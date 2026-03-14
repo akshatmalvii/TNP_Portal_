@@ -16,6 +16,11 @@ const DriveLockOverride = sequelize.define(
       unique: true
     },
 
+    dept_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+
     rule_id: {
       type: DataTypes.INTEGER,
       allowNull: false

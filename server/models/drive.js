@@ -15,11 +15,6 @@ const Drive = sequelize.define(
       allowNull: false
     },
 
-    dept_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
-
     created_by_id: {
       type: DataTypes.INTEGER,
       allowNull: false
@@ -47,6 +42,11 @@ const Drive = sequelize.define(
 
     drive_status: {
       type: DataTypes.STRING
+    },
+
+    form_schema: {
+      type: DataTypes.JSONB,
+      allowNull: true
     },
 
     created_at: {

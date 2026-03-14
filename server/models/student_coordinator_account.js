@@ -1,10 +1,10 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
-const StudentApplication = sequelize.define(
-  "StudentApplication",
+const StudentCoordinatorAccount = sequelize.define(
+  "StudentCoordinatorAccount",
   {
-    application_id: {
+    assignment_id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
@@ -15,29 +15,34 @@ const StudentApplication = sequelize.define(
       allowNull: false
     },
 
-    drive_id: {
+    staff_id: {
       type: DataTypes.INTEGER,
       allowNull: false
     },
 
-     application_data: {
-      type: DataTypes.JSONB,
-      allowNull: true
+    dept_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
 
-    application_status: {
-      type: DataTypes.STRING
+    academic_year: {
+      type: DataTypes.STRING,
+      allowNull: false
     },
 
-    applied_at: {
+    assigned_by: {
+      type: DataTypes.INTEGER
+    },
+
+    assigned_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     }
   },
   {
-    tableName: "student_applications",
+    tableName: "student_coordinator_accounts",
     timestamps: false
   }
 );
 
-export default StudentApplication;
+export default StudentCoordinatorAccount;
