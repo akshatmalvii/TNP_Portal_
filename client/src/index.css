@@ -1,3 +1,44 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Color Variables */
+
+:root {
+  --background: #f9fafb;
+  --foreground: #111827;
+  --card: #ffffff;
+  --primary: #6366f1;
+  --secondary: #e5e7eb;
+  --accent: #f97316;
+  --muted: #f3f4f6;
+  --border: #e5e7eb;
+  --input: #f9fafb;
+  --radius: 0.625rem;
+}
+
+/* Dark mode */
+
+.dark {
+  --background: #111827;
+  --foreground: #f9fafb;
+  --card: #1f2937;
+  --primary: #818cf8;
+  --secondary: #374151;
+  --accent: #fb923c;
+  --muted: #374151;
+  --border: #374151;
+  --input: #1f2937;
+}
+
+/* Base styles */
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, sans-serif;
+}
