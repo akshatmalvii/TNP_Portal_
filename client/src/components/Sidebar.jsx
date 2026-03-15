@@ -13,13 +13,13 @@ import {
 } from "lucide-react";
 
 export default function Sidebar({ userRole }) {
-//   const location = useLocation();
-//   const navigate = useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-//   const handleLogout = () => {
-//     localStorage.removeItem("user");
-//     navigate("/");
-//   };
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/");
+  };
 
   const studentMenuItems = [
     { href: "/dashboard/student", label: "Dashboard", icon: BarChart3 },
@@ -57,7 +57,7 @@ export default function Sidebar({ userRole }) {
 
       {/* Logo */}
       <div className="p-6 border-b border-gray-700">
-        {/* <Link to={`/dashboard/${userRole}`} className="flex items-center gap-3"> */}
+        <Link to={`/dashboard/${userRole}`} className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
             <Briefcase className="w-6 h-6 text-white" />
           </div>
@@ -66,7 +66,7 @@ export default function Sidebar({ userRole }) {
             <h1 className="font-bold">TNP</h1>
             <p className="text-xs text-gray-400">Portal</p>
           </div>
-        {/* </Link> */}
+        </Link>
       </div>
 
       {/* Menu */}
@@ -76,7 +76,7 @@ export default function Sidebar({ userRole }) {
           const active = isActive(item.href);
 
           return (
-            // <Link key={item.href} to={item.href}>
+            <Link key={item.href} to={item.href}>
               <div
                 className={`flex items-center gap-3 px-4 py-2 rounded-lg cursor-pointer transition ${
                   active
@@ -87,7 +87,7 @@ export default function Sidebar({ userRole }) {
                 <Icon className="w-5 h-5" />
                 <span className="text-sm font-medium">{item.label}</span>
               </div>
-            // </Link>
+            </Link>
           );
         })}
       </nav>
@@ -95,15 +95,15 @@ export default function Sidebar({ userRole }) {
       {/* Settings + Logout */}
       <div className="p-4 border-t border-gray-700 space-y-2">
 
-        {/* <Link to={`/dashboard/${userRole}/settings`}> */}
+        <Link to={`/dashboard/${userRole}/settings`}>
           <div className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-700">
             <Settings className="w-5 h-5" />
             <span className="text-sm font-medium">Settings</span>
           </div>
-        {/* </Link> */}
+        </Link>
 
         <button
-        //   onClick={handleLogout}
+          onClick={handleLogout}
           className="flex w-full items-center gap-3 px-4 py-2 rounded-lg hover:bg-red-600"
         >
           <LogOut className="w-5 h-5" />
