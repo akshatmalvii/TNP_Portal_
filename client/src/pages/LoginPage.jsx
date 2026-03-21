@@ -12,8 +12,11 @@ import {
 export default function LoginPage() {
 //   const navigate = useNavigate();
 
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
   const [selectedRole, setSelectedRole] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -55,67 +58,150 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* Toggle between Login and Sign Up */}
+        <div className="mb-6 flex justify-center">
+          <div className="bg-gray-200 p-1 rounded-lg">
+            <button
+              onClick={() => setIsLogin(true)}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+                isLogin
+                  ? "bg-white text-blue-600 shadow"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              Login
+            </button>
+            <button
+              onClick={() => setIsLogin(false)}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+                !isLogin
+                  ? "bg-white text-blue-600 shadow"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              Sign Up
+            </button>
+          </div>
+        </div>
+
         <Card className="shadow-lg">
 
           <CardHeader>
-            <CardTitle>Login to Your Account</CardTitle>
+            <CardTitle>{isLogin ? "Login to Your Account" : "Create Student Account"}</CardTitle>
             <CardDescription>
-              Select your role and enter your credentials
+              {isLogin
+                ? "Select your role and enter your credentials"
+                : "Enter your details to create a student account"
+              }
             </CardDescription>
           </CardHeader>
 
           <CardContent>
 
-            {/* <form onSubmit={handleLogin} className="space-y-4"> */}
+            {/* <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4"> */}
 <form  className="space-y-4">
-              {/* Role Selection */}
-              <div className="grid grid-cols-3 gap-2">
+              {isLogin ? (
+                <>
+                  {/* Role Selection */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {["student", "coordinator", "TPO"].map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setSelectedRole(role)}
+                        className={`py-2 px-3 rounded-lg text-sm font-medium transition 
+                        ${
+                          selectedRole === role
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-200 hover:bg-gray-300"
+                        }`}
+                      >
+                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                      </button>
+                    ))}
+                  </div>
 
-                {["student", "coordinator", "TPO"].map((role) => (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => setSelectedRole(role)}
-                    className={`py-2 px-3 rounded-lg text-sm font-medium transition 
-                    ${
-                      selectedRole === role
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 hover:bg-gray-300"
-                    }`}
-                  >
-                    {role.charAt(0).toUpperCase() + role.slice(1)}
-                  </button>
-                ))}
+                  {/* Email */}
+                  <div>
+                    <label className="text-sm font-medium">
+                      Email
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
 
-              </div>
+                  {/* Password */}
+                  <div>
+                    <label className="text-sm font-medium">
+                      Password
+                    </label>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Name */}
+                  <div>
+                    <label className="text-sm font-medium">
+                      Full Name
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="John Doe"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
 
-              {/* Email */}
-              <div>
-                <label className="text-sm font-medium">
-                  Email
-                </label>
+                  {/* Email */}
+                  <div>
+                    <label className="text-sm font-medium">
+                      Email
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
 
-                <Input
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
+                  {/* Password */}
+                  <div>
+                    <label className="text-sm font-medium">
+                      Password
+                    </label>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
 
-              {/* Password */}
-              <div>
-                <label className="text-sm font-medium">
-                  Password
-                </label>
-
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="text-sm font-medium">
+                      Confirm Password
+                    </label>
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Demo Credentials */}
               {/* <div className="bg-gray-100 border rounded-lg p-3 text-xs">
@@ -133,7 +219,7 @@ export default function LoginPage() {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? (isLogin ? "Logging in..." : "Signing up...") : (isLogin ? "Login" : "Sign Up")}
               </Button>
 
             </form>
