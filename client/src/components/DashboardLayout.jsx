@@ -8,10 +8,12 @@ export default function DashboardLayout() {
   const location = useLocation();
 
   // Determine user role based on current path
-  const userRole = location.pathname.includes('/coordinator') ? 'coordinator' : 'student';
+  const userRole = location.pathname.includes('/tpo') ? 'tpo' : 
+                   location.pathname.includes('/coordinator') ? 'coordinator' : 'student';
 
   // For now, hardcode user details - in real app, get from context/auth
-  const userName = userRole === 'coordinator' ? 'Coordinator Name' : 'John Doe';
+  const userName = userRole === 'tpo' ? 'TPO Name' :
+                   userRole === 'coordinator' ? 'Coordinator Name' : 'John Doe';
 
   return (
     <div className="flex h-screen bg-gray-100">

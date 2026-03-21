@@ -12,6 +12,12 @@ import PendingPage from './pages/coordinator/PendingPage'
 import SettingsPage from './pages/coordinator/SettingsPage'
 import StudentsPage from './pages/coordinator/StudentsPage'
 import VerificationsPage from './pages/coordinator/VerificationsPage'
+import TPODashboardPage from './pages/tpo/TPODashboardPage'
+import TPODrivesPage from './pages/tpo/TPODrivesPage'
+import CompaniesPage from './pages/tpo/CompaniesPage'
+import ApprovalsPage from './pages/tpo/ApprovalsPage'
+import AnalyticsPage from './pages/tpo/AnalyticsPage'
+import TPOSettingsPage from './pages/tpo/TPOSettingsPage'
 
 function App() {
 
@@ -31,6 +37,12 @@ function App() {
             <Route path="coordinator/settings" element={<SettingsPage />} />
             <Route path="coordinator/students" element={<StudentsPage />} />
             <Route path="coordinator/verifications" element={<VerificationsPage />} />
+            <Route path="tpo" element={<TPODashboardPage />} />
+            <Route path="tpo/drives" element={<TPODrivesPage />} />
+            <Route path="tpo/companies" element={<CompaniesPage />} />
+            <Route path="tpo/approvals" element={<ApprovalsPage />} />
+            <Route path="tpo/analytics" element={<AnalyticsPage />} />
+            <Route path="tpo/settings" element={<TPOSettingsPage />} />
           </Route>
         </Routes>
     </Router>
