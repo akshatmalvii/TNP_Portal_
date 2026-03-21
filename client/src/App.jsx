@@ -7,6 +7,11 @@ import StudentApplicationPage from './pages/student/StudentApplicationPage'
 import StudentDrivePage from './pages/student/StudentDrivePage'
 import StudentProfilePage from './pages/student/StudentProfilePage'
 import StudentSettingPage from './pages/student/StudentSettingPage'
+import CoordinatorDashboardPage from './pages/coordinator/CoordinatorDashboardPage'
+import PendingPage from './pages/coordinator/PendingPage'
+import SettingsPage from './pages/coordinator/SettingsPage'
+import StudentsPage from './pages/coordinator/StudentsPage'
+import VerificationsPage from './pages/coordinator/VerificationsPage'
 
 function App() {
 
@@ -21,6 +26,11 @@ function App() {
             <Route path="student/drives" element={<StudentDrivePage />} />
             <Route path="student/profile" element={<StudentProfilePage />} />
             <Route path="student/settings" element={<StudentSettingPage />} />
+            <Route path="coordinator" element={<CoordinatorDashboardPage />} />
+            <Route path="coordinator/pending" element={<PendingPage />} />
+            <Route path="coordinator/settings" element={<SettingsPage />} />
+            <Route path="coordinator/students" element={<StudentsPage />} />
+            <Route path="coordinator/verifications" element={<VerificationsPage />} />
           </Route>
         </Routes>
     </Router>

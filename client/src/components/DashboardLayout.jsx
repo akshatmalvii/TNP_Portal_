@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  // Determine user role based on current path
+  const userRole = location.pathname.includes('/coordinator') ? 'coordinator' : 'student';
 
   // For now, hardcode user details - in real app, get from context/auth
-  const userName = "John Doe";
-  const userRole = "student";
+  const userName = userRole === 'coordinator' ? 'Coordinator Name' : 'John Doe';
 
   return (
     <div className="flex h-screen bg-gray-100">
