@@ -1,29 +1,83 @@
-import React, { useState } from "react";
-import { mockDrives } from "./mockDrives.js";
+import React, { useEffect, useState } from "react";
 import { Calendar, DollarSign, Search } from "lucide-react";
 
 export default function StudentDrivePage() {
+  const [drives, setDrives] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [appliedDrives, setAppliedDrives] = useState([]);
 
-  const [appliedDrives, setAppliedDrives] = useState(
-    mockDrives.filter((d) => d.applied).map((d) => d.id)
-  );
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-  const filteredDrives = mockDrives.filter((drive) => {
+    const fetchData = async () => {
+      try {
+        const [drivesRes, appsRes] = await Promise.all([
+          fetch("http://localhost:5000/api/v1/drives", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch("http://localhost:5000/api/v1/drives/applications", {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+
+        if (drivesRes.ok && appsRes.ok) {
+          const driveData = await drivesRes.json();
+          const appData = await appsRes.json();
+
+          setDrives(driveData);
+          setAppliedDrives(appData.map((a) => a.drive_id));
+        }
+      } catch (error) {
+        console.error("Error loading drives", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const filteredDrives = drives.filter((drive) => {
+    const companyName = drive.company_name || "";
+    const position = drive.position || "";
+
     const matchesSearch =
-      drive.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      drive.position.toLowerCase().includes(searchTerm.toLowerCase());
+      companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      position.toLowerCase().includes(searchTerm.toLowerCase());
 
+    const status = drive.drive_status || "";
     const matchesStatus =
-      statusFilter === "all" || drive.status === statusFilter;
+      statusFilter === "all" || status === statusFilter;
 
-    return matchesSearch && matchesStatus && drive.eligible;
+    return matchesSearch && matchesStatus;
   });
 
-  const handleApply = (driveId) => {
-    if (!appliedDrives.includes(driveId)) {
-      setAppliedDrives([...appliedDrives, driveId]);
+  const handleApply = async (driveId) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/v1/drives/${driveId}/apply`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ application_data: {} })
+        }
+      );
+
+      if (!response.ok) {
+        const body = await response.json();
+        throw new Error(body.error || "Failed to apply");
+      }
+
+      setAppliedDrives((prev) => [...prev, driveId]);
+    } catch (error) {
+      console.error("Apply error", error);
+      alert(error.message);
     }
   };
 
@@ -44,7 +98,6 @@ export default function StudentDrivePage() {
 
   return (
     <div className="p-6 space-y-6">
-
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Job Drives</h1>
@@ -55,11 +108,8 @@ export default function StudentDrivePage() {
 
       {/* Search + Filter */}
       <div className="bg-white shadow rounded-lg p-5 space-y-4">
-
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-
           <input
             type="text"
             placeholder="Search by company or position..."
@@ -69,7 +119,6 @@ export default function StudentDrivePage() {
           />
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap gap-2">
           {["all", "Open", "Shortlisted", "Selected"].map((filter) => (
             <button
@@ -89,7 +138,6 @@ export default function StudentDrivePage() {
 
       {/* Drives List */}
       <div className="space-y-4">
-
         {filteredDrives.length === 0 ? (
           <div className="bg-white shadow rounded-lg p-6 text-center text-gray-400">
             No drives found matching your criteria
@@ -106,11 +154,14 @@ export default function StudentDrivePage() {
                 className="bg-white shadow rounded-lg p-5 hover:shadow-md transition"
               >
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
                   {/* Company */}
                   <div>
-                    <h3 className="font-bold text-lg">{drive.company}</h3>
-                    <p className="text-sm text-gray-500">{drive.position}</p>
+                    <h3 className="font-bold text-lg">
+                      {drive.company_name}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {drive.position}
+                    </p>
                   </div>
 
                   {/* Details */}
@@ -118,7 +169,7 @@ export default function StudentDrivePage() {
                     <div className="flex items-center gap-2">
                       <DollarSign className="w-4 h-4 text-gray-400" />
                       <span className="text-sm font-semibold">
-                        {drive.salary}
+                        {drive.salary || "N/A"}
                       </span>
                     </div>
 
@@ -136,13 +187,13 @@ export default function StudentDrivePage() {
                   <div className="flex items-center gap-2">
                     <span
                       className={`px-2 py-1 text-xs rounded ${getStatusColor(
-                        drive.status
+                        drive.drive_status
                       )}`}
                     >
-                      {drive.status}
+                      {drive.drive_status}
                     </span>
 
-                    {drive.applied && (
+                    {hasApplied && (
                       <span className="px-2 py-1 text-xs rounded bg-gray-200">
                         Applied
                       </span>
@@ -174,13 +225,11 @@ export default function StudentDrivePage() {
                       </button>
                     )}
                   </div>
-
                 </div>
               </div>
             );
           })
         )}
-
       </div>
     </div>
   );

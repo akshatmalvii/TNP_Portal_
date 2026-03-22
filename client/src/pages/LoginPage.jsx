@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import {
@@ -10,7 +11,7 @@ import {
 } from "../components/Card";
 
 export default function LoginPage() {
-//   const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -19,30 +20,86 @@ export default function LoginPage() {
   const [name, setName] = useState("");
   const [selectedRole, setSelectedRole] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
 
-  //   if (!email || !password || !selectedRole) {
-  //     alert("Please fill all fields and select a role");
-  //     return;
-  //   }
+    if (!email || !password || !selectedRole) {
+      setErrorMsg("Please fill all fields and select a role");
+      return;
+    }
 
-  //   setIsLoading(true);
+    setIsLoading(true);
 
-  //   setTimeout(() => {
-  //     localStorage.setItem(
-  //       "user",
-  //       JSON.stringify({
-  //         email,
-  //         role: selectedRole,
-  //         name: email.split("@")[0]
-  //       })
-  //     );
+    try {
+      const response = await fetch("http://localhost:5000/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role: selectedRole })
+      });
+      const data = await response.json();
 
-  //   //   navigate(`/dashboard/${selectedRole}`);
-  //   }, 500);
-  // };
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "Login failed");
+      }
+
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+
+      let targetPath = `/dashboard/${selectedRole}`;
+      if (selectedRole === 'student' && data.nextStep === 'profile') {
+        targetPath = `/dashboard/student/profile`;
+      } else if (selectedRole === 'student' && data.nextStep === 'verification_pending') {
+        // Just go to student dashboard for now, maybe show a pending banner there
+        targetPath = `/dashboard/student`;
+      }
+      
+      navigate(targetPath);
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    setErrorMsg("");
+
+    if (!email || !password || !confirmPassword || !name) {
+      setErrorMsg("Please fill all fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMsg("Passwords do not match");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/v1/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, confirmPassword, name, role: "student" })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "Sign up failed");
+      }
+
+      setIsLogin(true);
+      setErrorMsg("Account created! Please login.");
+    } catch (err) {
+      setErrorMsg(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-100">
@@ -97,9 +154,13 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent>
+            {errorMsg && (
+              <div className={`p-3 rounded-md text-sm mb-4 ${errorMsg.includes('created') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                {errorMsg}
+              </div>
+            )}
 
-            {/* <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4"> */}
-<form  className="space-y-4">
+            <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4">
               {isLogin ? (
                 <>
                   {/* Role Selection */}

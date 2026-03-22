@@ -1,26 +1,97 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Mail, Phone, Briefcase, BookOpen } from "lucide-react";
 
 export default function StudentProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "john.doe@college.edu",
-    phone: "+91 98765 43210",
-    cgpa: "8.5",
-    department: "Computer Science",
-    year: "Fourth Year",
-    bio: "Aspiring software engineer with interests in web development and cloud computing.",
+    name: "",
+    email: "",
+    phone: "",
+    cgpa: "",
+    department: "",
+    year: "",
+    bio: ""
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const loadProfile = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch("http://localhost:5000/api/v1/students/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch profile");
+        }
+
+        const data = await response.json();
+        setProfile({
+          name: data.name || "",
+          email: data.email || "",
+          phone: data.mobile_number || "",
+          cgpa: data.cgpa ? data.cgpa.toString() : "",
+          department: data?.Department?.dept_name || "",
+          year: data.year || "",
+          bio: data.bio || ""
+        });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
 
   const handleChange = (field, value) => {
     setProfile((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    // Save API logic here later
+  const handleSave = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Not authenticated");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/api/v1/students", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          dept_id: profile.dept_id,
+          cgpa: parseFloat(profile.cgpa),
+          backlogs: profile.backlogs || 0,
+          resume_url: profile.resume_url || "",
+          name: profile.name,
+          mobile_number: profile.phone,
+          email: profile.email,
+          bio: profile.bio
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to save profile");
+      }
+
+      setIsEditing(false);
+      alert("Profile saved successfully");
+    } catch (error) {
+      console.error("Profile save error", error);
+      alert(error.message);
+    }
   };
 
   return (

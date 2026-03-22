@@ -15,6 +15,12 @@ const Department = sequelize.define(
       allowNull: false
     },
 
+    dept_code: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true
+    },
+
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

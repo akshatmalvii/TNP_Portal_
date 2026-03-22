@@ -1,45 +1,80 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { mockDrives, mockApplications } from "./mockDrives.js";
 import { Briefcase, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 
 export default function StudentDashboardPage() {
+  const [drives, setDrives] = useState([]);
+  const [applications, setApplications] = useState([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const fetchData = async () => {
+      try {
+        const [drivesRes, appsRes] = await Promise.all([
+          fetch("http://localhost:5000/api/v1/drives", {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch("http://localhost:5000/api/v1/drives/applications", {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+
+        if (!drivesRes.ok || !appsRes.ok) {
+          console.error("Failed to load dashboard data");
+          return;
+        }
+
+        const drivesData = await drivesRes.json();
+        const appsData = await appsRes.json();
+
+        setDrives(drivesData);
+        setApplications(appsData);
+      } catch (error) {
+        console.error("Dashboard load error", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const stats = [
     {
       title: "Total Applications",
-      value: mockApplications.length,
+      value: applications.length,
       icon: Briefcase,
       color: "text-blue-500",
     },
     {
       title: "Selected",
-      value: mockApplications.filter((a) => a.status === "Selected").length,
+      value: applications.filter((a) => a.application_status === "SELECTED").length,
       icon: CheckCircle2,
       color: "text-green-500",
     },
     {
       title: "Shortlisted",
-      value: mockApplications.filter((a) => a.status === "Shortlisted").length,
+      value: applications.filter((a) => a.application_status === "SHORTLISTED").length,
       icon: AlertCircle,
       color: "text-yellow-500",
     },
     {
       title: "Pending Response",
-      value: mockApplications.filter((a) => a.status === "Applied").length,
+      value: applications.filter((a) => a.application_status === "APPLIED").length,
       icon: Clock,
       color: "text-purple-500",
     },
   ];
 
-  const recentApplications = mockApplications.slice(0, 3);
+  const recentApplications = applications.slice(0, 3);
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "Selected":
+    switch (status.toUpperCase()) {
+      case "SELECTED":
         return "bg-green-100 text-green-700";
-      case "Shortlisted":
+      case "SHORTLISTED":
         return "bg-yellow-100 text-yellow-700";
-      case "Applied":
+      case "APPLIED":
         return "bg-blue-100 text-blue-700";
       default:
         return "bg-gray-100 text-gray-700";
@@ -154,7 +189,7 @@ export default function StudentDashboardPage() {
             <h4 className="font-semibold mb-2">Available Drives</h4>
 
             <p className="text-2xl font-bold text-indigo-600">
-              {mockDrives.filter((d) => d.status === "Open").length}
+              {drives.filter((d) => d.drive_status === "OPEN").length}
             </p>
 
             <p className="text-xs text-gray-500">
