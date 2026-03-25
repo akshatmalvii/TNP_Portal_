@@ -10,6 +10,9 @@ import {
   Briefcase,
   CheckCircle2,
   Clock,
+  ShieldCheck,
+  UserPlus,
+  LayoutDashboard,
 } from "lucide-react";
 
 export default function Sidebar({ userRole }) {
@@ -18,46 +21,70 @@ export default function Sidebar({ userRole }) {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
     navigate("/");
   };
 
   const studentMenuItems = [
-    { href: "/dashboard/student", label: "Dashboard", icon: BarChart3 },
+    { href: "/dashboard/student", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/student/drives", label: "Job Drives", icon: Briefcase },
     { href: "/dashboard/student/applications", label: "My Applications", icon: FileText },
     { href: "/dashboard/student/profile", label: "My Profile", icon: Users },
   ];
 
   const coordinatorMenuItems = [
-    { href: "/dashboard/coordinator", label: "Dashboard", icon: BarChart3 },
+    { href: "/dashboard/coordinator", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/coordinator/students", label: "Students", icon: Users },
     { href: "/dashboard/coordinator/verifications", label: "Verifications", icon: CheckCircle2 },
     { href: "/dashboard/coordinator/pending", label: "Pending", icon: Clock },
   ];
 
   const tpoMenuItems = [
-    { href: "/dashboard/tpo", label: "Dashboard", icon: BarChart3 },
+    { href: "/dashboard/tpo", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/tpo/drives", label: "Job Drives", icon: Briefcase },
     { href: "/dashboard/tpo/companies", label: "Companies", icon: Building2 },
     { href: "/dashboard/tpo/approvals", label: "Approvals", icon: CheckCircle2 },
     { href: "/dashboard/tpo/analytics", label: "Analytics", icon: BarChart3 },
   ];
 
-  const menuItems =
-    userRole === "student"
-      ? studentMenuItems
-      : userRole === "coordinator"
-      ? coordinatorMenuItems
-      : tpoMenuItems;
+  const tpoHeadMenuItems = [
+    { href: "/dashboard/tpohead", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard/tpohead/departments", label: "Departments", icon: Building2 },
+    { href: "/dashboard/tpohead/tpos", label: "Manage TPOs", icon: ShieldCheck },
+    { href: "/dashboard/tpohead/coordinators", label: "Manage Coordinators", icon: UserPlus },
+    { href: "/dashboard/tpohead/reports", label: "Reports", icon: BarChart3 },
+  ];
+
+  const getMenuItems = () => {
+    switch (userRole) {
+      case "tpohead": return tpoHeadMenuItems;
+      case "tpo": return tpoMenuItems;
+      case "coordinator": return coordinatorMenuItems;
+      default: return studentMenuItems;
+    }
+  };
+
+  const menuItems = getMenuItems();
+  const basePath = `/dashboard/${userRole}`;
 
   const isActive = (href) => location.pathname === href;
+
+  const getRoleLabel = () => {
+    switch (userRole) {
+      case "tpohead": return "TPO Head";
+      case "tpo": return "TPO";
+      case "coordinator": return "Coordinator";
+      default: return "Student";
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white w-64">
 
       {/* Logo */}
       <div className="p-6 border-b border-gray-700">
-        <Link to={`/dashboard/${userRole}`} className="flex items-center gap-3">
+        <Link to={basePath} className="flex items-center gap-3">
           <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
             <Briefcase className="w-6 h-6 text-white" />
           </div>
@@ -67,6 +94,13 @@ export default function Sidebar({ userRole }) {
             <p className="text-xs text-gray-400">Portal</p>
           </div>
         </Link>
+      </div>
+
+      {/* Role badge */}
+      <div className="px-6 py-3 border-b border-gray-700">
+        <span className="text-xs font-medium px-2 py-1 bg-indigo-600/20 text-indigo-300 rounded-md">
+          {getRoleLabel()}
+        </span>
       </div>
 
       {/* Menu */}
@@ -95,7 +129,7 @@ export default function Sidebar({ userRole }) {
       {/* Settings + Logout */}
       <div className="p-4 border-t border-gray-700 space-y-2">
 
-        <Link to={`/dashboard/${userRole}/settings`}>
+        <Link to={`${basePath}/settings`}>
           <div className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-700">
             <Settings className="w-5 h-5" />
             <span className="text-sm font-medium">Settings</span>

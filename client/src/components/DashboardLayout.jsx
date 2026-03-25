@@ -7,13 +7,25 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  // Determine user role based on current path
-  const userRole = location.pathname.includes('/tpo') ? 'tpo' : 
-                   location.pathname.includes('/coordinator') ? 'coordinator' : 'student';
+  // Read role from localStorage (set during login)
+  const storedRole = localStorage.getItem("role") || "";
 
-  // For now, hardcode user details - in real app, get from context/auth
-  const userName = userRole === 'tpo' ? 'TPO Name' :
-                   userRole === 'coordinator' ? 'Coordinator Name' : 'John Doe';
+  // Map role_name to sidebar key
+  const getRoleKey = () => {
+    switch (storedRole) {
+      case "TPO_Head": return "tpohead";
+      case "TPO": return "tpo";
+      case "Placement_Coordinator": return "coordinator";
+      case "Student":
+      default: return "student";
+    }
+  };
+
+  const userRole = getRoleKey();
+
+  // Get display name
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const userName = storedUser.email || "User";
 
   return (
     <div className="flex h-screen bg-gray-100">

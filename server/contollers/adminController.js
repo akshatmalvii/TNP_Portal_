@@ -29,8 +29,18 @@ export const deleteStaff = async (req, res) => {
 
 export const getAllStaff = async (req, res) => {
   try {
-    const staffList = await adminService.getAllStaff();
+    const role_filter = req.query.role || null;
+    const staffList = await adminService.getAllStaff(role_filter);
     res.json(staffList);
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+};
+
+export const assignDepartment = async (req, res) => {
+  try {
+    const result = await adminService.assignDepartment(req.params.id, req.body.dept_id);
+    res.json(result);
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message });
   }

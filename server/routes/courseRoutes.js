@@ -1,0 +1,19 @@
+import express from 'express';
+import {
+    getAllCourses,
+    getCourseById,
+    createCourse,
+    updateCourse,
+    deleteCourse,
+} from '../contollers/courseController.js';
+import {authorizeRoles} from '../middleware/roleMiddleware.js';
+
+const router = express.Router();
+
+router.get('/', getAllCourses);
+router.get('/:id', getCourseById);
+router.post('/', authorizeRoles('TPO_Head'), createCourse);
+router.put('/:id', authorizeRoles('TPO_Head'), updateCourse);
+router.delete('/:id', authorizeRoles('TPO_Head'), deleteCourse);
+
+export default router;

@@ -1,49 +1,76 @@
 import User from "../models/users.js";
 import StaffAdmin from "../models/staff_admin.js";
-import rolesRepository from "../repositories/rolesRepository.js";
+import Role from "../models/role.js";
+import Department from "../models/department.js";
+import DepartmentTpoAssignment from "../models/department_tpo_assignment.js";
 import sequelize from "../config/db.js";
 import bcrypt from "bcrypt";
 
-const createStaff = async (data) => {
+const createStaff = async ({ email, password, role_name, dept_id }) => {
+  if (!email || !password || !role_name) {
+    throw { status: 400, message: "email, password, and role_name are required" };
+  }
+
+  // Validate role
+  const allowedRoles = ["TPO", "Placement_Coordinator"];
+  if (!allowedRoles.includes(role_name)) {
+    throw { status: 400, message: `role_name must be one of: ${allowedRoles.join(", ")}` };
+  }
+
   return await sequelize.transaction(async (t) => {
-    // 1. Check if user exists
-    const existing = await User.findOne({ where: { email: data.email }, transaction: t });
+    // Check if user exists
+    const existing = await User.findOne({ where: { email }, transaction: t });
     if (existing) {
       throw { status: 409, message: "User with this email already exists" };
     }
 
-    // 2. Find Role
-    const role = await rolesRepository.findByName(data.role_level);
+    // Find role
+    const role = await Role.findOne({ where: { role_name }, transaction: t });
     if (!role) {
-      throw { status: 400, message: "Invalid role_level specified" };
+      throw { status: 400, message: "Role not found in system" };
     }
 
-    // 3. Create User
-    const password_hash = await bcrypt.hash(data.password, 10);
-    const user = await User.create({ email: data.email, password_hash }, { transaction: t });
-
-    // 4. Create Staff profile
-    const staff = await StaffAdmin.create({
-      user_id: user.user_id,
-      dept_id: data.dept_id,
+    // Create user with role_id
+    const password_hash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      email,
+      password_hash,
       role_id: role.role_id,
-      is_active: true
+      account_status: "Active"
     }, { transaction: t });
 
-    return { staff_id: staff.staff_id, email: user.email, role: data.role_level };
+    // Create staff admin record
+    const staff = await StaffAdmin.create({
+      user_id: user.user_id,
+      dept_id: dept_id || null
+    }, { transaction: t });
+
+    return {
+      staff_id: staff.staff_id,
+      user_id: user.user_id,
+      email: user.email,
+      role_name,
+      dept_id: staff.dept_id
+    };
   });
 };
 
 const updateStaff = async (staff_id, data) => {
-    // Basic implementation for update (e.g. deactivate or change dept)
-    const staff = await StaffAdmin.findByPk(staff_id);
-    if (!staff) throw { status: 404, message: "Staff not found" };
+  const staff = await StaffAdmin.findByPk(staff_id, {
+    include: [{ model: User, include: [{ model: Role }] }]
+  });
+  if (!staff) throw { status: 404, message: "Staff not found" };
 
-    if (data.dept_id) staff.dept_id = data.dept_id;
-    if (data.is_active !== undefined) staff.is_active = data.is_active;
+  if (data.dept_id !== undefined) staff.dept_id = data.dept_id;
+  await staff.save();
 
-    await staff.save();
-    return staff;
+  // Update account_status on user if provided
+  if (data.account_status && staff.User) {
+    staff.User.account_status = data.account_status;
+    await staff.User.save();
+  }
+
+  return staff;
 };
 
 const deleteStaff = async (staff_id) => {
@@ -53,26 +80,77 @@ const deleteStaff = async (staff_id) => {
 
     const user_id = staff.user_id;
 
+    // Remove any department TPO assignments
+    await DepartmentTpoAssignment.destroy({
+      where: { tpo_staff_id: staff_id },
+      transaction: t
+    });
+
     await staff.destroy({ transaction: t });
-    // Optionally destroy User, but let's keep it safe. 
     await User.destroy({ where: { user_id }, transaction: t });
 
-    return { message: "Staff deleted successfully" };
+    return { message: "Staff account deleted successfully" };
   });
 };
 
-const getAllStaff = async () => {
-    return await StaffAdmin.findAll({
-        include: [
-            { model: User, attributes: ['email'] },
-            { model: rolesRepository.findById ? null : { model: Role, attributes: ['role_name'] } } // Wait, better to keep as is or adjust
-        ]
+const getAllStaff = async (role_filter) => {
+  const whereClause = {};
+
+  const include = [
+    {
+      model: User,
+      attributes: ["user_id", "email", "account_status"],
+      include: [{ model: Role, attributes: ["role_id", "role_name"] }]
+    },
+    {
+      model: Department,
+      attributes: ["dept_id", "dept_code", "dept_name"],
+      required: false
+    }
+  ];
+
+  const staffList = await StaffAdmin.findAll({ include });
+
+  // Filter by role if specified
+  if (role_filter) {
+    return staffList.filter(s =>
+      s.User && s.User.Role && s.User.Role.role_name === role_filter
+    );
+  }
+
+  return staffList;
+};
+
+const assignDepartment = async (staff_id, dept_id) => {
+  const staff = await StaffAdmin.findByPk(staff_id, {
+    include: [{ model: User, include: [{ model: Role }] }]
+  });
+  if (!staff) throw { status: 404, message: "Staff not found" };
+
+  // Only TPOs can be assigned to departments via department_tpo_assignment
+  if (staff.User && staff.User.Role && staff.User.Role.role_name === "TPO") {
+    // Update staff's dept_id
+    staff.dept_id = dept_id;
+    await staff.save();
+
+    // Create/update department_tpo_assignment
+    await DepartmentTpoAssignment.upsert({
+      dept_id,
+      tpo_staff_id: staff_id
     });
+  } else {
+    // For coordinators, just update dept_id
+    staff.dept_id = dept_id;
+    await staff.save();
+  }
+
+  return { message: "Department assigned successfully", staff_id, dept_id };
 };
 
 export default {
-    createStaff,
-    updateStaff,
-    deleteStaff,
-    getAllStaff
+  createStaff,
+  updateStaff,
+  deleteStaff,
+  getAllStaff,
+  assignDepartment
 };
