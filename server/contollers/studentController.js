@@ -13,16 +13,6 @@ export const getMe = async (req, res) => {
   }
 };
 
-export const createProfile = async (req, res) => {
-  try {
-    const student = await studentService.createProfile(req.user.user_id, req.body);
-    return res.status(201).json(student);
-  } catch (err) {
-    console.error(err);
-    return res.status(err.status || 500).json({ error: err.message || "Failed to create profile" });
-  }
-};
-
 export const getVerificationStatus = async (req, res) => {
   try {
     const status = await studentService.getVerificationStatus(req.user.user_id);

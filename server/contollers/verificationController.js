@@ -18,6 +18,16 @@ export const getCoordinatorPending = async (req, res) => {
   }
 };
 
+export const getCoordinatorAll = async (req, res) => {
+  try {
+    const staff = await getStaffContext(req.user.user_id);
+    const students = await verificationService.getCoordinatorAll(staff.dept_id);
+    res.json(students);
+  } catch(err) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+};
+
 export const verifyByCoordinator = async (req, res) => {
   try {
     const staff = await getStaffContext(req.user.user_id);
@@ -31,37 +41,7 @@ export const verifyByCoordinator = async (req, res) => {
 export const rejectByCoordinator = async (req, res) => {
   try {
     const staff = await getStaffContext(req.user.user_id);
-    const result = await verificationService.rejectByCoordinator(req.params.student_id, staff.staff_id);
-    res.json(result);
-  } catch(err) {
-    res.status(err.status || 500).json({ error: err.message });
-  }
-};
-
-export const getTpoPending = async (req, res) => {
-  try {
-    const staff = await getStaffContext(req.user.user_id);
-    const students = await verificationService.getTpoPending(staff.dept_id);
-    res.json(students);
-  } catch(err) {
-    res.status(err.status || 500).json({ error: err.message });
-  }
-};
-
-export const approveByTpo = async (req, res) => {
-  try {
-    const staff = await getStaffContext(req.user.user_id);
-    const result = await verificationService.approveByTpo(req.params.student_id, staff.staff_id);
-    res.json(result);
-  } catch(err) {
-    res.status(err.status || 500).json({ error: err.message });
-  }
-};
-
-export const rejectByTpo = async (req, res) => {
-  try {
-    const staff = await getStaffContext(req.user.user_id);
-    const result = await verificationService.rejectByTpo(req.params.student_id, staff.staff_id);
+    const result = await verificationService.rejectByCoordinator(req.params.student_id, staff.staff_id, req.body.reason);
     res.json(result);
   } catch(err) {
     res.status(err.status || 500).json({ error: err.message });

@@ -46,6 +46,7 @@ import driveRoutes from './routes/driveRoutes.js';
 import departmentRoutes from './routes/departmentRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
 import driveAllowedCourseRoutes from './routes/driveAllowedCourseRoutes.js';
+import studentProfileRoutes from './routes/studentProfileRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -84,6 +85,7 @@ app.use('/api/v1/drives', driveRoutes);
 app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/drive-allowed-courses', driveAllowedCourseRoutes);
+app.use('/api/v1/student-profile', studentProfileRoutes);
 
 // Health check
 app.get('/', (req, res) => {
@@ -109,6 +111,9 @@ const startServer = async () => {
         await StaffAdmin.sync({alter: true});
         await DepartmentTpoAssignment.sync({alter: true});
         await Student.sync({alter: true});
+        // Fix: Sequelize alter doesn't always drop NOT NULL — force it
+        await sequelize.query('ALTER TABLE students ALTER COLUMN dept_id DROP NOT NULL;').catch(() => {});
+        await sequelize.query('ALTER TABLE students ALTER COLUMN course_id DROP NOT NULL;').catch(() => {});
         await CompanyContact.sync({alter: true});
         await CompanyRole.sync({alter: true});
 
