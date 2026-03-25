@@ -12,7 +12,22 @@ const StudentVerificationRequest = sequelize.define(
 
     student_id: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      unique: true
+    },
+
+    coordinator_status: {
+      type: DataTypes.STRING(20),
+      validate: {
+        isIn: [["Pending", "Approved", "Rejected"]]
+      }
+    },
+
+    tpo_status: {
+      type: DataTypes.STRING(20),
+      validate: {
+        isIn: [["Pending", "Approved", "Rejected"]]
+      }
     },
 
     verified_by_coordinator: {
@@ -23,11 +38,12 @@ const StudentVerificationRequest = sequelize.define(
       type: DataTypes.INTEGER
     },
 
-    verification_status: {
-      type: DataTypes.STRING
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
     },
 
-    created_at: {
+    updated_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     }

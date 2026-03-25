@@ -10,13 +10,14 @@ const Department = sequelize.define(
       autoIncrement: true
     },
 
-    dept_name: {
-      type: DataTypes.STRING,
-      allowNull: false
+    dept_code: {
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      unique: true
     },
 
-    dept_code: {
-      type: DataTypes.STRING,
+    dept_name: {
+      type: DataTypes.STRING(100),
       allowNull: false,
       unique: true
     },

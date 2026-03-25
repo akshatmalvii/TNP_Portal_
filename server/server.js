@@ -9,22 +9,30 @@ dotenv.config();
 // Models & Associations
 import "./utils/associations.js";
 import User from "./models/users.js";
-import Department from "./models/department.js";
-import Company from "./models/company.js";
-import Student from "./models/student.js";
-import Offer from "./models/offer.js";
-import StaffAdmin from "./models/staff_admin.js";
 import Role from "./models/role.js";
-import StudentCoordinatorAccount from "./models/student_coordinator_account.js";
+import Department from "./models/department.js";
+import StaffAdmin from "./models/staff_admin.js";
+import DepartmentTpoAssignment from "./models/department_tpo_assignment.js";
+import Student from "./models/student.js";
+import StudentEducation from "./models/student_education.js";
+import StudentDocument from "./models/student_document.js";
+import Company from "./models/company.js";
+import CompanyContact from "./models/company_contact.js";
+import CompanyRole from "./models/company_role.js";
+import Drive from "./models/drive.js";
+import DriveAllowedDepartment from "./models/drive_allowed_department.js";
+import DriveEligibility from "./models/drive_eligibility.js";
+import PlacementPolicyRule from "./models/placement_policy_rule.js";
+import DepartmentPolicyRule from "./models/department_policy_rule.js";
+import DrivePolicyOverride from "./models/drive_policy_override.js";
 import StudentApplication from "./models/student_application.js";
+import DynamicFormField from "./models/dynamic_form_field.js";
+import DynamicFormResponse from "./models/dynamic_form_response.js";
+import DriveSelection from "./models/drive_selection.js";
+import Offer from "./models/offer.js";
 import StudentVerificationRequest from "./models/student_verification_request.js";
 import AuditLog from "./models/audit_log.js";
-import DepartmentDefaultLock from "./models/department_default_lock.js";
-import DriveAllowedDepartment from "./models/drive_allowed_department.js";
-import DriveLockOverride from "./models/drive_lock_override.js";
-import DriveSelection from "./models/drive_selection.js";
-import Drive from "./models/drive.js";
-import LockRule from "./models/lock_rule.js";
+import seedRolesAndAdmin from "./seed.js";
 
 // Routes
 import authRoutes from "./routes/authRoutes.js";
@@ -80,26 +88,47 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log("PostgreSQL connected successfully");
 
-    // Sync all tables one by one (DEV MODE)
-    await User.sync({ alter: true });
-    await Department.sync({ alter: true });
+    // Sync all tables in dependency order (DEV MODE)
+    // 1. Independent tables
     await Role.sync({ alter: true });
-    await StaffAdmin.sync({ alter: true });
+    await Department.sync({ alter: true });
     await Company.sync({ alter: true });
+    await PlacementPolicyRule.sync({ alter: true });
+
+    // 2. Tables depending on roles / departments / companies
+    await User.sync({ alter: true });
+    await StaffAdmin.sync({ alter: true });
+    await DepartmentTpoAssignment.sync({ alter: true });
     await Student.sync({ alter: true });
-    await StudentCoordinatorAccount.sync({ alter: true });
+    await CompanyContact.sync({ alter: true });
+    await CompanyRole.sync({ alter: true });
+
+    // 3. Tables depending on students / company_roles / staff
+    await StudentEducation.sync({ alter: true });
+    await StudentDocument.sync({ alter: true });
+    await StudentVerificationRequest.sync({ alter: true });
     await Drive.sync({ alter: true });
+
+    // 4. Tables depending on drives
+    await DriveAllowedDepartment.sync({ alter: true });
+    await DriveEligibility.sync({ alter: true });
+    await DepartmentPolicyRule.sync({ alter: true });
+    await DrivePolicyOverride.sync({ alter: true });
+    await DynamicFormField.sync({ alter: true });
     await StudentApplication.sync({ alter: true });
+
+    // 5. Tables depending on applications / form fields
+    await DynamicFormResponse.sync({ alter: true });
     await DriveSelection.sync({ alter: true });
     await Offer.sync({ alter: true });
-    await DriveAllowedDepartment.sync({ alter: true });
-    await LockRule.sync({ alter: true });
-    await DepartmentDefaultLock.sync({ alter: true });
-    await DriveLockOverride.sync({ alter: true });
-    await StudentVerificationRequest.sync({ alter: true });
+
+    // 6. Audit
     await AuditLog.sync({ alter: true });
 
     console.log("All tables synced with database");
+
+    // Seed roles and TPO Head
+    await seedRolesAndAdmin();
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
@@ -113,4 +142,3 @@ const startServer = async () => {
 startServer();
 
 export default app;
-

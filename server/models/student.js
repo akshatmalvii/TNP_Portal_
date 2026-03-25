@@ -16,159 +16,92 @@ const Student = sequelize.define(
       unique: true
     },
 
+    full_name: {
+      type: DataTypes.STRING(255)
+    },
+
+    gender: {
+      type: DataTypes.STRING(20)
+    },
+
+    marital_status: {
+      type: DataTypes.STRING(20)
+    },
+
+    date_of_birth: {
+      type: DataTypes.DATEONLY
+    },
+
+    mobile_number: {
+      type: DataTypes.STRING(20)
+    },
+
+    parent_mobile_number: {
+      type: DataTypes.STRING(20)
+    },
+
+    email: {
+      type: DataTypes.STRING(255)
+    },
+
+    blood_group: {
+      type: DataTypes.STRING(10)
+    },
+
+    category: {
+      type: DataTypes.STRING(50)
+    },
+
+    nationality: {
+      type: DataTypes.STRING(50)
+    },
+
+    height_cm: {
+      type: DataTypes.INTEGER
+    },
+
+    weight_kg: {
+      type: DataTypes.INTEGER
+    },
+
+    present_address: {
+      type: DataTypes.TEXT
+    },
+
+    permanent_address: {
+      type: DataTypes.TEXT
+    },
+
     dept_id: {
       type: DataTypes.INTEGER,
       allowNull: true
     },
 
+    running_backlogs: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+
+    total_kt: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0
+    },
+
+    prn: {
+      type: DataTypes.STRING(50)
+    },
+
     tnp_id: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-
-    cgpa: {
-      type: DataTypes.FLOAT
-    },
-
-    backlogs: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0
-    },
-
-    current_placement_status: {
-      type: DataTypes.STRING
-    },
-
-    is_verified: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    },
-    verification_requested_at: {
-      type: DataTypes.DATE
-    },
-    verified_at: {
-      type: DataTypes.DATE
-    },
-
-    resume_url: {
-      type: DataTypes.STRING
-    },
-
-    // Personal details
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    gender: {
-      type: DataTypes.STRING
-    },
-    date_of_birth: {
-      type: DataTypes.DATE
-    },
-    mobile_number: {
-      type: DataTypes.STRING
-    },
-    email: {
-      type: DataTypes.STRING,
-      validate: {
-        isEmail: true
-      }
-    },
-    blood_group: {
-      type: DataTypes.STRING
-    },
-    category: {
-      type: DataTypes.STRING
-    },
-    nationality: {
-      type: DataTypes.STRING
-    },
-    present_postal_address: {
-      type: DataTypes.TEXT
-    },
-    permanent_postal_address: {
-      type: DataTypes.TEXT
-    },
-
-    // SSC
-    ssc_passing_year: {
-      type: DataTypes.INTEGER
-    },
-    ssc_school_name: {
-      type: DataTypes.STRING
-    },
-    ssc_board_name: {
-      type: DataTypes.STRING
-    },
-
-    // Diploma
-    diploma_passing_year: {
-      type: DataTypes.INTEGER
-    },
-    diploma_college_name: {
-      type: DataTypes.STRING
-    },
-    diploma_course_name: {
-      type: DataTypes.STRING
-    },
-    diploma_percentage: {
-      type: DataTypes.FLOAT
-    },
-    diploma_cgpa: {
-      type: DataTypes.FLOAT
-    },
-
-    // HSC
-    hsc_passing_year: {
-      type: DataTypes.INTEGER
-    },
-    hsc_school_name: {
-      type: DataTypes.STRING
-    },
-    hsc_board_name: {
-      type: DataTypes.STRING
-    },
-    hsc_stream: {
-      type: DataTypes.STRING
-    },
-
-    // UG
-    ug_prn_no: {
-      type: DataTypes.STRING
-    },
-    ug_department: {
-      type: DataTypes.STRING
-    },
-    ug_program: {
-      type: DataTypes.STRING
-    },
-    ug_no_of_kt: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0
-    },
-    ug_running_backlogs: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0
-    },
-
-    // Documents
-    aadhaar_card_url: {
-      type: DataTypes.STRING
-    },
-    ssc_marksheet_url: {
-      type: DataTypes.STRING
-    },
-    hsc_marksheet_url: {
-      type: DataTypes.STRING
-    },
-    ug_marksheet_url: {
-      type: DataTypes.STRING
-    },
-    passport_photo_url: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING(20),
+      unique: true
     },
 
     created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+
+    updated_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     }

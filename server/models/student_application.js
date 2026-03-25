@@ -20,23 +20,32 @@ const StudentApplication = sequelize.define(
       allowNull: false
     },
 
-     application_data: {
-      type: DataTypes.JSONB,
-      allowNull: true
-    },
-
     application_status: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING(20),
+      validate: {
+        isIn: [["Applied", "Withdrawn", "InProgress"]]
+      }
     },
 
     applied_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+
+    updated_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     }
   },
   {
     tableName: "student_applications",
-    timestamps: false
+    timestamps: false,
+    indexes: [
+      {
+        unique: true,
+        fields: ["student_id", "drive_id"]
+      }
+    ]
   }
 );
 

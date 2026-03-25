@@ -1,8 +1,8 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
-const DepartmentDefaultLock = sequelize.define(
-  "DepartmentDefaultLock",
+const DepartmentTpoAssignment = sequelize.define(
+  "DepartmentTpoAssignment",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -16,15 +16,20 @@ const DepartmentDefaultLock = sequelize.define(
       unique: true
     },
 
-    rule_id: {
+    tpo_staff_id: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
+    },
+
+    assigned_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
     }
   },
   {
-    tableName: "department_default_lock",
+    tableName: "department_tpo_assignment",
     timestamps: false
   }
 );
 
-export default DepartmentDefaultLock;
+export default DepartmentTpoAssignment;

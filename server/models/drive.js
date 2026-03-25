@@ -10,46 +10,56 @@ const Drive = sequelize.define(
       autoIncrement: true
     },
 
-    company_id: {
+    company_role_id: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
 
-    created_by_id: {
+    created_by_staff: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
 
-    verified_by_id: {
-      type: DataTypes.INTEGER
+    approved_by_staff: {
+      type: DataTypes.INTEGER,
+      allowNull: true
     },
 
     offer_type: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING(20),
+      validate: {
+        isIn: [["Internship", "Placement", "Internship+PPO"]]
+      }
     },
 
     package_lpa: {
-      type: DataTypes.FLOAT
+      type: DataTypes.DECIMAL(6, 2)
     },
 
     deadline: {
       type: DataTypes.DATE
     },
 
-    verification_status: {
-      type: DataTypes.STRING
-    },
-
     drive_status: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING(20),
+      validate: {
+        isIn: [["Draft", "Active", "Completed"]]
+      }
     },
 
-    form_schema: {
-      type: DataTypes.JSONB,
-      allowNull: true
+    approval_status: {
+      type: DataTypes.STRING(20),
+      validate: {
+        isIn: [["Pending", "Approved", "Rejected"]]
+      }
     },
 
     created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+
+    updated_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     }

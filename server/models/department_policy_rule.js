@@ -1,8 +1,8 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
-const DriveLockOverride = sequelize.define(
-  "DriveLockOverride",
+const DepartmentPolicyRule = sequelize.define(
+  "DepartmentPolicyRule",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -10,26 +10,21 @@ const DriveLockOverride = sequelize.define(
       autoIncrement: true
     },
 
-    drive_id: {
+    dept_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       unique: true
     },
 
-    dept_id: {
+    policy_id: {
       type: DataTypes.INTEGER,
-      allowNull: false
-    },
-
-    rule_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     }
   },
   {
-    tableName: "drive_lock_override",
+    tableName: "department_policy_rules",
     timestamps: false
   }
 );
 
-export default DriveLockOverride;
+export default DepartmentPolicyRule;

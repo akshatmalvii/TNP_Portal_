@@ -1,35 +1,30 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
-const StaffAdmin = sequelize.define(
-  "StaffAdmin",
+const DrivePolicyOverride = sequelize.define(
+  "DrivePolicyOverride",
   {
-    staff_id: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
 
-    user_id: {
+    drive_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       unique: true
     },
 
-    dept_id: {
+    policy_id: {
       type: DataTypes.INTEGER,
       allowNull: true
-    },
-
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW
     }
   },
   {
-    tableName: "staff_admins",
+    tableName: "drive_policy_override",
     timestamps: false
   }
 );
 
-export default StaffAdmin;
+export default DrivePolicyOverride;

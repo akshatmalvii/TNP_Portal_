@@ -11,17 +11,34 @@ const User = sequelize.define(
     },
 
     email: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
       unique: true
     },
 
     password_hash: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false
     },
 
+    role_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+
+    account_status: {
+      type: DataTypes.STRING(20),
+      validate: {
+        isIn: [["Active", "Inactive"]]
+      }
+    },
+
     created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+
+    updated_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     }

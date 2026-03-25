@@ -1,142 +1,143 @@
 import User from "../models/users.js";
-import Department from "../models/department.js";
-import Company from "../models/company.js";
-import Student from "../models/student.js";
-import Offer from "../models/offer.js";
-import StaffAdmin from "../models/staff_admin.js";
 import Role from "../models/role.js";
-import StudentCoordinatorAccount from "../models/student_coordinator_account.js";
-
+import Department from "../models/department.js";
+import StaffAdmin from "../models/staff_admin.js";
+import DepartmentTpoAssignment from "../models/department_tpo_assignment.js";
+import Student from "../models/student.js";
+import StudentEducation from "../models/student_education.js";
+import StudentDocument from "../models/student_document.js";
+import Company from "../models/company.js";
+import CompanyContact from "../models/company_contact.js";
+import CompanyRole from "../models/company_role.js";
+import Drive from "../models/drive.js";
+import DriveAllowedDepartment from "../models/drive_allowed_department.js";
+import DriveEligibility from "../models/drive_eligibility.js";
+import PlacementPolicyRule from "../models/placement_policy_rule.js";
+import DepartmentPolicyRule from "../models/department_policy_rule.js";
+import DrivePolicyOverride from "../models/drive_policy_override.js";
 import StudentApplication from "../models/student_application.js";
+import DynamicFormField from "../models/dynamic_form_field.js";
+import DynamicFormResponse from "../models/dynamic_form_response.js";
+import DriveSelection from "../models/drive_selection.js";
+import Offer from "../models/offer.js";
 import StudentVerificationRequest from "../models/student_verification_request.js";
 import AuditLog from "../models/audit_log.js";
 
-import DepartmentDefaultLock from "../models/department_default_lock.js";
-import DriveAllowedDepartment from "../models/drive_allowed_department.js";
-import DriveLockOverride from "../models/drive_lock_override.js";
-import DriveSelection from "../models/drive_selection.js";
-import Drive from "../models/drive.js";
-import LockRule from "../models/lock_rule.js";
 
+// ─── ROLE ↔ USER ────────────────────────────────────────
+Role.hasMany(User, { foreignKey: "role_id" });
+User.belongsTo(Role, { foreignKey: "role_id" });
 
-// USER → STUDENT
+// ─── USER ↔ STUDENT ─────────────────────────────────────
 User.hasOne(Student, { foreignKey: "user_id" });
 Student.belongsTo(User, { foreignKey: "user_id" });
 
-// USER → STAFF ADMIN
+// ─── USER ↔ STAFF ADMIN ─────────────────────────────────
 User.hasOne(StaffAdmin, { foreignKey: "user_id" });
 StaffAdmin.belongsTo(User, { foreignKey: "user_id" });
 
-// Departments
-Department.hasMany(Student, { foreignKey: "dept_id" });
-Student.belongsTo(Department, { foreignKey: "dept_id" });
-
+// ─── DEPARTMENT ↔ STAFF ADMIN ───────────────────────────
 Department.hasMany(StaffAdmin, { foreignKey: "dept_id" });
 StaffAdmin.belongsTo(Department, { foreignKey: "dept_id" });
 
-// Roles
-Role.hasMany(StaffAdmin, { foreignKey: "role_id" });
-StaffAdmin.belongsTo(Role, { foreignKey: "role_id" });
+// ─── DEPARTMENT ↔ TPO ASSIGNMENT ────────────────────────
+Department.hasOne(DepartmentTpoAssignment, { foreignKey: "dept_id" });
+DepartmentTpoAssignment.belongsTo(Department, { foreignKey: "dept_id" });
 
-// Companies & Drives
-Company.hasMany(Drive, { foreignKey: "company_id" });
-Drive.belongsTo(Company, { foreignKey: "company_id" });
+StaffAdmin.hasMany(DepartmentTpoAssignment, { foreignKey: "tpo_staff_id" });
+DepartmentTpoAssignment.belongsTo(StaffAdmin, { foreignKey: "tpo_staff_id" });
 
-// Drive Admin Actions
-StaffAdmin.hasMany(Drive, { foreignKey: "created_by_id", as: "createdDrives" });
-Drive.belongsTo(StaffAdmin, { foreignKey: "created_by_id", as: "creator" });
+// ─── DEPARTMENT ↔ STUDENT ───────────────────────────────
+Department.hasMany(Student, { foreignKey: "dept_id" });
+Student.belongsTo(Department, { foreignKey: "dept_id" });
 
-StaffAdmin.hasMany(Drive, { foreignKey: "verified_by_id", as: "verifiedDrives" });
-Drive.belongsTo(StaffAdmin, { foreignKey: "verified_by_id", as: "verifier" });
+// ─── STUDENT ↔ EDUCATION ────────────────────────────────
+Student.hasMany(StudentEducation, { foreignKey: "student_id" });
+StudentEducation.belongsTo(Student, { foreignKey: "student_id" });
 
-// LockRule Relationships
-LockRule.hasMany(DepartmentDefaultLock, { foreignKey: "rule_id" });
-DepartmentDefaultLock.belongsTo(LockRule, { foreignKey: "rule_id" });
+// ─── STUDENT ↔ DOCUMENTS ────────────────────────────────
+Student.hasMany(StudentDocument, { foreignKey: "student_id" });
+StudentDocument.belongsTo(Student, { foreignKey: "student_id" });
 
-LockRule.hasMany(DriveLockOverride, { foreignKey: "rule_id" });
-DriveLockOverride.belongsTo(LockRule, { foreignKey: "rule_id" });
+// ─── COMPANY ↔ CONTACTS ─────────────────────────────────
+Company.hasMany(CompanyContact, { foreignKey: "company_id" });
+CompanyContact.belongsTo(Company, { foreignKey: "company_id" });
 
-// Department Default Lock
-Department.hasMany(DepartmentDefaultLock, { foreignKey: "dept_id" });
-DepartmentDefaultLock.belongsTo(Department, { foreignKey: "dept_id" });
+// ─── COMPANY ↔ ROLES ────────────────────────────────────
+Company.hasMany(CompanyRole, { foreignKey: "company_id" });
+CompanyRole.belongsTo(Company, { foreignKey: "company_id" });
 
-// Drive Allowed Departments
+// ─── COMPANY ROLE ↔ DRIVE ───────────────────────────────
+CompanyRole.hasMany(Drive, { foreignKey: "company_role_id" });
+Drive.belongsTo(CompanyRole, { foreignKey: "company_role_id" });
+
+// ─── STAFF ADMIN ↔ DRIVE (created / approved) ──────────
+StaffAdmin.hasMany(Drive, { foreignKey: "created_by_staff", as: "createdDrives" });
+Drive.belongsTo(StaffAdmin, { foreignKey: "created_by_staff", as: "creator" });
+
+StaffAdmin.hasMany(Drive, { foreignKey: "approved_by_staff", as: "approvedDrives" });
+Drive.belongsTo(StaffAdmin, { foreignKey: "approved_by_staff", as: "approver" });
+
+// ─── DRIVE ↔ ALLOWED DEPARTMENTS ────────────────────────
 Drive.hasMany(DriveAllowedDepartment, { foreignKey: "drive_id" });
 DriveAllowedDepartment.belongsTo(Drive, { foreignKey: "drive_id" });
 
 Department.hasMany(DriveAllowedDepartment, { foreignKey: "dept_id" });
 DriveAllowedDepartment.belongsTo(Department, { foreignKey: "dept_id" });
 
-// Student Verification Requests
-Student.hasMany(StudentVerificationRequest, { foreignKey: "student_id" });
-StudentVerificationRequest.belongsTo(Student, { foreignKey: "student_id" });
+// ─── DRIVE ↔ ELIGIBILITY ────────────────────────────────
+Drive.hasOne(DriveEligibility, { foreignKey: "drive_id" });
+DriveEligibility.belongsTo(Drive, { foreignKey: "drive_id" });
 
-StaffAdmin.hasMany(StudentVerificationRequest, { foreignKey: "verified_by" });
-StudentVerificationRequest.belongsTo(StaffAdmin, { foreignKey: "verified_by" });
+// ─── PLACEMENT POLICY RULES ↔ DEPARTMENT / DRIVE ────────
+PlacementPolicyRule.hasMany(DepartmentPolicyRule, { foreignKey: "policy_id" });
+DepartmentPolicyRule.belongsTo(PlacementPolicyRule, { foreignKey: "policy_id" });
 
-// Students Applications
+Department.hasOne(DepartmentPolicyRule, { foreignKey: "dept_id" });
+DepartmentPolicyRule.belongsTo(Department, { foreignKey: "dept_id" });
+
+PlacementPolicyRule.hasMany(DrivePolicyOverride, { foreignKey: "policy_id" });
+DrivePolicyOverride.belongsTo(PlacementPolicyRule, { foreignKey: "policy_id" });
+
+Drive.hasOne(DrivePolicyOverride, { foreignKey: "drive_id" });
+DrivePolicyOverride.belongsTo(Drive, { foreignKey: "drive_id" });
+
+// ─── STUDENT ↔ APPLICATIONS ─────────────────────────────
 Student.hasMany(StudentApplication, { foreignKey: "student_id" });
 StudentApplication.belongsTo(Student, { foreignKey: "student_id" });
 
 Drive.hasMany(StudentApplication, { foreignKey: "drive_id" });
 StudentApplication.belongsTo(Drive, { foreignKey: "drive_id" });
 
-// Drive Selections
-Student.hasMany(DriveSelection, { foreignKey: "student_id" });
-DriveSelection.belongsTo(Student, { foreignKey: "student_id" });
+// ─── DRIVE ↔ DYNAMIC FORM FIELDS ────────────────────────
+Drive.hasMany(DynamicFormField, { foreignKey: "drive_id" });
+DynamicFormField.belongsTo(Drive, { foreignKey: "drive_id" });
 
-Drive.hasMany(DriveSelection, { foreignKey: "drive_id" });
-DriveSelection.belongsTo(Drive, { foreignKey: "drive_id" });
+// ─── APPLICATION ↔ DYNAMIC FORM RESPONSES ───────────────
+StudentApplication.hasMany(DynamicFormResponse, { foreignKey: "application_id" });
+DynamicFormResponse.belongsTo(StudentApplication, { foreignKey: "application_id" });
 
-// Offers
-Student.hasMany(Offer, { foreignKey: "student_id" });
-Offer.belongsTo(Student, { foreignKey: "student_id" });
+DynamicFormField.hasMany(DynamicFormResponse, { foreignKey: "field_id" });
+DynamicFormResponse.belongsTo(DynamicFormField, { foreignKey: "field_id" });
 
-Drive.hasMany(Offer, { foreignKey: "drive_id" });
-Offer.belongsTo(Drive, { foreignKey: "drive_id" });
+// ─── APPLICATION ↔ DRIVE SELECTION ──────────────────────
+StudentApplication.hasOne(DriveSelection, { foreignKey: "application_id" });
+DriveSelection.belongsTo(StudentApplication, { foreignKey: "application_id" });
 
-// Student Coordinator Accounts
-Student.hasMany(StudentCoordinatorAccount, { foreignKey: "student_id" });
-StudentCoordinatorAccount.belongsTo(Student, { foreignKey: "student_id" });
+// ─── APPLICATION ↔ OFFER ────────────────────────────────
+StudentApplication.hasOne(Offer, { foreignKey: "application_id" });
+Offer.belongsTo(StudentApplication, { foreignKey: "application_id" });
 
-StaffAdmin.hasMany(StudentCoordinatorAccount, { foreignKey: "staff_id" });
-StudentCoordinatorAccount.belongsTo(StaffAdmin, { foreignKey: "staff_id" });
-
-Department.hasMany(StudentCoordinatorAccount, { foreignKey: "dept_id" });
-StudentCoordinatorAccount.belongsTo(Department, { foreignKey: "dept_id" });
-
-// Audit logs
-StaffAdmin.hasMany(AuditLog, { foreignKey: "staff_id" });
-AuditLog.belongsTo(StaffAdmin, { foreignKey: "staff_id" });
-
-// Lock Rules
-LockRule.hasMany(DepartmentDefaultLock, { foreignKey: "rule_id" });
-DepartmentDefaultLock.belongsTo(LockRule, { foreignKey: "rule_id" });
-
-LockRule.hasMany(DriveLockOverride, { foreignKey: "rule_id" });
-DriveLockOverride.belongsTo(LockRule, { foreignKey: "rule_id" });
-
-// Department Default Locks
-Department.hasMany(DepartmentDefaultLock, { foreignKey: "dept_id" });
-DepartmentDefaultLock.belongsTo(Department, { foreignKey: "dept_id" });
-
-// Drive Lock Overrides
-Drive.hasMany(DriveLockOverride, { foreignKey: "drive_id" });
-DriveLockOverride.belongsTo(Drive, { foreignKey: "drive_id" });
-
-Department.hasMany(DriveLockOverride, { foreignKey: "dept_id" });
-DriveLockOverride.belongsTo(Department, { foreignKey: "dept_id" });
-
-// Drive Allowed Departments
-Drive.hasMany(DriveAllowedDepartment, { foreignKey: "drive_id" });
-DriveAllowedDepartment.belongsTo(Drive, { foreignKey: "drive_id" });
-
-Department.hasMany(DriveAllowedDepartment, { foreignKey: "dept_id" });
-DriveAllowedDepartment.belongsTo(Department, { foreignKey: "dept_id" });
-
-// Student Verification Requests
-Student.hasMany(StudentVerificationRequest, { foreignKey: "student_id" });
+// ─── STUDENT ↔ VERIFICATION REQUEST ─────────────────────
+Student.hasOne(StudentVerificationRequest, { foreignKey: "student_id" });
 StudentVerificationRequest.belongsTo(Student, { foreignKey: "student_id" });
 
-StaffAdmin.hasMany(StudentVerificationRequest, { foreignKey: "verified_by" });
-StudentVerificationRequest.belongsTo(StaffAdmin, { foreignKey: "verified_by" });
+StaffAdmin.hasMany(StudentVerificationRequest, { foreignKey: "verified_by_coordinator", as: "coordinatorVerifications" });
+StudentVerificationRequest.belongsTo(StaffAdmin, { foreignKey: "verified_by_coordinator", as: "coordinator" });
+
+StaffAdmin.hasMany(StudentVerificationRequest, { foreignKey: "approved_by_tpo", as: "tpoApprovals" });
+StudentVerificationRequest.belongsTo(StaffAdmin, { foreignKey: "approved_by_tpo", as: "tpoApprover" });
+
+// ─── STAFF ADMIN ↔ AUDIT LOG ────────────────────────────
+StaffAdmin.hasMany(AuditLog, { foreignKey: "staff_id" });
+AuditLog.belongsTo(StaffAdmin, { foreignKey: "staff_id" });

@@ -10,25 +10,36 @@ const Offer = sequelize.define(
       autoIncrement: true
     },
 
-    student_id: {
+    application_id: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      unique: true
     },
 
-    drive_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false
+    offer_category: {
+      type: DataTypes.STRING(30),
+      validate: {
+        isIn: [["Internship", "Placement", "Internship+PPO", "PPO_Conversion"]]
+      }
     },
 
     offered_package: {
-      type: DataTypes.FLOAT
+      type: DataTypes.DECIMAL(6, 2)
     },
 
-    accepted_status: {
-      type: DataTypes.STRING
+    acceptance_status: {
+      type: DataTypes.STRING(20),
+      validate: {
+        isIn: [["Pending", "Accepted", "Rejected"]]
+      }
     },
 
     created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW
+    },
+
+    updated_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     }

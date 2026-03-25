@@ -1,22 +1,26 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
-const Company = sequelize.define(
-  "Company",
+const CompanyRole = sequelize.define(
+  "CompanyRole",
   {
-    company_id: {
+    company_role_id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
 
-    company_name: {
-      type: DataTypes.STRING(255),
-      allowNull: false,
-      unique: true
+    company_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false
     },
 
-    company_website: {
+    role_title: {
+      type: DataTypes.STRING(255),
+      allowNull: false
+    },
+
+    role_description: {
       type: DataTypes.TEXT
     },
 
@@ -26,9 +30,9 @@ const Company = sequelize.define(
     }
   },
   {
-    tableName: "companies",
+    tableName: "company_roles",
     timestamps: false
   }
 );
 
-export default Company;
+export default CompanyRole;

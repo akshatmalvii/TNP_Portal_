@@ -10,18 +10,17 @@ const DriveSelection = sequelize.define(
       autoIncrement: true
     },
 
-    student_id: {
+    application_id: {
       type: DataTypes.INTEGER,
-      allowNull: false
-    },
-
-    drive_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      unique: true
     },
 
     selection_status: {
-      type: DataTypes.STRING
+      type: DataTypes.STRING(20),
+      validate: {
+        isIn: [["Selected", "Rejected", "Waitlisted"]]
+      }
     },
 
     updated_at: {
