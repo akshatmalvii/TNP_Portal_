@@ -9,6 +9,8 @@ import StudentApplicationPage from './pages/student/StudentApplicationPage';
 import StudentDrivePage from './pages/student/StudentDrivePage';
 import StudentProfilePage from './pages/student/StudentProfilePage';
 import StudentSettingPage from './pages/student/StudentSettingPage';
+import StudentProfileFormPage from './pages/student/StudentProfileFormPage';
+import VerificationPendingPage from './pages/student/VerificationPendingPage';
 
 // Coordinator pages
 import CoordinatorDashboardPage from './pages/coordinator/CoordinatorDashboardPage';
@@ -57,6 +59,14 @@ function App() {
                     <Route
                         path='student/settings'
                         element={<StudentSettingPage />}
+                    />
+                    <Route
+                        path='student/profile-form'
+                        element={<StudentProfileFormPage />}
+                    />
+                    <Route
+                        path='student/verification-pending'
+                        element={<VerificationPendingPage />}
                     />
 
                     {/* Coordinator */}
