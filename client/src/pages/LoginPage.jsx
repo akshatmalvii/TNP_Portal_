@@ -17,17 +17,28 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
-  const [selectedRole, setSelectedRole] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const getRoleDashboardPath = (role) => {
+    switch (role) {
+      case "TPO_Head":
+      case "TPO":
+        return "/dashboard/tpo";
+      case "Placement_Coordinator":
+        return "/dashboard/coordinator";
+      case "Student":
+      default:
+        return "/dashboard/student";
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!email || !password || !selectedRole) {
-      setErrorMsg("Please fill all fields and select a role");
+    if (!email || !password) {
+      setErrorMsg("Please fill all fields");
       return;
     }
 
@@ -37,7 +48,7 @@ export default function LoginPage() {
       const response = await fetch("http://localhost:5000/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, role: selectedRole })
+        body: JSON.stringify({ email, password })
       });
       const data = await response.json();
 
@@ -45,18 +56,11 @@ export default function LoginPage() {
         throw new Error(data.error || data.message || "Login failed");
       }
 
-      localStorage.setItem("user", JSON.stringify(data.user));
       localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      let targetPath = `/dashboard/${selectedRole}`;
-      if (selectedRole === 'student' && data.nextStep === 'profile') {
-        targetPath = `/dashboard/student/profile`;
-      } else if (selectedRole === 'student' && data.nextStep === 'verification_pending') {
-        // Just go to student dashboard for now, maybe show a pending banner there
-        targetPath = `/dashboard/student`;
-      }
-      
-      navigate(targetPath);
+      navigate(getRoleDashboardPath(data.role));
     } catch (err) {
       setErrorMsg(err.message);
     } finally {
@@ -68,7 +72,7 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!email || !password || !confirmPassword || !name) {
+    if (!email || !password || !confirmPassword) {
       setErrorMsg("Please fill all fields");
       return;
     }
@@ -84,7 +88,7 @@ export default function LoginPage() {
       const response = await fetch("http://localhost:5000/api/v1/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, confirmPassword, name, role: "student" })
+        body: JSON.stringify({ email, password, confirmPassword })
       });
       const data = await response.json();
 
@@ -93,6 +97,9 @@ export default function LoginPage() {
       }
 
       setIsLogin(true);
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
       setErrorMsg("Account created! Please login.");
     } catch (err) {
       setErrorMsg(err.message);
@@ -119,7 +126,7 @@ export default function LoginPage() {
         <div className="mb-6 flex justify-center">
           <div className="bg-gray-200 p-1 rounded-lg">
             <button
-              onClick={() => setIsLogin(true)}
+              onClick={() => { setIsLogin(true); setErrorMsg(""); }}
               className={`px-4 py-2 rounded-md text-sm font-medium transition ${
                 isLogin
                   ? "bg-white text-blue-600 shadow"
@@ -129,7 +136,7 @@ export default function LoginPage() {
               Login
             </button>
             <button
-              onClick={() => setIsLogin(false)}
+              onClick={() => { setIsLogin(false); setErrorMsg(""); }}
               className={`px-4 py-2 rounded-md text-sm font-medium transition ${
                 !isLogin
                   ? "bg-white text-blue-600 shadow"
@@ -147,7 +154,7 @@ export default function LoginPage() {
             <CardTitle>{isLogin ? "Login to Your Account" : "Create Student Account"}</CardTitle>
             <CardDescription>
               {isLogin
-                ? "Select your role and enter your credentials"
+                ? "Enter your credentials to continue"
                 : "Enter your details to create a student account"
               }
             </CardDescription>
@@ -161,118 +168,47 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={isLogin ? handleLogin : handleSignUp} className="space-y-4">
-              {isLogin ? (
-                <>
-                  {/* Role Selection */}
-                  <div className="grid grid-cols-3 gap-2">
-                    {["student", "coordinator", "TPO"].map((role) => (
-                      <button
-                        key={role}
-                        type="button"
-                        onClick={() => setSelectedRole(role)}
-                        className={`py-2 px-3 rounded-lg text-sm font-medium transition 
-                        ${
-                          selectedRole === role
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-200 hover:bg-gray-300"
-                        }`}
-                      >
-                        {role.charAt(0).toUpperCase() + role.slice(1)}
-                      </button>
-                    ))}
-                  </div>
 
-                  {/* Email */}
-                  <div>
-                    <label className="text-sm font-medium">
-                      Email
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
+              {/* Email */}
+              <div>
+                <label className="text-sm font-medium">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
 
-                  {/* Password */}
-                  <div>
-                    <label className="text-sm font-medium">
-                      Password
-                    </label>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Name */}
-                  <div>
-                    <label className="text-sm font-medium">
-                      Full Name
-                    </label>
-                    <Input
-                      type="text"
-                      placeholder="John Doe"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                    />
-                  </div>
+              {/* Password */}
+              <div>
+                <label className="text-sm font-medium">
+                  Password
+                </label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
 
-                  {/* Email */}
-                  <div>
-                    <label className="text-sm font-medium">
-                      Email
-                    </label>
-                    <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Password */}
-                  <div>
-                    <label className="text-sm font-medium">
-                      Password
-                    </label>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div>
-                    <label className="text-sm font-medium">
-                      Confirm Password
-                    </label>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
-                  </div>
-                </>
+              {/* Confirm Password (Sign Up only) */}
+              {!isLogin && (
+                <div>
+                  <label className="text-sm font-medium">
+                    Confirm Password
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
               )}
-
-              {/* Demo Credentials */}
-              {/* <div className="bg-gray-100 border rounded-lg p-3 text-xs">
-                <p className="font-semibold mb-2">
-                  Demo Credentials
-                </p>
-
-                <p>Email: demo@example.com</p>
-                <p>Password: demo123</p>
-              </div> */}
 
               {/* Button */}
               <Button
