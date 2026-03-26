@@ -4,9 +4,11 @@ import { Button } from "../Button";
 import { Input } from "../Input";
 import { Plus, Trash2 } from "lucide-react";
 
-export default function CreateDriveForm({ onCancel, onSuccess }) {
+export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
   const [formData, setFormData] = useState({
-    company_role_id: "",
+    company_id: "",
+    role_title: "",
+    role_description: "",
     offer_type: "Placement",
     package_lpa: "",
     deadline: "",
@@ -30,35 +32,75 @@ export default function CreateDriveForm({ onCancel, onSuccess }) {
   // Options fetched from backend (mocked here if endpoints don't exist yet, but we will try fetching)
   const [departments, setDepartments] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [companyRoles, setCompanyRoles] = useState([]);
+  const [companies, setCompanies] = useState([]);
 
   useEffect(() => {
-    // Fetch departments and courses
     const fetchMetadata = async () => {
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
         
-        const depRes = await fetch("http://localhost:5000/api/v1/departments", { headers });
+        const [depRes, crsRes, compRes] = await Promise.all([
+          fetch("http://localhost:5000/api/v1/departments", { headers }),
+          fetch("http://localhost:5000/api/v1/courses", { headers }),
+          fetch("http://localhost:5000/api/v1/tpo/companies", { headers })
+        ]);
+
         if (depRes.ok) setDepartments(await depRes.json());
-
-        const crsRes = await fetch("http://localhost:5000/api/v1/courses", { headers });
         if (crsRes.ok) setCourses(await crsRes.json());
+        
+        let fetchedComps = [];
+        if (compRes.ok) {
+          fetchedComps = await compRes.json();
+          setCompanies(fetchedComps);
+        }
 
-        const rolesRes = await fetch("http://localhost:5000/api/v1/tpo/company-roles", { headers });
-        if (rolesRes.ok) {
-          const fetchedRoles = await rolesRes.json();
-          setCompanyRoles(fetchedRoles);
-          if (fetchedRoles.length > 0) {
-            setFormData(prev => ({ ...prev, company_role_id: fetchedRoles[0].role_id }));
+        if (initialData) {
+          const driveId = initialData.drive_id || initialData.id;
+          const driveRes = await fetch(`http://localhost:5000/api/v1/tpo/drive/${driveId}`, { headers });
+          if (driveRes.ok) {
+            const driveData = await driveRes.json();
+            
+            setFormData({
+              company_id: driveData.company_id || "",
+              role_title: driveData.role_title || "",
+              role_description: driveData.role_description || "",
+              offer_type: driveData.offer_type || "Placement",
+              package_lpa: driveData.package_lpa || "",
+              deadline: driveData.deadline ? driveData.deadline.split("T")[0] : "",
+              allowed_departments: driveData.DriveAllowedDepartments?.map(d => d.dept_id) || [],
+              allowed_courses: driveData.DriveAllowedCourses?.map(c => c.course_id) || [],
+            });
+
+            if (driveData.DriveEligibility) {
+              setEligibility({
+                min_cgpa: driveData.DriveEligibility.min_cgpa || "",
+                max_backlogs: driveData.DriveEligibility.max_backlogs || "",
+                min_10th_percent: driveData.DriveEligibility.min_10th_percent || "",
+                min_12th_percent: driveData.DriveEligibility.min_12th_percent || "",
+                gender: driveData.DriveEligibility.gender || "Any",
+                passing_year: driveData.DriveEligibility.passing_year || "",
+              });
+            }
+
+            if (driveData.DynamicFormFields) {
+              setDynamicFields(driveData.DynamicFormFields.map(f => ({
+                label: f.field_label,
+                type: f.field_type,
+                required: f.is_required,
+                order: f.field_order
+              })));
+            }
           }
+        } else if (fetchedComps.length > 0) {
+          setFormData(prev => ({ ...prev, company_id: fetchedComps[0].company_id }));
         }
       } catch (err) {
-        console.error("Failed to fetch metadata", err);
+        console.error("Failed to fetch metadata or drive data", err);
       }
     };
     fetchMetadata();
-  }, []);
+  }, [initialData]);
 
   const handleToggleArray = (arrayName, id) => {
     setFormData((prev) => {
@@ -93,10 +135,15 @@ export default function CreateDriveForm({ onCancel, onSuccess }) {
 
     try {
       const token = localStorage.getItem("token");
+      
+      const visibleCoursesList = courses.filter(c => formData.allowed_departments.includes(c.dept_id));
+      const validAllowedCourses = formData.allowed_courses.filter(id => visibleCoursesList.some(vc => vc.course_id === id));
+
       const payload = {
         ...formData,
         package_lpa: parseFloat(formData.package_lpa) || 0,
-        company_role_id: parseInt(formData.company_role_id) || 0,
+        company_id: parseInt(formData.company_id) || null,
+        allowed_courses: validAllowedCourses,
         eligibility: {
           min_cgpa: parseFloat(eligibility.min_cgpa) || null,
           max_backlogs: parseInt(eligibility.max_backlogs) || 0,
@@ -108,8 +155,13 @@ export default function CreateDriveForm({ onCancel, onSuccess }) {
         dynamic_form_fields: dynamicFields
       };
 
-      const res = await fetch("http://localhost:5000/api/v1/tpo/drive", {
-        method: "POST",
+      const method = initialData ? "PUT" : "POST";
+      const url = initialData 
+        ? `http://localhost:5000/api/v1/tpo/drive/${initialData.drive_id || initialData.id}` 
+        : "http://localhost:5000/api/v1/tpo/drive";
+
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
@@ -131,7 +183,7 @@ export default function CreateDriveForm({ onCancel, onSuccess }) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Create New Job Drive</h2>
+        <h2 className="text-2xl font-bold">{initialData ? "Edit Job Drive" : "Create New Job Drive"}</h2>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
       </div>
 
@@ -147,20 +199,40 @@ export default function CreateDriveForm({ onCancel, onSuccess }) {
           <CardHeader><CardTitle>Job Details</CardTitle></CardHeader>
           <CardContent className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium">Company Role *</label>
+              <label className="text-sm font-medium">Company *</label>
               <select 
                 className="w-full border rounded-md px-3 py-2 text-sm bg-white"
                 required
-                value={formData.company_role_id}
-                onChange={e => setFormData({...formData, company_role_id: e.target.value})}
+                value={formData.company_id}
+                onChange={e => setFormData({...formData, company_id: e.target.value})}
               >
-                <option value="">Select a Company Role</option>
-                {companyRoles.map(role => (
-                  <option key={role.role_id} value={role.role_id}>
-                    {role.Company?.company_name} - {role.role_title}
+                <option value="">Select a Company</option>
+                {companies.map(comp => (
+                  <option key={comp.company_id} value={comp.company_id}>
+                    {comp.company_name}
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Role Title *</label>
+                <Input 
+                  required 
+                  value={formData.role_title} 
+                  onChange={e => setFormData({...formData, role_title: e.target.value})} 
+                  placeholder="e.g. Software Engineer" 
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Role Description</label>
+                <textarea 
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-white h-10"
+                  value={formData.role_description} 
+                  onChange={e => setFormData({...formData, role_description: e.target.value})} 
+                  placeholder="Short description..." 
+                />
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium">Offer Type *</label>
@@ -188,6 +260,7 @@ export default function CreateDriveForm({ onCancel, onSuccess }) {
               <Input 
                 type="date" 
                 required 
+                min={new Date().toISOString().split("T")[0]}
                 value={formData.deadline} 
                 onChange={e => setFormData({...formData, deadline: e.target.value})} 
               />
@@ -218,9 +291,9 @@ export default function CreateDriveForm({ onCancel, onSuccess }) {
             </div>
 
             <div>
-              <label className="text-sm font-medium block mb-2">Allowed Courses *</label>
+              <label className="text-sm font-medium block mb-2">Allowed Courses * <span className="text-xs font-normal text-gray-500">(Mapped to selected departments)</span></label>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                {courses.map(c => (
+                {courses.filter(c => formData.allowed_departments.includes(c.dept_id)).map(c => (
                   <label key={c.course_id} className="flex items-center gap-2 text-sm">
                     <input 
                       type="checkbox" 
@@ -231,7 +304,7 @@ export default function CreateDriveForm({ onCancel, onSuccess }) {
                     {c.course_name}
                   </label>
                 ))}
-                {courses.length === 0 && <span className="text-gray-400 text-sm">No courses loaded</span>}
+                {formData.allowed_departments.length === 0 && <span className="text-gray-400 text-sm italic col-span-2">Select a department first</span>}
               </div>
             </div>
           </CardContent>
@@ -360,7 +433,7 @@ export default function CreateDriveForm({ onCancel, onSuccess }) {
 
         <div className="flex justify-end pt-4 border-t">
           <Button type="submit" disabled={submitting} className="min-w-[150px]">
-            {submitting ? "Publishing..." : "Publish Drive"}
+            {submitting ? "Saving..." : (initialData ? "Update Drive" : "Publish Drive")}
           </Button>
         </div>
       </form>
