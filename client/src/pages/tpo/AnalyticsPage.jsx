@@ -1,9 +1,4 @@
-import {
-  mockAnalytics,
-  mockSalaryDistribution,
-  mockDepartmentStats,
-  mockPlacementStats
-} from './mockData'
+// Analytics logic stripped of mockData. Will be integrated with live aggregation APIs in the future.
 
 import {
   Card,
@@ -35,25 +30,25 @@ export default function AnalyticsPage() {
   const stats = [
     {
       title: 'Total Students',
-      value: mockAnalytics.totalStudents,
+      value: "0*",
       icon: Users,
       color: 'text-blue-500'
     },
     {
       title: 'Placed',
-      value: mockAnalytics.totalPlaced,
+      value: "0*",
       icon: Briefcase,
       color: 'text-green-500'
     },
     {
       title: 'Avg. Salary',
-      value: `${mockAnalytics.averageSalary} LPA`,
+      value: `0 LPA`,
       icon: DollarSign,
       color: 'text-purple-500'
     },
     {
       title: 'Placement %',
-      value: `${mockAnalytics.placementPercentage}%`,
+      value: `0%`,
       icon: TrendingUp,
       color: 'text-orange-500'
     }
@@ -110,16 +105,14 @@ export default function AnalyticsPage() {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={mockPlacementStats}
+                  data={[]}
                   cx="50%"
                   cy="50%"
                   outerRadius={80}
                   dataKey="value"
                   label={({ name, value }) => `${name}: ${value}`}
                 >
-                  {mockPlacementStats.map((entry, index) => (
-                    <Cell key={index} fill={entry.fill} />
-                  ))}
+                  {[]}
                 </Pie>
                 <Tooltip />
               </PieChart>
@@ -138,7 +131,7 @@ export default function AnalyticsPage() {
 
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={mockSalaryDistribution}>
+              <BarChart data={[]}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="range" />
                 <YAxis />
@@ -161,7 +154,7 @@ export default function AnalyticsPage() {
 
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={mockDepartmentStats} layout="vertical">
+            <BarChart data={[]} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" />
               <YAxis dataKey="name" type="category" width={120} />
@@ -180,7 +173,7 @@ export default function AnalyticsPage() {
           <CardContent className="pt-6">
             <p className="text-sm text-gray-500">Highest Salary</p>
             <p className="text-3xl font-bold mt-2">
-              {mockAnalytics.highestSalary} LPA
+              0 LPA
             </p>
           </CardContent>
         </Card>
@@ -189,7 +182,7 @@ export default function AnalyticsPage() {
           <CardContent className="pt-6">
             <p className="text-sm text-gray-500">Lowest Salary</p>
             <p className="text-3xl font-bold mt-2">
-              {mockAnalytics.lowestSalary} LPA
+              0 LPA
             </p>
           </CardContent>
         </Card>
@@ -198,7 +191,7 @@ export default function AnalyticsPage() {
           <CardContent className="pt-6">
             <p className="text-sm text-gray-500">Average Salary</p>
             <p className="text-3xl font-bold mt-2">
-              {mockAnalytics.averageSalary} LPA
+              0 LPA
             </p>
           </CardContent>
         </Card>
