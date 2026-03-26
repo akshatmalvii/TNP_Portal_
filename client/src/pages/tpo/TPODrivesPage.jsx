@@ -5,14 +5,16 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Search, Plus, Edit2, Trash2 } from "lucide-react";
+import CreateDriveForm from "../../components/tpo/CreateDriveForm";
 
 export default function TPODrivesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [drives, setDrives] = useState(mockDrives);
+  const [isCreating, setIsCreating] = useState(false);
 
   const filteredDrives = drives.filter((drive) =>
-    drive.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    drive.position.toLowerCase().includes(searchTerm.toLowerCase())
+    (drive.company || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (drive.position || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleDelete = (id) => {
@@ -22,6 +24,7 @@ export default function TPODrivesPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "Open":
+      case "Active":
         return "bg-green-500/10 text-green-700 border-green-200";
       case "Closed":
         return "bg-red-500/10 text-red-700 border-red-200";
@@ -29,6 +32,28 @@ export default function TPODrivesPage() {
         return "bg-gray-500/10 text-gray-700 border-gray-200";
     }
   };
+
+  if (isCreating) {
+    return (
+      <div className="p-6 max-w-5xl mx-auto">
+        <CreateDriveForm 
+          onCancel={() => setIsCreating(false)} 
+          onSuccess={(newDrive) => {
+             // For now, format it loosely like a mock
+             setDrives([{ 
+               id: newDrive.drive_id, 
+               company: "Company Role " + newDrive.company_role_id, 
+               position: "New Role",
+               salary: newDrive.package_lpa + " LPA",
+               deadline: newDrive.deadline,
+               status: newDrive.drive_status
+             }, ...drives]);
+             setIsCreating(false);
+          }} 
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -41,7 +66,7 @@ export default function TPODrivesPage() {
           </p>
         </div>
 
-        <Button className="bg-primary hover:bg-primary/90 gap-2">
+        <Button className="bg-primary hover:bg-primary/90 gap-2" onClick={() => setIsCreating(true)}>
           <Plus className="w-4 h-4" />
           New Drive
         </Button>
@@ -75,7 +100,7 @@ export default function TPODrivesPage() {
         ) : (
           filteredDrives.map((drive) => (
             <Card
-              key={drive.id}
+              key={drive.id || drive.drive_id}
               className="border-0 bg-card hover:shadow-md transition"
             >
               <CardContent className="pt-6">

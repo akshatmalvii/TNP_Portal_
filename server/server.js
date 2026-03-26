@@ -36,6 +36,7 @@ import StudentVerificationRequest from './models/student_verification_request.js
 import AuditLog from './models/audit_log.js';
 import seedRolesAndAdmin from './seed.js';
 import createTnpTrigger from './utils/createTnpTrigger.js';
+import createDriveTriggers from './utils/createDriveTriggers.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -48,6 +49,7 @@ import departmentRoutes from './routes/departmentRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
 import driveAllowedCourseRoutes from './routes/driveAllowedCourseRoutes.js';
 import studentProfileRoutes from './routes/studentProfileRoutes.js';
+import tpoRoutes from './routes/tpoRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -83,6 +85,7 @@ app.use('/api/v1/verification', verificationRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/roles', rolesRoutes);
 app.use('/api/v1/drives', driveRoutes);
+app.use('/api/v1/tpo', tpoRoutes);
 app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/drive-allowed-courses', driveAllowedCourseRoutes);
@@ -148,6 +151,9 @@ const startServer = async () => {
 
         // Create TNP ID trigger + function in DB
         await createTnpTrigger();
+
+        // Create Drive auto-audit and updated_at triggers
+        await createDriveTriggers();
 
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
