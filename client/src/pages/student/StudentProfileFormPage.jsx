@@ -476,7 +476,12 @@ export default function StudentProfileFormPage() {
             <CardDescription>Upload required documents (JPEG, PNG, or PDF, max 5MB)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {DOCUMENT_TYPES.map(docType => {
+            {DOCUMENT_TYPES.filter(dt => {
+              // If student chose HSC, don't show Diploma marksheet upload and vice versa
+              if (dt.value === "Diploma_Marksheet" && educationPath !== "Diploma") return false;
+              if (dt.value === "HSC_Marksheet" && educationPath !== "HSC") return false;
+              return true;
+            }).map(docType => {
               const existing = documents.find(d => d.document_type === docType.value);
               return (
                 <div key={docType.value} className="flex items-center justify-between p-4 border rounded-lg">
@@ -514,9 +519,46 @@ export default function StudentProfileFormPage() {
               );
             })}
 
+            {/* Missing documents warning */}
+            {(() => {
+              const requiredTypes = DOCUMENT_TYPES
+                .filter(dt => {
+                  // If student chose HSC, don't require Diploma marksheet and vice versa
+                  if (dt.value === "Diploma_Marksheet" && educationPath !== "Diploma") return false;
+                  if (dt.value === "HSC_Marksheet" && educationPath !== "HSC") return false;
+                  return true;
+                })
+                .map(dt => dt.value);
+              const uploadedTypes = documents.map(d => d.document_type);
+              const missing = requiredTypes.filter(t => !uploadedTypes.includes(t));
+              if (missing.length > 0) {
+                return (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-md text-sm">
+                    ⚠ Please upload all required documents before proceeding. Missing: {missing.length} document(s).
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             <div className="flex justify-between mt-6">
               <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-              <Button onClick={() => setStep(3)}>Continue to Review</Button>
+              <Button
+                onClick={() => setStep(3)}
+                disabled={(() => {
+                  const requiredTypes = DOCUMENT_TYPES
+                    .filter(dt => {
+                      if (dt.value === "Diploma_Marksheet" && educationPath !== "Diploma") return false;
+                      if (dt.value === "HSC_Marksheet" && educationPath !== "HSC") return false;
+                      return true;
+                    })
+                    .map(dt => dt.value);
+                  const uploadedTypes = documents.map(d => d.document_type);
+                  return requiredTypes.some(t => !uploadedTypes.includes(t));
+                })()}
+              >
+                Continue to Review
+              </Button>
             </div>
           </CardContent>
         </Card>

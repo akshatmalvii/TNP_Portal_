@@ -31,7 +31,7 @@ export const getCoordinatorAll = async (req, res) => {
 export const verifyByCoordinator = async (req, res) => {
   try {
     const staff = await getStaffContext(req.user.user_id);
-    const result = await verificationService.verifyByCoordinator(req.params.student_id, staff.staff_id);
+    const result = await verificationService.verifyByCoordinator(req.params.student_id, staff.staff_id, staff.dept_id);
     res.json(result);
   } catch(err) {
     res.status(err.status || 500).json({ error: err.message });
@@ -41,7 +41,7 @@ export const verifyByCoordinator = async (req, res) => {
 export const rejectByCoordinator = async (req, res) => {
   try {
     const staff = await getStaffContext(req.user.user_id);
-    const result = await verificationService.rejectByCoordinator(req.params.student_id, staff.staff_id, req.body.reason);
+    const result = await verificationService.rejectByCoordinator(req.params.student_id, staff.staff_id, staff.dept_id, req.body.reason);
     res.json(result);
   } catch(err) {
     res.status(err.status || 500).json({ error: err.message });

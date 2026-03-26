@@ -5,7 +5,6 @@ import StudentEducation from "../models/student_education.js";
 import Department from "../models/department.js";
 import Course from "../models/course.js";
 import sequelize from "../config/db.js";
-import { generateTnpId } from "../utils/tnpIdGenerator.js";
 
 // Get all students pending coordinator verification (in coordinator's department)
 const getCoordinatorPending = async (dept_id) => {
@@ -37,8 +36,8 @@ const getCoordinatorAll = async (dept_id) => {
   });
 };
 
-// Coordinator approves student → generates TNP ID
-const verifyByCoordinator = async (student_id, staff_id) => {
+// Coordinator approves student → DB trigger generates TNP ID
+const verifyByCoordinator = async (student_id, staff_id, coordinator_dept_id) => {
   return await sequelize.transaction(async (t) => {
     const req = await StudentVerificationRequest.findOne({
       where: { student_id, coordinator_status: "Pending" },
@@ -52,26 +51,26 @@ const verifyByCoordinator = async (student_id, staff_id) => {
     const student = await Student.findOne({ where: { student_id }, transaction: t });
     if (!student) throw { status: 404, message: "Student not found" };
 
-    // Generate TNP ID on approval
-    const tnp_id = await generateTnpId(student.dept_id);
+    // Enforce department scoping — coordinator can only verify students in their department
+    if (student.dept_id !== coordinator_dept_id) {
+      throw { status: 403, message: "You can only verify students from your department" };
+    }
 
-    // Update student
-    student.tnp_id = tnp_id;
-    student.updated_at = new Date();
-    await student.save({ transaction: t });
-
-    // Update verification request
+    // Update verification request — DB trigger will auto-generate TNP ID
     req.coordinator_status = "Approved";
     req.verified_by_coordinator = staff_id;
     req.updated_at = new Date();
     await req.save({ transaction: t });
 
-    return { message: "Student verified successfully", tnp_id };
+    // Reload student to get the TNP ID set by trigger
+    await student.reload({ transaction: t });
+
+    return { message: "Student verified successfully", tnp_id: student.tnp_id };
   });
 };
 
 // Coordinator rejects student
-const rejectByCoordinator = async (student_id, staff_id, reason) => {
+const rejectByCoordinator = async (student_id, staff_id, coordinator_dept_id, reason) => {
   return await sequelize.transaction(async (t) => {
     const req = await StudentVerificationRequest.findOne({
       where: { student_id, coordinator_status: "Pending" },
@@ -80,6 +79,14 @@ const rejectByCoordinator = async (student_id, staff_id, reason) => {
 
     if (!req) {
       throw { status: 404, message: "No pending verification request found for this student" };
+    }
+
+    // Enforce department scoping
+    const student = await Student.findOne({ where: { student_id }, transaction: t });
+    if (!student) throw { status: 404, message: "Student not found" };
+
+    if (student.dept_id !== coordinator_dept_id) {
+      throw { status: 403, message: "You can only reject students from your department" };
     }
 
     req.coordinator_status = "Rejected";

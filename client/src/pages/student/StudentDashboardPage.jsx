@@ -27,7 +27,7 @@ export default function StudentDashboardPage() {
         const profile = await profileRes.json();
 
         // If profile not filled (no name), redirect to form
-        if (!profile.full_name || !profile.dept_id || !profile.course_id) {
+        if (!profile.full_name || !profile.dept_id || !profile.program) {
           navigate("/dashboard/student/profile-form");
           return;
         }
@@ -153,16 +153,16 @@ export default function StudentDashboardPage() {
               </p>
             ) : (
               recentApplications.map((app) => (
-                <div key={app.id} className="p-4 border rounded-lg hover:bg-gray-50">
+                <div key={app.application_id} className="p-4 border rounded-lg hover:bg-gray-50">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold">{app.company}</h3>
+                      <h3 className="font-semibold">{app.Drive?.company_name || 'Unknown Company'}</h3>
                       <p className="text-sm text-gray-500">
-                        Applied on {new Date(app.appliedDate).toLocaleDateString()}
+                        Applied on {new Date(app.applied_at || app.updated_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded ${getStatusColor(app.status)}`}>
-                      {app.status}
+                    <span className={`px-2 py-1 text-xs rounded ${getStatusColor(app.application_status)}`}>
+                      {app.application_status}
                     </span>
                   </div>
                 </div>

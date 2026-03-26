@@ -134,8 +134,18 @@ const submitForVerification = async (student_id) => {
 
   // Check if already submitted
   const existing = await StudentVerificationRequest.findOne({ where: { student_id } });
+
   if (existing) {
-    throw { status: 409, message: "Verification request already submitted" };
+    if (existing.coordinator_status === "Pending") {
+      throw { status: 409, message: "Verification request already pending" };
+    }
+    if (existing.coordinator_status === "Approved") {
+      throw { status: 409, message: "You are already verified" };
+    }
+    // If rejected, delete old request and allow resubmission
+    if (existing.coordinator_status === "Rejected") {
+      await existing.destroy();
+    }
   }
 
   const request = await StudentVerificationRequest.create({

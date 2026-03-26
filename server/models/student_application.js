@@ -23,7 +23,7 @@ const StudentApplication = sequelize.define(
     application_status: {
       type: DataTypes.STRING(20),
       validate: {
-        isIn: [["Applied", "Withdrawn", "InProgress"]]
+        isIn: [["APPLIED", "WITHDRAWN", "IN_PROGRESS", "SHORTLISTED", "SELECTED", "REJECTED"]]
       }
     },
 

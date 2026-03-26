@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { mockStudents } from "./mockData";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -12,32 +11,68 @@ import { Input } from "../../components/Input";
 import { Search } from "lucide-react";
 
 export default function StudentsPage() {
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredStudents = mockStudents.filter((student) => {
-    const matchesSearch =
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase());
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:5000/api/v1/verification/coordinator/all", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStudents(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch students", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStudents();
+  }, []);
 
+  const getStatusText = (student) => {
+    const vr = student.StudentVerificationRequest;
+    if (!vr) return "Not Verified";
+    if (vr.coordinator_status === "Pending") return "Pending Review";
+    if (vr.coordinator_status === "Approved") return "Verified";
+    if (vr.coordinator_status === "Rejected") return "Rejected";
+    return "Unknown";
+  };
+
+  const filteredStudents = students.filter((student) => {
+    const matchesSearch =
+      (student.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.email || "").toLowerCase().includes(searchTerm.toLowerCase());
+
+    const statusObj = getStatusText(student);
     const matchesStatus =
-      statusFilter === "all" || student.status === statusFilter;
+      statusFilter === "all" || statusObj === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Placed":
+      case "Verified":
         return "bg-green-500/10 text-green-700 border-green-200";
-      case "Shortlisted":
+      case "Pending Review":
         return "bg-yellow-500/10 text-yellow-700 border-yellow-200";
-      case "Applied":
-        return "bg-blue-500/10 text-blue-700 border-blue-200";
+      case "Rejected":
+        return "bg-red-500/10 text-red-700 border-red-200";
       default:
         return "bg-gray-500/10 text-gray-700 border-gray-200";
     }
   };
+
+  if (loading) {
+    return <div className="p-6 text-gray-500">Loading students...</div>;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -64,7 +99,7 @@ export default function StudentsPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {["all", "Placed", "Shortlisted", "Applied", "Not Applied"].map(
+              {["all", "Verified", "Pending Review", "Not Verified", "Rejected"].map(
                 (filter) => (
                   <Button
                     key={filter}
@@ -104,42 +139,46 @@ export default function StudentsPage() {
                 </thead>
 
                 <tbody>
-                  {filteredStudents.map((student) => (
-                    <tr
-                      key={student.id}
-                      className="border-b border-border hover:bg-secondary/50"
-                    >
-                      <td className="py-3 px-4 font-medium">
-                        {student.name}
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground text-xs">
-                        {student.email}
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground">
-                        {student.department}
-                      </td>
-                      <td className="py-3 px-4 font-medium">
-                        {student.cgpa}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge
-                          className={
-                            getStatusColor(student.status) + " border"
-                          }
-                        >
-                          {student.status}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground">
-                        {student.placedCompany}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Button size="sm" variant="outline">
-                          View
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredStudents.map((student) => {
+                    const statusText = getStatusText(student);
+                    return (
+                      <tr
+                        key={student.student_id}
+                        className="border-b border-border hover:bg-secondary/50"
+                      >
+                        <td className="py-3 px-4 font-medium">
+                          {student.full_name || "N/A"}
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground text-xs">
+                          {student.email}
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground">
+                          {student.Department?.dept_name || "N/A"}
+                        </td>
+                        <td className="py-3 px-4 font-medium">
+                          {student.cgpa || "-"}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge
+                            className={
+                              getStatusColor(statusText) + " border"
+                            }
+                          >
+                            {statusText}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground">
+                          {/* Placed Company pending Offer module */}
+                          -
+                        </td>
+                        <td className="py-3 px-4">
+                          <Button size="sm" variant="outline">
+                            View
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

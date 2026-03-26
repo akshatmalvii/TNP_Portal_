@@ -1,14 +1,38 @@
-import React from "react";
-import { mockApplications } from "./mockDrives.js";
+import React, { useState, useEffect } from "react";
 import { CheckCircle2, Clock, FileText } from "lucide-react";
 
 export default function StudentApplicationPage() {
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/v1/drives/applications", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setApplications(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch applications", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchApplications();
+    }
+  }, [token]);
 
   const getStatusIcon = (status) => {
-    switch (status) {
-      case "Selected":
+    switch (status?.toUpperCase()) {
+      case "SELECTED":
         return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-      case "Shortlisted":
+      case "SHORTLISTED":
         return <Clock className="w-5 h-5 text-yellow-500" />;
       default:
         return <FileText className="w-5 h-5 text-blue-500" />;
@@ -16,12 +40,12 @@ export default function StudentApplicationPage() {
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "Selected":
+    switch (status?.toUpperCase()) {
+      case "SELECTED":
         return "bg-green-100 text-green-700";
-      case "Shortlisted":
+      case "SHORTLISTED":
         return "bg-yellow-100 text-yellow-700";
-      case "Applied":
+      case "APPLIED":
         return "bg-blue-100 text-blue-700";
       default:
         return "bg-gray-100 text-gray-700";
@@ -29,10 +53,18 @@ export default function StudentApplicationPage() {
   };
 
   const groupedApplications = {
-    selected: mockApplications.filter((a) => a.status === "Selected"),
-    shortlisted: mockApplications.filter((a) => a.status === "Shortlisted"),
-    applied: mockApplications.filter((a) => a.status === "Applied"),
+    selected: applications.filter((a) => a.application_status === "SELECTED"),
+    shortlisted: applications.filter((a) => a.application_status === "SHORTLISTED"),
+    applied: applications.filter((a) => a.application_status === "APPLIED"),
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <p className="text-gray-500">Loading applications...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -84,7 +116,7 @@ export default function StudentApplicationPage() {
 
               {groupedApplications.selected.map((app) => (
                 <div
-                  key={app.id}
+                  key={app.application_id}
                   className="bg-white shadow rounded-lg p-5 hover:shadow-md"
                 >
                   <div className="flex justify-between">
@@ -92,19 +124,20 @@ export default function StudentApplicationPage() {
                     <div className="flex gap-4">
 
                       <div className="p-2 bg-green-100 rounded-lg">
-                        {getStatusIcon(app.status)}
+                        {getStatusIcon(app.application_status)}
                       </div>
 
                       <div>
-                        <h3 className="font-bold text-lg">{app.company}</h3>
+                        <h3 className="font-bold text-lg">{app.Drive?.company_name || 'Unknown Company'}</h3>
 
                         <p className="text-sm text-gray-500">
                           Applied on{" "}
-                          {new Date(app.appliedDate).toLocaleDateString()}
+                          {new Date(app.applied_at || app.updated_at).toLocaleDateString()}
                         </p>
 
                         <p className="text-sm text-green-600 font-medium mt-2">
-                          {app.result}
+                          {/* We don't have result dynamically right now, placeholder */}
+                          {app.application_status === 'SELECTED' ? 'Offer Extended' : ''}
                         </p>
                       </div>
 
@@ -112,10 +145,10 @@ export default function StudentApplicationPage() {
 
                     <span
                       className={`px-2 py-1 text-xs rounded ${getStatusColor(
-                        app.status
+                        app.application_status
                       )}`}
                     >
-                      {app.status}
+                      {app.application_status}
                     </span>
 
                   </div>
@@ -133,7 +166,7 @@ export default function StudentApplicationPage() {
 
               {groupedApplications.shortlisted.map((app) => (
                 <div
-                  key={app.id}
+                  key={app.application_id}
                   className="bg-white shadow rounded-lg p-5 hover:shadow-md"
                 >
                   <div className="flex justify-between">
@@ -141,19 +174,20 @@ export default function StudentApplicationPage() {
                     <div className="flex gap-4">
 
                       <div className="p-2 bg-yellow-100 rounded-lg">
-                        {getStatusIcon(app.status)}
+                        {getStatusIcon(app.application_status)}
                       </div>
 
                       <div>
-                        <h3 className="font-bold text-lg">{app.company}</h3>
+                        <h3 className="font-bold text-lg">{app.Drive?.company_name || 'Unknown Company'}</h3>
 
                         <p className="text-sm text-gray-500">
                           Applied on{" "}
-                          {new Date(app.appliedDate).toLocaleDateString()}
+                          {new Date(app.applied_at || app.updated_at).toLocaleDateString()}
                         </p>
 
                         <p className="text-sm text-yellow-600 font-medium mt-2">
-                          {app.result}
+                          {/* Placeholder */}
+                          {app.application_status === 'SHORTLISTED' ? 'Under Review' : ''}
                         </p>
                       </div>
 
@@ -161,10 +195,10 @@ export default function StudentApplicationPage() {
 
                     <span
                       className={`px-2 py-1 text-xs rounded ${getStatusColor(
-                        app.status
+                        app.application_status
                       )}`}
                     >
-                      {app.status}
+                      {app.application_status}
                     </span>
 
                   </div>
@@ -182,7 +216,7 @@ export default function StudentApplicationPage() {
 
               {groupedApplications.applied.map((app) => (
                 <div
-                  key={app.id}
+                  key={app.application_id}
                   className="bg-white shadow rounded-lg p-5 hover:shadow-md"
                 >
                   <div className="flex justify-between">
@@ -190,19 +224,19 @@ export default function StudentApplicationPage() {
                     <div className="flex gap-4">
 
                       <div className="p-2 bg-blue-100 rounded-lg">
-                        {getStatusIcon(app.status)}
+                        {getStatusIcon(app.application_status)}
                       </div>
 
                       <div>
-                        <h3 className="font-bold text-lg">{app.company}</h3>
+                        <h3 className="font-bold text-lg">{app.Drive?.company_name || 'Unknown Company'}</h3>
 
                         <p className="text-sm text-gray-500">
                           Applied on{" "}
-                          {new Date(app.appliedDate).toLocaleDateString()}
+                          {new Date(app.applied_at || app.updated_at).toLocaleDateString()}
                         </p>
 
                         <p className="text-sm text-blue-600 font-medium mt-2">
-                          {app.result}
+                           Application received
                         </p>
                       </div>
 
@@ -210,10 +244,10 @@ export default function StudentApplicationPage() {
 
                     <span
                       className={`px-2 py-1 text-xs rounded ${getStatusColor(
-                        app.status
+                        app.application_status
                       )}`}
                     >
-                      {app.status}
+                      {app.application_status}
                     </span>
 
                   </div>

@@ -22,6 +22,7 @@ const StudentDocument = sequelize.define(
           "Aadhaar",
           "SSC_Marksheet",
           "HSC_Marksheet",
+          "Diploma_Marksheet",
           "UG_Marksheet",
           "Photo",
           "Resume"

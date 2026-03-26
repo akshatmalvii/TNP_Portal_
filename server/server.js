@@ -35,6 +35,7 @@ import Offer from './models/offer.js';
 import StudentVerificationRequest from './models/student_verification_request.js';
 import AuditLog from './models/audit_log.js';
 import seedRolesAndAdmin from './seed.js';
+import createTnpTrigger from './utils/createTnpTrigger.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -144,6 +145,9 @@ const startServer = async () => {
 
         // Seed roles and TPO Head
         await seedRolesAndAdmin();
+
+        // Create TNP ID trigger + function in DB
+        await createTnpTrigger();
 
         app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
