@@ -3,12 +3,22 @@ import Role from './models/role.js';
 import User from './models/users.js';
 import StaffAdmin from './models/staff_admin.js';
 import Course from './models/course.js';
+import Department from './models/department.js';
 
 const ROLES = [
     {role_name: 'TPO_Head'},
     {role_name: 'TPO'},
     {role_name: 'Placement_Coordinator'},
     {role_name: 'Student'},
+];
+
+const DEPARTMENTS = [
+    {dept_code: 'CSE', dept_name: 'Computer Science and Engineering'},
+    {dept_code: 'IT', dept_name: 'Information Technology'},
+    {dept_code: 'MECH', dept_name: 'Mechanical Engineering'},
+    {dept_code: 'CIVIL', dept_name: 'Civil Engineering'},
+    {dept_code: 'EEE', dept_name: 'Electrical and Electronics Engineering'},
+    {dept_code: 'ECE', dept_name: 'Electronics and Communication Engineering'},
 ];
 
 const COURSES = [
@@ -24,6 +34,15 @@ const TPO_HEAD_PASSWORD = 'Admin@123';
 
 const seedRolesAndAdmin = async () => {
     try {
+        // Seed departments
+        for (const dept of DEPARTMENTS) {
+            await Department.findOrCreate({
+                where: {dept_code: dept.dept_code},
+                defaults: dept,
+            });
+        }
+        console.log('✅ Departments seeded successfully');
+
         // Seed courses
         for (const course of COURSES) {
             await Course.findOrCreate({

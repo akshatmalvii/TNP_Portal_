@@ -15,7 +15,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 
-export default function Sidebar({ userRole }) {
+export default function Sidebar({ userRole, isVerified = true }) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -79,6 +79,9 @@ export default function Sidebar({ userRole }) {
     }
   };
 
+  // For unverified students, disable all nav links
+  const isLocked = userRole === "student" && !isVerified;
+
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white w-64">
 
@@ -101,6 +104,11 @@ export default function Sidebar({ userRole }) {
         <span className="text-xs font-medium px-2 py-1 bg-indigo-600/20 text-indigo-300 rounded-md">
           {getRoleLabel()}
         </span>
+        {isLocked && (
+          <span className="ml-2 text-xs font-medium px-2 py-1 bg-yellow-600/20 text-yellow-300 rounded-md">
+            Not Verified
+          </span>
+        )}
       </div>
 
       {/* Menu */}
@@ -108,6 +116,20 @@ export default function Sidebar({ userRole }) {
         {menuItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
+
+          if (isLocked) {
+            // Render as disabled, non-clickable div
+            return (
+              <div
+                key={item.href}
+                className="flex items-center gap-3 px-4 py-2 rounded-lg cursor-not-allowed opacity-40"
+                title="Complete verification to unlock"
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-sm font-medium">{item.label}</span>
+              </div>
+            );
+          }
 
           return (
             <Link key={item.href} to={item.href}>

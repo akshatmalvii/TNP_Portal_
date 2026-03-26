@@ -37,7 +37,7 @@ const updateProfile = async (user_id, data) => {
     "mobile_number", "parent_mobile_number", "blood_group",
     "category", "nationality", "height_cm", "weight_kg",
     "present_address", "permanent_address",
-    "dept_id", "course_id", "prn", "running_backlogs", "total_kt",
+    "dept_id", "course_id", "prn", "program", "running_backlogs", "total_kt", "cgpa",
   ];
 
   const updateData = {};
@@ -122,8 +122,8 @@ const submitForVerification = async (student_id) => {
   const student = await Student.findByPk(student_id);
   if (!student) throw { status: 404, message: "Student not found" };
 
-  if (!student.full_name || !student.dept_id || !student.course_id) {
-    throw { status: 400, message: "Please complete your profile (name, department, course) before submitting" };
+  if (!student.full_name || !student.dept_id) {
+    throw { status: 400, message: "Please complete your profile (name, department) before submitting" };
   }
 
   // Check required documents exist

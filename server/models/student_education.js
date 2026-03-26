@@ -18,7 +18,7 @@ const StudentEducation = sequelize.define(
     education_type: {
       type: DataTypes.STRING(20),
       validate: {
-        isIn: [["SSC", "HSC", "Diploma", "UG"]]
+        isIn: [["SSC", "HSC", "Diploma"]]
       }
     },
 

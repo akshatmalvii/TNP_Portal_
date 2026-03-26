@@ -9,11 +9,11 @@ const API_BASE = "http://localhost:5000/api/v1/student-profile";
 
 const STEPS = ["Personal Info", "Academic Info", "Documents", "Review & Submit"];
 
-const EDUCATION_TYPES = ["SSC", "HSC", "Diploma", "UG"];
 const DOCUMENT_TYPES = [
   { value: "Aadhaar", label: "Aadhaar Card" },
   { value: "SSC_Marksheet", label: "SSC Marksheet" },
   { value: "HSC_Marksheet", label: "HSC Marksheet" },
+  { value: "Diploma_Marksheet", label: "Diploma Marksheet" },
   { value: "UG_Marksheet", label: "UG Marksheet" },
   { value: "Photo", label: "Passport Photo" },
   { value: "Resume", label: "Resume" },
@@ -28,7 +28,6 @@ export default function StudentProfileFormPage() {
   const [successMsg, setSuccessMsg] = useState("");
 
   const [departments, setDepartments] = useState([]);
-  const [courses, setCourses] = useState([]);
 
   // Personal info
   const [personal, setPersonal] = useState({
@@ -38,17 +37,20 @@ export default function StudentProfileFormPage() {
     present_address: "", permanent_address: "",
   });
 
-  // Academic info
+  // Academic / UG info
   const [academic, setAcademic] = useState({
-    dept_id: "", course_id: "", prn: "", running_backlogs: 0, total_kt: 0,
+    dept_id: "", prn: "", program: "", running_backlogs: 0, total_kt: 0, cgpa: "",
   });
 
   // Education records
   const [educations, setEducations] = useState([]);
 
+  // HSC or Diploma path selection: "HSC" | "Diploma" | ""
+  const [educationPath, setEducationPath] = useState("");
+
   // Documents
   const [documents, setDocuments] = useState([]);
-  const [uploading, setUploading] = useState(false);
+  const [uploadingType, setUploadingType] = useState("");
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
@@ -58,14 +60,12 @@ export default function StudentProfileFormPage() {
 
   const loadData = async () => {
     try {
-      const [profileRes, deptRes, courseRes] = await Promise.all([
+      const [profileRes, deptRes] = await Promise.all([
         fetch(`${API_BASE}/profile`, { headers }),
         fetch("http://localhost:5000/api/v1/departments", { headers }),
-        fetch("http://localhost:5000/api/v1/courses", { headers }),
       ]);
 
       if (deptRes.ok) setDepartments(await deptRes.json());
-      if (courseRes.ok) setCourses(await courseRes.json());
 
       if (profileRes.ok) {
         const data = await profileRes.json();
@@ -89,13 +89,21 @@ export default function StudentProfileFormPage() {
 
         setAcademic({
           dept_id: data.dept_id || "",
-          course_id: data.course_id || "",
           prn: data.prn || "",
+          program: data.program || "",
           running_backlogs: data.running_backlogs || 0,
           total_kt: data.total_kt || 0,
+          cgpa: data.cgpa || "",
         });
 
-        if (data.StudentEducations) setEducations(data.StudentEducations);
+        if (data.StudentEducations) {
+          setEducations(data.StudentEducations);
+          // Determine the education path from existing records
+          const hasDiploma = data.StudentEducations.some(e => e.education_type === "Diploma");
+          const hasHSC = data.StudentEducations.some(e => e.education_type === "HSC");
+          if (hasDiploma) setEducationPath("Diploma");
+          else if (hasHSC) setEducationPath("HSC");
+        }
         if (data.StudentDocuments) setDocuments(data.StudentDocuments);
 
         // If already submitted for verification, redirect
@@ -113,6 +121,17 @@ export default function StudentProfileFormPage() {
 
   const savePersonal = async () => {
     setSaving(true); setError("");
+    // Validate phone numbers (exactly 10 digits)
+    if (personal.mobile_number && !/^\d{10}$/.test(personal.mobile_number)) {
+      setError("Mobile number must be exactly 10 digits");
+      setSaving(false);
+      return;
+    }
+    if (personal.parent_mobile_number && !/^\d{10}$/.test(personal.parent_mobile_number)) {
+      setError("Parent mobile number must be exactly 10 digits");
+      setSaving(false);
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/profile`, {
         method: "PUT", headers: jsonHeaders, body: JSON.stringify(personal),
@@ -125,6 +144,12 @@ export default function StudentProfileFormPage() {
 
   const saveAcademic = async () => {
     setSaving(true); setError("");
+    // Validate PRN (exactly 10 digits)
+    if (academic.prn && !/^\d{10}$/.test(academic.prn)) {
+      setError("PRN must be exactly 10 digits");
+      setSaving(false);
+      return;
+    }
     try {
       const res = await fetch(`${API_BASE}/profile`, {
         method: "PUT", headers: jsonHeaders, body: JSON.stringify(academic),
@@ -155,7 +180,7 @@ export default function StudentProfileFormPage() {
   };
 
   const handleFileUpload = async (file, document_type) => {
-    setUploading(true); setError("");
+    setUploadingType(document_type); setError("");
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -176,7 +201,7 @@ export default function StudentProfileFormPage() {
         if (profile.StudentDocuments) setDocuments(profile.StudentDocuments);
       }
     } catch (err) { setError(err.message); }
-    finally { setUploading(false); }
+    finally { setUploadingType(""); }
   };
 
   const handleSubmitVerification = async () => {
@@ -328,52 +353,109 @@ export default function StudentProfileFormPage() {
         <Card className="border-0">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><GraduationCap className="w-5 h-5" /> Academic Information</CardTitle>
-            <CardDescription>Enter your academic details and education history</CardDescription>
+            <CardDescription>Enter your undergraduate and education history details</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Department *</label>
-                <select value={academic.dept_id} onChange={e => setAcademic({ ...academic, dept_id: e.target.value })} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
-                  <option value="">Select department</option>
-                  {departments.map(d => <option key={d.dept_id} value={d.dept_id}>{d.dept_code} — {d.dept_name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Course *</label>
-                <select value={academic.course_id} onChange={e => setAcademic({ ...academic, course_id: e.target.value })} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
-                  <option value="">Select course</option>
-                  {courses.map(c => <option key={c.course_id} value={c.course_id}>{c.course_name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">PRN</label>
-                <Input value={academic.prn} onChange={e => setAcademic({ ...academic, prn: e.target.value })} placeholder="University PRN" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Running Backlogs</label>
-                <Input type="number" value={academic.running_backlogs} onChange={e => setAcademic({ ...academic, running_backlogs: parseInt(e.target.value) || 0 })} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Total KTs</label>
-                <Input type="number" value={academic.total_kt} onChange={e => setAcademic({ ...academic, total_kt: parseInt(e.target.value) || 0 })} />
+          <CardContent className="space-y-8">
+
+            {/* ──────────── UG Information ──────────── */}
+            <div>
+              <h3 className="font-semibold text-base mb-4 pb-2 border-b">Undergraduate (UG) Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">PRN *</label>
+                  <Input value={academic.prn} onChange={e => setAcademic({ ...academic, prn: e.target.value })} placeholder="University PRN" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Department *</label>
+                  <select value={academic.dept_id} onChange={e => setAcademic({ ...academic, dept_id: e.target.value })} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+                    <option value="">Select department</option>
+                    {departments.map(d => <option key={d.dept_id} value={d.dept_id}>{d.dept_code} — {d.dept_name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Program *</label>
+                  <Input value={academic.program} onChange={e => setAcademic({ ...academic, program: e.target.value })} placeholder="e.g. B.Tech Computer Science" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Total KT</label>
+                  <Input type="number" value={academic.total_kt} onChange={e => setAcademic({ ...academic, total_kt: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Running Backlogs</label>
+                  <Input type="number" value={academic.running_backlogs} onChange={e => setAcademic({ ...academic, running_backlogs: parseInt(e.target.value) || 0 })} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">CGPA</label>
+                  <Input type="number" step="0.01" value={academic.cgpa} onChange={e => setAcademic({ ...academic, cgpa: e.target.value })} placeholder="e.g. 8.5" />
+                </div>
               </div>
             </div>
 
-            {/* Education Records */}
+            {/* ──────────── SSC Information ──────────── */}
             <div>
-              <h3 className="font-semibold mb-3">Education History</h3>
-              {EDUCATION_TYPES.map(type => {
-                const existing = educations.find(e => e.education_type === type);
-                return (
-                  <EducationRow
-                    key={type}
-                    type={type}
-                    existing={existing}
-                    onSave={(data) => saveEducation(data)}
+              <h3 className="font-semibold text-base mb-4 pb-2 border-b">SSC Information</h3>
+              <EducationSection
+                type="SSC"
+                existing={educations.find(e => e.education_type === "SSC")}
+                onSave={saveEducation}
+              />
+            </div>
+
+            {/* ──────────── HSC / Diploma Toggle ──────────── */}
+            <div>
+              <h3 className="font-semibold text-base mb-3 pb-2 border-b">After SSC</h3>
+              <div className="flex items-center gap-6 mb-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="educationPath"
+                    value="HSC"
+                    checked={educationPath === "HSC"}
+                    onChange={() => setEducationPath("HSC")}
+                    disabled={educations.some(e => e.education_type === "Diploma")}
+                    className="w-4 h-4 text-blue-600"
                   />
-                );
-              })}
+                  <span className="text-sm font-medium">HSC (12th Standard)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="educationPath"
+                    value="Diploma"
+                    checked={educationPath === "Diploma"}
+                    onChange={() => setEducationPath("Diploma")}
+                    disabled={educations.some(e => e.education_type === "HSC")}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="text-sm font-medium">Diploma</span>
+                </label>
+              </div>
+
+              {educationPath === "" && (
+                <p className="text-sm text-gray-400 italic">Please select whether you completed HSC or Diploma after SSC.</p>
+              )}
+
+              {educationPath === "HSC" && (
+                <div>
+                  <h4 className="font-medium text-sm text-gray-700 mb-3">HSC Information</h4>
+                  <EducationSection
+                    type="HSC"
+                    existing={educations.find(e => e.education_type === "HSC")}
+                    onSave={saveEducation}
+                  />
+                </div>
+              )}
+
+              {educationPath === "Diploma" && (
+                <div>
+                  <h4 className="font-medium text-sm text-gray-700 mb-3">Diploma Information</h4>
+                  <EducationSection
+                    type="Diploma"
+                    existing={educations.find(e => e.education_type === "Diploma")}
+                    onSave={saveEducation}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between mt-6">
@@ -403,9 +485,7 @@ export default function StudentProfileFormPage() {
                     <div>
                       <p className="font-medium text-sm">{docType.label}</p>
                       {existing ? (
-                        <a href={existing.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
-                          ✅ Uploaded — View file
-                        </a>
+                        <p className="text-xs text-green-600">✅ Uploaded</p>
                       ) : (
                         <p className="text-xs text-gray-400">Not uploaded</p>
                       )}
@@ -424,10 +504,10 @@ export default function StudentProfileFormPage() {
                     <Button
                       variant={existing ? "outline" : "default"}
                       size="sm"
-                      disabled={uploading}
+                      disabled={uploadingType !== ""}
                       onClick={() => document.getElementById(`file-${docType.value}`).click()}
                     >
-                      {uploading ? "Uploading..." : existing ? "Replace" : "Upload"}
+                      {uploadingType === docType.value ? "Uploading..." : existing ? "Replace" : "Upload"}
                     </Button>
                   </div>
                 </div>
@@ -463,15 +543,16 @@ export default function StudentProfileFormPage() {
               </div>
             </div>
 
-            {/* Academic Summary */}
+            {/* UG Academic Summary */}
             <div>
-              <h3 className="font-semibold text-sm text-gray-500 uppercase mb-2">Academic Info</h3>
+              <h3 className="font-semibold text-sm text-gray-500 uppercase mb-2">Undergraduate Info</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                <div><span className="text-gray-500">Department:</span> <span className="font-medium">{departments.find(d => d.dept_id == academic.dept_id)?.dept_name || "—"}</span></div>
-                <div><span className="text-gray-500">Course:</span> <span className="font-medium">{courses.find(c => c.course_id == academic.course_id)?.course_name || "—"}</span></div>
                 <div><span className="text-gray-500">PRN:</span> <span className="font-medium">{academic.prn || "—"}</span></div>
+                <div><span className="text-gray-500">Department:</span> <span className="font-medium">{departments.find(d => d.dept_id == academic.dept_id)?.dept_name || "—"}</span></div>
+                <div><span className="text-gray-500">Program:</span> <span className="font-medium">{academic.program || "—"}</span></div>
+                <div><span className="text-gray-500">Total KT:</span> <span className="font-medium">{academic.total_kt}</span></div>
                 <div><span className="text-gray-500">Backlogs:</span> <span className="font-medium">{academic.running_backlogs}</span></div>
-                <div><span className="text-gray-500">Total KTs:</span> <span className="font-medium">{academic.total_kt}</span></div>
+                <div><span className="text-gray-500">CGPA:</span> <span className="font-medium">{academic.cgpa || "—"}</span></div>
               </div>
             </div>
 
@@ -481,11 +562,18 @@ export default function StudentProfileFormPage() {
               {educations.length === 0 ? (
                 <p className="text-sm text-gray-400">No education records added</p>
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {educations.map(e => (
-                    <p key={e.education_id} className="text-sm">
-                      <span className="font-mono bg-gray-100 px-1 rounded">{e.education_type}</span> — {e.institution_name || "N/A"} — {e.percentage ? `${e.percentage}%` : e.cgpa ? `CGPA: ${e.cgpa}` : ""}
-                    </p>
+                    <div key={e.education_id} className="p-3 bg-gray-50 rounded-lg text-sm">
+                      <span className="font-mono bg-gray-200 px-2 py-0.5 rounded text-xs font-semibold">{e.education_type}</span>
+                      <span className="ml-2">{e.institution_name || "N/A"}</span>
+                      {e.board_or_university && <span className="text-gray-500"> • {e.board_or_university}</span>}
+                      {e.passing_year && <span className="text-gray-500"> • {e.passing_year}</span>}
+                      {e.percentage ? <span className="text-gray-500"> • {e.percentage}%</span> : null}
+                      {e.cgpa ? <span className="text-gray-500"> • CGPA: {e.cgpa}</span> : null}
+                      {e.stream ? <span className="text-gray-500"> • {e.stream}</span> : null}
+                      {e.course_name ? <span className="text-gray-500"> • {e.course_name}</span> : null}
+                    </div>
                   ))}
                 </div>
               )}
@@ -520,77 +608,150 @@ export default function StudentProfileFormPage() {
   );
 }
 
-// Sub-component for education row
-function EducationRow({ type, existing, onSave }) {
-  const [expanded, setExpanded] = useState(false);
-  const [form, setForm] = useState({
+// ─────────────────────────────────────────────────────────────
+// Education Section component — renders the correct fields
+// based on type: SSC, HSC, or Diploma
+// ─────────────────────────────────────────────────────────────
+function EducationSection({ type, existing, onSave }) {
+  const getInitialForm = () => ({
     education_type: type,
     institution_name: existing?.institution_name || "",
     board_or_university: existing?.board_or_university || "",
     course_name: existing?.course_name || "",
-    program: existing?.program || "",
     stream: existing?.stream || "",
     passing_year: existing?.passing_year || "",
     percentage: existing?.percentage || "",
     cgpa: existing?.cgpa || "",
   });
+
+  const [form, setForm] = useState(getInitialForm);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
     const success = await onSave(form);
     setSaving(false);
-    if (success) setExpanded(false);
   };
 
-  return (
-    <div className="border rounded-lg mb-3">
-      <div
-        className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{type}</span>
-          {existing && <CheckCircle2 className="w-4 h-4 text-green-500" />}
+  // SSC: Passing year, School name, Board name, Percentage or CGPA
+  if (type === "SSC") {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium">School Name *</label>
+            <Input value={form.institution_name} onChange={e => setForm({ ...form, institution_name: e.target.value })} placeholder="School name" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">Board Name *</label>
+            <Input value={form.board_or_university} onChange={e => setForm({ ...form, board_or_university: e.target.value })} placeholder="e.g. CBSE, State Board" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">Passing Year *</label>
+            <Input type="number" value={form.passing_year} onChange={e => setForm({ ...form, passing_year: e.target.value })} placeholder="e.g. 2019" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">Percentage</label>
+            <Input type="number" step="0.01" value={form.percentage} onChange={e => setForm({ ...form, percentage: e.target.value })} placeholder="e.g. 85.5" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">CGPA</label>
+            <Input type="number" step="0.01" value={form.cgpa} onChange={e => setForm({ ...form, cgpa: e.target.value })} placeholder="e.g. 9.2" />
+          </div>
         </div>
-        <span className="text-sm text-gray-400">{expanded ? "▲" : "▼"}</span>
+        <div className="flex justify-end">
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? "Saving..." : existing ? "Update" : "Save"}
+          </Button>
+        </div>
+        {existing && (
+          <p className="text-xs text-green-600 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> Saved
+          </p>
+        )}
       </div>
+    );
+  }
 
-      {expanded && (
-        <div className="p-3 pt-0 border-t">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-            <div>
-              <label className="text-xs font-medium">Institution</label>
-              <Input value={form.institution_name} onChange={e => setForm({ ...form, institution_name: e.target.value })} placeholder="School / College name" />
-            </div>
-            <div>
-              <label className="text-xs font-medium">Board / University</label>
-              <Input value={form.board_or_university} onChange={e => setForm({ ...form, board_or_university: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-xs font-medium">Passing Year</label>
-              <Input type="number" value={form.passing_year} onChange={e => setForm({ ...form, passing_year: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-xs font-medium">Percentage</label>
-              <Input type="number" step="0.01" value={form.percentage} onChange={e => setForm({ ...form, percentage: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-xs font-medium">CGPA</label>
-              <Input type="number" step="0.01" value={form.cgpa} onChange={e => setForm({ ...form, cgpa: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-xs font-medium">Stream</label>
-              <Input value={form.stream} onChange={e => setForm({ ...form, stream: e.target.value })} placeholder="e.g. Science, Commerce" />
-            </div>
+  // HSC: Passing year, School name, Board name, Stream, Percentage
+  if (type === "HSC") {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium">School Name *</label>
+            <Input value={form.institution_name} onChange={e => setForm({ ...form, institution_name: e.target.value })} placeholder="School name" />
           </div>
-          <div className="flex justify-end mt-3">
-            <Button size="sm" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save"}
-            </Button>
+          <div>
+            <label className="text-xs font-medium">Board Name *</label>
+            <Input value={form.board_or_university} onChange={e => setForm({ ...form, board_or_university: e.target.value })} placeholder="e.g. CBSE, State Board" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">Passing Year *</label>
+            <Input type="number" value={form.passing_year} onChange={e => setForm({ ...form, passing_year: e.target.value })} placeholder="e.g. 2021" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">Stream *</label>
+            <Input value={form.stream} onChange={e => setForm({ ...form, stream: e.target.value })} placeholder="e.g. Science, Commerce, Arts" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">Percentage *</label>
+            <Input type="number" step="0.01" value={form.percentage} onChange={e => setForm({ ...form, percentage: e.target.value })} placeholder="e.g. 78.5" />
           </div>
         </div>
-      )}
-    </div>
-  );
+        <div className="flex justify-end">
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? "Saving..." : existing ? "Update" : "Save"}
+          </Button>
+        </div>
+        {existing && (
+          <p className="text-xs text-green-600 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> Saved
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Diploma: Passing year, College name, Course name, Percentage, CGPA
+  if (type === "Diploma") {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium">College Name *</label>
+            <Input value={form.institution_name} onChange={e => setForm({ ...form, institution_name: e.target.value })} placeholder="College name" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">Course Name *</label>
+            <Input value={form.course_name} onChange={e => setForm({ ...form, course_name: e.target.value })} placeholder="e.g. Mechanical Engineering" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">Passing Year *</label>
+            <Input type="number" value={form.passing_year} onChange={e => setForm({ ...form, passing_year: e.target.value })} placeholder="e.g. 2022" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">Percentage</label>
+            <Input type="number" step="0.01" value={form.percentage} onChange={e => setForm({ ...form, percentage: e.target.value })} placeholder="e.g. 72.5" />
+          </div>
+          <div>
+            <label className="text-xs font-medium">CGPA</label>
+            <Input type="number" step="0.01" value={form.cgpa} onChange={e => setForm({ ...form, cgpa: e.target.value })} placeholder="e.g. 7.8" />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? "Saving..." : existing ? "Update" : "Save"}
+          </Button>
+        </div>
+        {existing && (
+          <p className="text-xs text-green-600 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> Saved
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return null;
 }

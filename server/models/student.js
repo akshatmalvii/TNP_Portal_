@@ -100,6 +100,14 @@ const Student = sequelize.define(
             type: DataTypes.STRING(50),
         },
 
+        program: {
+            type: DataTypes.STRING(100),
+        },
+
+        cgpa: {
+            type: DataTypes.DECIMAL(4, 2),
+        },
+
         tnp_id: {
             type: DataTypes.STRING(20),
             unique: true,
