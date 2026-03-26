@@ -35,6 +35,7 @@ import Offer from './models/offer.js';
 import StudentVerificationRequest from './models/student_verification_request.js';
 import AuditLog from './models/audit_log.js';
 import seedRolesAndAdmin from './seed.js';
+import seedCourses from './utils/seedCourses.js';
 import createTnpTrigger from './utils/createTnpTrigger.js';
 import createDriveTriggers from './utils/createDriveTriggers.js';
 
@@ -107,13 +108,20 @@ const startServer = async () => {
         await Role.sync({alter: true});
         await Department.sync({alter: true});
         await Company.sync({alter: true});
+        
+        // Force drop courses to safely apply new NOT NULL dept_id constraints
+        await sequelize.query('DROP TABLE IF EXISTS "courses" CASCADE');
         await Course.sync({alter: true});
+        
         await PlacementPolicyRule.sync({alter: true});
 
         // 2. Tables depending on roles / departments / companies / courses
         await User.sync({alter: true});
         await StaffAdmin.sync({alter: true});
         await DepartmentTpoAssignment.sync({alter: true});
+        
+        // Nullify dangling course references from old students before re-applying FK constraint
+        await sequelize.query('UPDATE students SET course_id = NULL').catch(() => {});
         await Student.sync({alter: true});
         // Fix: Sequelize alter doesn't always drop NOT NULL — force it
         await sequelize.query('ALTER TABLE students ALTER COLUMN dept_id DROP NOT NULL;').catch(() => {});
@@ -129,6 +137,9 @@ const startServer = async () => {
 
         // 4. Tables depending on drives
         await DriveAllowedDepartment.sync({alter: true});
+        
+        // Wipe dangling allowed courses since the target courses table was truncated previously
+        await sequelize.query('DELETE FROM drive_allowed_courses').catch(() => {});
         await DriveAllowedCourse.sync({alter: true});
         await DriveEligibility.sync({alter: true});
         await DepartmentPolicyRule.sync({alter: true});
@@ -148,6 +159,9 @@ const startServer = async () => {
 
         // Seed roles and TPO Head
         await seedRolesAndAdmin();
+
+        // Seed structured courses (dependent on Deparments)
+        await seedCourses();
 
         // Create TNP ID trigger + function in DB
         await createTnpTrigger();

@@ -1,9 +1,15 @@
 import Course from '../models/course.js';
 
 class CourseService {
-    async getAll() {
+    async getAll(query = {}) {
         try {
+            const whereClause = {};
+            if (query.dept_id) {
+                whereClause.dept_id = query.dept_id;
+            }
+
             const courses = await Course.findAll({
+                where: whereClause,
                 order: [['course_name', 'ASC']],
             });
             return courses;

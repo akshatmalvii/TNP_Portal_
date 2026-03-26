@@ -10,8 +10,22 @@ const Drive = sequelize.define(
       autoIncrement: true
     },
 
-    company_role_id: {
+    company_id: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'companies',
+        key: 'company_id',
+      }
+    },
+
+    role_title: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+
+    role_description: {
+      type: DataTypes.TEXT,
       allowNull: true
     },
 

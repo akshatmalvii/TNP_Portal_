@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { mockDrives } from "./mockData";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
@@ -9,16 +8,55 @@ import CreateDriveForm from "../../components/tpo/CreateDriveForm";
 
 export default function TPODrivesPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [drives, setDrives] = useState(mockDrives);
+  const [drives, setDrives] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [editingDrive, setEditingDrive] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDrives();
+  }, []);
+
+  const fetchDrives = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/v1/tpo/drives", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setDrives(await res.json());
+      }
+    } catch (err) {
+      console.error("Failed to fetch drives", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredDrives = drives.filter((drive) =>
-    (drive.company || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (drive.position || "").toLowerCase().includes(searchTerm.toLowerCase())
+    (drive.company_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (drive.role_title || drive.position || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDelete = (id) => {
-    setDrives(drives.filter((d) => d.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to completely erase this Drive? This action cannot be undone.")) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:5000/api/v1/tpo/drive/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setDrives(drives.filter((d) => (d.drive_id || d.id) !== id));
+      } else {
+        alert("Failed to delete drive");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting drive");
+    }
   };
 
   const getStatusColor = (status) => {
@@ -33,22 +71,20 @@ export default function TPODrivesPage() {
     }
   };
 
-  if (isCreating) {
+  if (isCreating || editingDrive) {
     return (
       <div className="p-6 max-w-5xl mx-auto">
         <CreateDriveForm 
-          onCancel={() => setIsCreating(false)} 
-          onSuccess={(newDrive) => {
-             // For now, format it loosely like a mock
-             setDrives([{ 
-               id: newDrive.drive_id, 
-               company: "Company Role " + newDrive.company_role_id, 
-               position: "New Role",
-               salary: newDrive.package_lpa + " LPA",
-               deadline: newDrive.deadline,
-               status: newDrive.drive_status
-             }, ...drives]);
+          initialData={editingDrive}
+          onCancel={() => {
+            setIsCreating(false);
+            setEditingDrive(null);
+          }} 
+          onSuccess={() => {
+             // Reload real drives immediately from DB
+             fetchDrives();
              setIsCreating(false);
+             setEditingDrive(null);
           }} 
         />
       </div>
@@ -107,9 +143,9 @@ export default function TPODrivesPage() {
                 <div className="grid md:grid-cols-5 gap-4 items-center">
                   {/* Company */}
                   <div>
-                    <h3 className="font-bold">{drive.company}</h3>
+                    <h3 className="font-bold">{drive.company_name || "Unknown Company"}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {drive.position}
+                      {drive.role_title}
                     </p>
                   </div>
 
@@ -119,7 +155,7 @@ export default function TPODrivesPage() {
                       Salary
                     </p>
                     <p className="font-semibold">
-                      {drive.salary}
+                      {drive.package_lpa ? `${drive.package_lpa} LPA` : "N/A"}
                     </p>
                   </div>
 
@@ -139,16 +175,16 @@ export default function TPODrivesPage() {
                   <div>
                     <Badge
                       className={
-                        getStatusColor(drive.status) + " border"
+                        getStatusColor(drive.drive_status || drive.status) + " border"
                       }
                     >
-                      {drive.status}
+                      {drive.drive_status || drive.status}
                     </Badge>
                   </div>
 
                   {/* Actions */}
                   <div className="flex gap-2 justify-end">
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => setEditingDrive(drive)}>
                       <Edit2 className="w-4 h-4 mr-1" />
                       Edit
                     </Button>
@@ -156,7 +192,7 @@ export default function TPODrivesPage() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleDelete(drive.id)}
+                      onClick={() => handleDelete(drive.drive_id || drive.id)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

@@ -39,8 +39,10 @@ export default function StudentProfileFormPage() {
 
   // Academic / UG info
   const [academic, setAcademic] = useState({
-    dept_id: "", prn: "", program: "", running_backlogs: 0, total_kt: 0, cgpa: "",
+    dept_id: "", prn: "", course_id: "", running_backlogs: 0, total_kt: 0, cgpa: "",
   });
+
+  const [departmentCourses, setDepartmentCourses] = useState([]);
 
   // Education records
   const [educations, setEducations] = useState([]);
@@ -57,6 +59,17 @@ export default function StudentProfileFormPage() {
   const jsonHeaders = { ...headers, "Content-Type": "application/json" };
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    if (academic.dept_id) {
+      fetch(`http://localhost:5000/api/v1/courses?dept_id=${academic.dept_id}`, { headers })
+        .then(res => res.ok ? res.json() : [])
+        .then(data => setDepartmentCourses(data))
+        .catch(err => console.error(err));
+    } else {
+      setDepartmentCourses([]);
+    }
+  }, [academic.dept_id]);
 
   const loadData = async () => {
     try {
@@ -90,7 +103,7 @@ export default function StudentProfileFormPage() {
         setAcademic({
           dept_id: data.dept_id || "",
           prn: data.prn || "",
-          program: data.program || "",
+          course_id: data.course_id || "",
           running_backlogs: data.running_backlogs || 0,
           total_kt: data.total_kt || 0,
           cgpa: data.cgpa || "",
@@ -367,14 +380,26 @@ export default function StudentProfileFormPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">Department *</label>
-                  <select value={academic.dept_id} onChange={e => setAcademic({ ...academic, dept_id: e.target.value })} className="w-full border rounded-md px-3 py-2 text-sm bg-white">
+                  <select 
+                    value={academic.dept_id} 
+                    onChange={e => setAcademic({ ...academic, dept_id: e.target.value, course_id: "" })}
+                    className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                  >
                     <option value="">Select department</option>
                     {departments.map(d => <option key={d.dept_id} value={d.dept_id}>{d.dept_code} — {d.dept_name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Program *</label>
-                  <Input value={academic.program} onChange={e => setAcademic({ ...academic, program: e.target.value })} placeholder="e.g. B.Tech Computer Science" />
+                  <label className="text-sm font-medium">Course *</label>
+                  <select 
+                    value={academic.course_id} 
+                    onChange={e => setAcademic({ ...academic, course_id: e.target.value })}
+                    className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                    disabled={!academic.dept_id || departmentCourses.length === 0}
+                  >
+                    <option value="">Select course</option>
+                    {departmentCourses.map(c => <option key={c.course_id} value={c.course_id}>{c.course_name}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label className="text-sm font-medium">Total KT</label>
@@ -591,7 +616,7 @@ export default function StudentProfileFormPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
                 <div><span className="text-gray-500">PRN:</span> <span className="font-medium">{academic.prn || "—"}</span></div>
                 <div><span className="text-gray-500">Department:</span> <span className="font-medium">{departments.find(d => d.dept_id == academic.dept_id)?.dept_name || "—"}</span></div>
-                <div><span className="text-gray-500">Program:</span> <span className="font-medium">{academic.program || "—"}</span></div>
+                <div><span className="text-gray-500">Course:</span> <span className="font-medium">{departmentCourses.find(c => c.course_id == academic.course_id)?.course_name || "—"}</span></div>
                 <div><span className="text-gray-500">Total KT:</span> <span className="font-medium">{academic.total_kt}</span></div>
                 <div><span className="text-gray-500">Backlogs:</span> <span className="font-medium">{academic.running_backlogs}</span></div>
                 <div><span className="text-gray-500">CGPA:</span> <span className="font-medium">{academic.cgpa || "—"}</span></div>

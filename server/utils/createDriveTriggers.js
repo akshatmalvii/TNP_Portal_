@@ -16,7 +16,7 @@ const createDriveTriggers = async () => {
         VALUES (
           NEW.created_by_staff, 
           'CREATE_DRIVE', 
-          'Drive created for company_role_id: ' || NEW.company_role_id,
+          'Drive created: ' || NEW.role_title,
           NOW()
         );
         RETURN NEW;

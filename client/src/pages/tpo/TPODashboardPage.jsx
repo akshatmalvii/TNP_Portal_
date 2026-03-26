@@ -1,9 +1,4 @@
-import React from "react";
-import {
-  mockDrives,
-  mockAnalytics,
-  mockCompanyRequests,
-} from "./mockData";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -22,36 +17,55 @@ import {
 import { Link } from "react-router-dom";
 
 export default function TPODashboard() {
+  const [drives, setDrives] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDrives();
+  }, []);
+
+  const fetchDrives = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/v1/tpo/drives", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setDrives(await res.json());
+    } catch (err) {
+      console.error("Failed to load drives", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const stats = [
     {
       title: "Total Drives Posted",
-      value: mockDrives.length,
+      value: drives.length,
       icon: Briefcase,
       color: "text-blue-500",
     },
     {
       title: "Students Placed",
-      value: mockAnalytics.totalPlaced,
+      value: "0*", // Analytics pending
       icon: CheckCircle2,
       color: "text-green-500",
     },
     {
       title: "Avg. Salary",
-      value: `${mockAnalytics.averageSalary} LPA`,
+      value: "0 LPA", // Analytics pending
       icon: TrendingUp,
       color: "text-purple-500",
     },
     {
-      title: "Companies",
-      value: mockAnalytics.companyCount,
+      title: "Active Drives",
+      value: drives.filter(d => d.drive_status === "OPEN" || d.drive_status === "Active").length,
       icon: Building2,
       color: "text-orange-500",
     },
   ];
 
-  const pendingApprovals = mockCompanyRequests.filter(
-    (r) => r.status === "Pending Approval"
-  );
+  const pendingApprovals = []; // TBD based on new company creation workflows
 
   return (
     <div className="p-6 space-y-6">
@@ -167,7 +181,7 @@ export default function TPODashboard() {
                 Placement %
               </p>
               <p className="text-3xl font-bold text-primary mt-1">
-                {mockAnalytics.placementPercentage}%
+                N/A
               </p>
             </div>
 
@@ -176,7 +190,7 @@ export default function TPODashboard() {
                 Highest Salary
               </p>
               <p className="text-2xl font-bold mt-1">
-                {mockAnalytics.highestSalary} LPA
+                N/A
               </p>
             </div>
 
@@ -200,33 +214,38 @@ export default function TPODashboard() {
 
         <CardContent>
           <div className="space-y-3">
-            {mockDrives.slice(0, 3).map((drive) => (
+            {drives.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                No active drives.
+              </p>
+            ) : (
+              drives.slice(0, 3).map((drive) => (
               <div
-                key={drive.id}
+                key={drive.drive_id || drive.id}
                 className="p-4 border rounded-lg hover:bg-secondary/20"
               >
                 <div className="flex justify-between">
                   <div>
                     <h3 className="font-semibold">
-                      {drive.company}
+                      {drive.company_name}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {drive.position}
+                      {drive.role_title}
                     </p>
                   </div>
 
                   <Badge
                     className={
-                      drive.status === "Open"
+                      (drive.drive_status || "") === "OPEN"
                         ? "bg-green-500/10 text-green-700 border border-green-200"
                         : "bg-gray-500/10 text-gray-700 border border-gray-200"
                     }
                   >
-                    {drive.status}
+                    {drive.drive_status || "Closed"}
                   </Badge>
                 </div>
               </div>
-            ))}
+            )))}
           </div>
 
           <Link to="/dashboard/tpo/drives">

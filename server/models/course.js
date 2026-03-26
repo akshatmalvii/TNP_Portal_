@@ -12,7 +12,14 @@ const Course = sequelize.define(
         course_name: {
             type: DataTypes.STRING(100),
             allowNull: false,
-            unique: true,
+        },
+        dept_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'departments',
+                key: 'dept_id',
+            },
         },
         created_at: {
             type: DataTypes.DATE,
@@ -22,6 +29,12 @@ const Course = sequelize.define(
     {
         tableName: 'courses',
         timestamps: false,
+        indexes: [
+            {
+                unique: true,
+                fields: ['course_name', 'dept_id']
+            }
+        ]
     },
 );
 

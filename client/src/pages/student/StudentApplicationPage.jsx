@@ -83,7 +83,7 @@ export default function StudentApplicationPage() {
         <div className="bg-white shadow rounded-lg p-5">
           <p className="text-sm text-gray-500">Total Applications</p>
           <p className="text-3xl font-bold mt-2">
-            {mockApplications.length}
+            {applications.length}
           </p>
         </div>
 

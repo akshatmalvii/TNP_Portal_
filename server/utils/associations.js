@@ -72,9 +72,9 @@ CompanyContact.belongsTo(Company, {foreignKey: 'company_id'});
 Company.hasMany(CompanyRole, {foreignKey: 'company_id'});
 CompanyRole.belongsTo(Company, {foreignKey: 'company_id'});
 
-// ─── COMPANY ROLE ↔ DRIVE ───────────────────────────────
-CompanyRole.hasMany(Drive, {foreignKey: 'company_role_id'});
-Drive.belongsTo(CompanyRole, {foreignKey: 'company_role_id'});
+// ─── COMPANY ↔ DRIVE ───────────────────────────────
+Company.hasMany(Drive, {foreignKey: 'company_id'});
+Drive.belongsTo(Company, {foreignKey: 'company_id'});
 
 // ─── STAFF ADMIN ↔ DRIVE (created / approved) ──────────
 StaffAdmin.hasMany(Drive, {

@@ -21,14 +21,6 @@ const DEPARTMENTS = [
     {dept_code: 'ECE', dept_name: 'Electronics and Communication Engineering'},
 ];
 
-const COURSES = [
-    {course_name: 'B.Tech'},
-    {course_name: 'MCA'},
-    {course_name: 'BCA'},
-    {course_name: 'Diploma'},
-    {course_name: 'M.Tech'},
-];
-
 const TPO_HEAD_EMAIL = 'tpohead@tnp.edu.in';
 const TPO_HEAD_PASSWORD = 'Admin@123';
 
@@ -42,15 +34,6 @@ const seedRolesAndAdmin = async () => {
             });
         }
         console.log('✅ Departments seeded successfully');
-
-        // Seed courses
-        for (const course of COURSES) {
-            await Course.findOrCreate({
-                where: {course_name: course.course_name},
-                defaults: course,
-            });
-        }
-        console.log('✅ Courses seeded successfully');
         // Seed roles
         for (const role of ROLES) {
             await Role.findOrCreate({

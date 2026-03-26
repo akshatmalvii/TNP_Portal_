@@ -37,7 +37,7 @@ const updateProfile = async (user_id, data) => {
     "mobile_number", "parent_mobile_number", "blood_group",
     "category", "nationality", "height_cm", "weight_kg",
     "present_address", "permanent_address",
-    "dept_id", "course_id", "prn", "program", "running_backlogs", "total_kt", "cgpa",
+    "dept_id", "course_id", "prn", "running_backlogs", "total_kt", "cgpa",
   ];
 
   const updateData = {};

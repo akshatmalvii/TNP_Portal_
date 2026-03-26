@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { mockCompanyRequests } from "./mockData";
 import { Card, CardContent } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { CheckCircle2, XCircle, Clock } from "lucide-react";
 
 export default function ApprovalsPage() {
-  const [requests, setRequests] = useState(mockCompanyRequests);
+  const [requests, setRequests] = useState([]);
 
   const handleApprove = (id) => {
     setRequests(
