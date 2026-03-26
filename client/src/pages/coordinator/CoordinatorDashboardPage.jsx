@@ -1,5 +1,4 @@
-import React from "react";
-import { mockStudents, mockPendingApplications, mockAnalytics } from "./mockData";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
@@ -7,45 +6,92 @@ import { Users, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function CoordinatorDashboard() {
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:5000/api/v1/verification/coordinator/all", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStudents(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch students", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStudents();
+  }, []);
+
+  const totalStudents = students.length;
+  // Placeholders pending Offer module
+  const totalPlaced = 0;
+  const placementPercentage = totalStudents > 0 ? ((totalPlaced / totalStudents) * 100).toFixed(1) : 0;
+  
+  const pendingVerifications = students.filter(
+    (s) => s.StudentVerificationRequest?.coordinator_status === "Pending"
+  );
+
   const stats = [
     {
       title: "Total Students",
-      value: mockAnalytics.totalStudents,
+      value: totalStudents,
       icon: Users,
       color: "text-blue-500",
     },
     {
       title: "Placed Students",
-      value: mockAnalytics.totalPlaced,
+      value: totalPlaced,
       icon: CheckCircle2,
       color: "text-green-500",
     },
     {
       title: "Pending Verifications",
-      value: mockPendingApplications.length,
+      value: pendingVerifications.length,
       icon: Clock,
       color: "text-yellow-500",
     },
     {
       title: "Placement %",
-      value: `${mockAnalytics.placementPercentage}%`,
+      value: `${placementPercentage}%`,
       icon: TrendingUp,
       color: "text-purple-500",
     },
   ];
 
-  const recentVerifications = mockPendingApplications.slice(0, 3);
+  const recentVerifications = pendingVerifications.slice(0, 3);
+
+  const getStatusText = (student) => {
+    const vr = student.StudentVerificationRequest;
+    if (!vr) return "Not Verified";
+    if (vr.coordinator_status === "Pending") return "Pending Review";
+    if (vr.coordinator_status === "Approved") return "Verified";
+    if (vr.coordinator_status === "Rejected") return "Rejected";
+    return "Unknown";
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Pending Verification":
-        return "bg-yellow-500/10 text-yellow-700 border-yellow-200";
+      case "Verified":
+        return "bg-green-500/10 text-green-700 border-green-200";
       case "Pending Review":
-        return "bg-blue-500/10 text-blue-700 border-blue-200";
+        return "bg-yellow-500/10 text-yellow-700 border-yellow-200";
+      case "Rejected":
+        return "bg-red-500/10 text-red-700 border-red-200";
       default:
         return "bg-gray-500/10 text-gray-700 border-gray-200";
     }
   };
+
+  if (loading) {
+    return <div className="p-6 text-gray-500">Loading dashboard...</div>;
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -105,35 +151,36 @@ export default function CoordinatorDashboard() {
               ) : (
                 recentVerifications.map((app) => (
                   <div
-                    key={app.id}
+                    key={app.student_id}
                     className="p-4 border border-border rounded-lg hover:bg-secondary/20 transition"
                   >
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-semibold text-foreground">
-                          {app.studentName}
+                          {app.full_name || "N/A"}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {app.company} - {app.position}
+                          {app.Department?.dept_name} - {app.prn}
                         </p>
                       </div>
 
                       <Badge
-                        className={getStatusColor(app.status) + " border"}
+                        className={getStatusColor("Pending Review") + " border"}
                       >
-                        {app.status}
+                        Pending Review
                       </Badge>
                     </div>
 
                     <p className="text-xs text-muted-foreground mt-3">
-                      Documents: {app.documents}
+                      Documents: Available
                     </p>
 
                     <div className="flex gap-2 mt-3">
-                      <Button className="bg-green-600 hover:bg-green-700">
-                        Approve
-                      </Button>
-                      <Button variant="outline">Request Info</Button>
+                      <Link to="/dashboard/coordinator/verifications">
+                        <Button className="bg-green-600 hover:bg-green-700">
+                          Review
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 ))
@@ -158,21 +205,21 @@ export default function CoordinatorDashboard() {
             <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
               <p className="text-xs text-muted-foreground">Avg. Salary</p>
               <p className="text-2xl font-bold text-foreground mt-1">
-                {mockAnalytics.averageSalary} LPA
+                -- LPA
               </p>
             </div>
 
             <div className="p-4 bg-accent/10 rounded-lg border border-accent/20">
               <p className="text-xs text-muted-foreground">Highest Salary</p>
               <p className="text-2xl font-bold text-foreground mt-1">
-                {mockAnalytics.highestSalary} LPA
+                -- LPA
               </p>
             </div>
 
             <div className="p-4 bg-secondary/10 rounded-lg border border-secondary/20">
               <p className="text-xs text-muted-foreground">Companies</p>
               <p className="text-2xl font-bold text-foreground mt-1">
-                {mockAnalytics.companyCount}
+                --
               </p>
             </div>
           </CardContent>
@@ -202,34 +249,33 @@ export default function CoordinatorDashboard() {
               </thead>
 
               <tbody>
-                {mockStudents.slice(0, 5).map((student) => (
-                  <tr
-                    key={student.id}
-                    className="border-b border-border hover:bg-secondary/50"
-                  >
-                    <td className="py-3 px-4">{student.name}</td>
-                    <td className="py-3 px-4 text-muted-foreground">
-                      {student.department}
-                    </td>
-                    <td className="py-3 px-4 font-medium">
-                      {student.cgpa}
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge
-                        variant={
-                          student.status === "Placed"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {student.status}
-                      </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-muted-foreground">
-                      {student.placedCompany}
-                    </td>
-                  </tr>
-                ))}
+                {students.slice(0, 5).map((student) => {
+                  const statusText = getStatusText(student);
+                  return (
+                    <tr
+                      key={student.student_id}
+                      className="border-b border-border hover:bg-secondary/50"
+                    >
+                      <td className="py-3 px-4">{student.full_name || "N/A"}</td>
+                      <td className="py-3 px-4 text-muted-foreground">
+                        {student.Department?.dept_name || "N/A"}
+                      </td>
+                      <td className="py-3 px-4 font-medium">
+                        {student.cgpa || "-"}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge
+                          className={getStatusColor(statusText) + " border"}
+                        >
+                          {statusText}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-muted-foreground">
+                        -
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
