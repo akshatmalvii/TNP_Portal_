@@ -212,7 +212,7 @@ export default function VerificationsPage() {
                           {docs.map((doc) => (
                             <a
                               key={doc.document_id}
-                              href={doc.file_url}
+                              href={doc.view_url || doc.file_url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-xs rounded-full border hover:bg-primary/20 transition"
