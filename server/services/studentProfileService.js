@@ -6,6 +6,89 @@ import Department from "../models/department.js";
 import Course from "../models/course.js";
 import { uploadToCloudinary } from "../middleware/uploadMiddleware.js";
 
+const normalizeOptionalString = (value) => {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string") return value;
+
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+};
+
+const normalizeOptionalInteger = (value, fieldName) => {
+  if (value === undefined || value === null || value === "") return null;
+
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed)) {
+    throw { status: 400, message: `${fieldName} must be a valid number` };
+  }
+
+  return parsed;
+};
+
+const normalizeOptionalDecimal = (value, fieldName) => {
+  if (value === undefined || value === null || value === "") return null;
+
+  const parsed = Number.parseFloat(value);
+  if (Number.isNaN(parsed)) {
+    throw { status: 400, message: `${fieldName} must be a valid number` };
+  }
+
+  return parsed;
+};
+
+const normalizeEducationPayload = (data = {}) => {
+  const education_type = normalizeOptionalString(data.education_type);
+
+  const normalized = {
+    education_type,
+    institution_name: normalizeOptionalString(data.institution_name),
+    board_or_university: normalizeOptionalString(data.board_or_university),
+    course_name: normalizeOptionalString(data.course_name),
+    program: normalizeOptionalString(data.program),
+    stream: normalizeOptionalString(data.stream),
+    passing_year: normalizeOptionalInteger(data.passing_year, "Passing year"),
+    percentage: normalizeOptionalDecimal(data.percentage, "Percentage"),
+    cgpa: normalizeOptionalDecimal(data.cgpa, "CGPA"),
+  };
+
+  if (!normalized.education_type) {
+    throw { status: 400, message: "education_type is required" };
+  }
+
+  if (!["SSC", "HSC", "Diploma"].includes(normalized.education_type)) {
+    throw { status: 400, message: "Invalid education type" };
+  }
+
+  if (!normalized.institution_name) {
+    throw { status: 400, message: "Institution name is required" };
+  }
+
+  if (!normalized.passing_year) {
+    throw { status: 400, message: "Passing year is required" };
+  }
+
+  if (normalized.education_type === "SSC" || normalized.education_type === "HSC") {
+    if (!normalized.board_or_university) {
+      throw { status: 400, message: "Board name is required" };
+    }
+  }
+
+  if (normalized.education_type === "HSC") {
+    if (!normalized.stream) {
+      throw { status: 400, message: "Stream is required for HSC" };
+    }
+    if (normalized.percentage === null) {
+      throw { status: 400, message: "Percentage is required for HSC" };
+    }
+  }
+
+  if (normalized.education_type === "Diploma" && !normalized.course_name) {
+    throw { status: 400, message: "Course name is required for Diploma" };
+  }
+
+  return normalized;
+};
+
 const getProfile = async (user_id) => {
   const student = await Student.findOne({
     where: { user_id },
@@ -53,22 +136,20 @@ const updateProfile = async (user_id, data) => {
 };
 
 const addEducation = async (student_id, data) => {
-  if (!data.education_type) {
-    throw { status: 400, message: "education_type is required" };
-  }
+  const normalizedData = normalizeEducationPayload(data);
 
   // Check if this education type already exists for this student
   const existing = await StudentEducation.findOne({
-    where: { student_id, education_type: data.education_type },
+    where: { student_id, education_type: normalizedData.education_type },
   });
 
   if (existing) {
     // Update existing record
-    await existing.update(data);
+    await existing.update(normalizedData);
     return existing;
   }
 
-  return StudentEducation.create({ student_id, ...data });
+  return StudentEducation.create({ student_id, ...normalizedData });
 };
 
 const deleteEducation = async (education_id, student_id) => {
