@@ -102,6 +102,26 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
     fetchMetadata();
   }, [initialData]);
 
+  useEffect(() => {
+    setFormData((prev) => {
+      const visibleCourseIds = new Set(
+        courses
+          .filter((course) => prev.allowed_departments.includes(course.dept_id))
+          .map((course) => course.course_id)
+      );
+
+      const nextAllowedCourses = prev.allowed_courses.filter((courseId) =>
+        visibleCourseIds.has(courseId)
+      );
+
+      if (nextAllowedCourses.length === prev.allowed_courses.length) {
+        return prev;
+      }
+
+      return { ...prev, allowed_courses: nextAllowedCourses };
+    });
+  }, [courses, formData.allowed_departments]);
+
   const handleToggleArray = (arrayName, id) => {
     setFormData((prev) => {
       const arr = prev[arrayName];
@@ -112,6 +132,19 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
       }
     });
   };
+
+  const getDepartmentCode = (deptId) =>
+    departments.find((department) => department.dept_id === deptId)?.dept_code || "Unknown";
+
+  const visibleCourses = courses
+    .filter((course) => formData.allowed_departments.includes(course.dept_id))
+    .sort((a, b) => {
+      const nameCompare = a.course_name.localeCompare(b.course_name);
+      if (nameCompare !== 0) return nameCompare;
+      return getDepartmentCode(a.dept_id).localeCompare(getDepartmentCode(b.dept_id));
+    });
+
+  const getCourseLabel = (course) => `${course.course_name} (${getDepartmentCode(course.dept_id)})`;
 
   const addDynamicField = () => {
     setDynamicFields([...dynamicFields, { label: "", type: "TEXT", required: false, order: dynamicFields.length + 1 }]);
@@ -136,8 +169,9 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
     try {
       const token = localStorage.getItem("token");
       
-      const visibleCoursesList = courses.filter(c => formData.allowed_departments.includes(c.dept_id));
-      const validAllowedCourses = formData.allowed_courses.filter(id => visibleCoursesList.some(vc => vc.course_id === id));
+      const validAllowedCourses = formData.allowed_courses.filter((id) =>
+        visibleCourses.some((course) => course.course_id === id)
+      );
 
       const payload = {
         ...formData,
@@ -293,7 +327,7 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
             <div>
               <label className="text-sm font-medium block mb-2">Allowed Courses * <span className="text-xs font-normal text-gray-500">(Mapped to selected departments)</span></label>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                {courses.filter(c => formData.allowed_departments.includes(c.dept_id)).map(c => (
+                {visibleCourses.map(c => (
                   <label key={c.course_id} className="flex items-center gap-2 text-sm">
                     <input 
                       type="checkbox" 
@@ -301,7 +335,7 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
                       checked={formData.allowed_courses.includes(c.course_id)}
                       onChange={() => handleToggleArray("allowed_courses", c.course_id)}
                     />
-                    {c.course_name}
+                    {getCourseLabel(c)}
                   </label>
                 ))}
                 {formData.allowed_departments.length === 0 && <span className="text-gray-400 text-sm italic col-span-2">Select a department first</span>}
