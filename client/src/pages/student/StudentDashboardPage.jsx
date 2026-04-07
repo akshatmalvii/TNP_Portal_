@@ -27,7 +27,7 @@ export default function StudentDashboardPage() {
         const profile = await profileRes.json();
 
         // If profile not filled (no name), redirect to form
-        if (!profile.full_name || !profile.dept_id || !profile.program) {
+        if (!profile.full_name || !profile.dept_id || !profile.course_id) {
           navigate("/dashboard/student/profile-form");
           return;
         }
@@ -197,7 +197,7 @@ export default function StudentDashboardPage() {
           <div className="pt-4 mt-4 border-t">
             <h4 className="font-semibold mb-2">Available Drives</h4>
             <p className="text-2xl font-bold text-indigo-600">
-              {Array.isArray(drives) ? drives.filter((d) => d.drive_status === "OPEN").length : 0}
+              {Array.isArray(drives) ? drives.filter((d) => d.drive_status === "Active").length : 0}
             </p>
             <p className="text-xs text-gray-500">drives available to apply</p>
           </div>
