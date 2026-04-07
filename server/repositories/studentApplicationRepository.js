@@ -1,10 +1,15 @@
 import StudentApplication from "../models/student_application.js";
 import Drive from "../models/drive.js";
+import Company from "../models/company.js";
 
 const findByStudent = async (student_id) => {
   return StudentApplication.findAll({
     where: { student_id },
-    include: [{ model: Drive, attributes: ['company_name', 'position'] }]
+    include: [{
+      model: Drive,
+      attributes: ['drive_id', 'role_title', 'drive_status', 'package_lpa', 'deadline'],
+      include: [{ model: Company, attributes: ['company_name'] }]
+    }]
   });
 };
 

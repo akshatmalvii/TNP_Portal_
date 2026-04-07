@@ -11,12 +11,61 @@ import DynamicFormField from "../models/dynamic_form_field.js";
 
 const listOpenDrivesForStudent = async (student_id) => {
   const student = await Student.findOne({ where: { user_id: student_id } });
-  if (!student) {
-    throw { status: 404, message: "Student profile not found" };
-  }
+  if (!student) throw { status: 404, message: "Student profile not found" };
+  const StudentVerificationRequest = (await import("../models/student_verification_request.js")).default;
+  const vr = await StudentVerificationRequest.findOne({ where: { student_id: student.student_id } });
+  if (!vr || vr.coordinator_status !== "Approved") return []; // Unverified students see nothing
 
-  const drives = await driveRepository.findOpenForDept(student.dept_id);
-  return drives;
+  const StudentEducation = (await import("../models/student_education.js")).default;
+  const educations = await StudentEducation.findAll({ where: { student_id: student.student_id } });
+  
+  // Extract 10th and 12th grades
+  const ssc = educations.find(e => e.education_type === "SSC");
+  const hsc = educations.find(e => e.education_type === "HSC" || e.education_type === "Diploma");
+  const tenth_percent = ssc ? parseFloat(ssc.percentage) : 0;
+  const twelfth_percent = hsc ? parseFloat(hsc.percentage) : 0;
+
+  const Company = (await import("../models/company.js")).default;
+  const drives = await Drive.findAll({
+    where: { drive_status: "Active", approval_status: "Approved" },
+    include: [
+      { model: Company, attributes: ["company_name"] },
+      { model: DriveAllowedDepartment },
+      { model: DriveAllowedCourse },
+      { model: DriveEligibility }
+    ],
+    order: [["created_at", "DESC"]]
+  });
+
+  const eligibleDrives = drives.filter(drive => {
+    // Check Dept and Course Allowances
+    const allowedDepts = drive.DriveAllowedDepartments.map(d => d.dept_id);
+    if (allowedDepts.length > 0 && !allowedDepts.includes(student.dept_id)) return false;
+
+    const allowedCourses = drive.DriveAllowedCourses.map(c => c.course_id);
+    if (allowedCourses.length > 0 && !allowedCourses.includes(student.course_id)) return false;
+
+    // Check Eligibility Rules
+    if (drive.DriveEligibility) {
+      const e = drive.DriveEligibility;
+      
+      if (e.min_cgpa && parseFloat(student.cgpa || 0) < parseFloat(e.min_cgpa)) return false;
+      if (e.max_backlogs !== null && (student.running_backlogs || 0) > e.max_backlogs) return false;
+      if (e.min_10th_percent && tenth_percent < parseFloat(e.min_10th_percent)) return false;
+      if (e.min_12th_percent && twelfth_percent < parseFloat(e.min_12th_percent)) return false;
+      if (e.gender && e.gender !== "Any" && student.gender !== e.gender) return false;
+      
+      // We skip passing_year strictly unless student schema supports it.
+    }
+
+    return true;
+  });
+
+  return eligibleDrives.map(d => {
+    const plain = d.get({ plain: true });
+    plain.company_name = plain.Company?.company_name || 'Unknown Company';
+    return plain;
+  });
 };
 
 const getStudentApplications = async (student_id) => {
@@ -28,27 +77,79 @@ const getStudentApplications = async (student_id) => {
   return studentApplicationRepository.findByStudent(student.student_id);
 };
 
+const getDriveFormFields = async (drive_id) => {
+  return DynamicFormField.findAll({
+    where: { drive_id },
+    order: [['field_order', 'ASC']]
+  });
+};
+
 const applyToDrive = async (student_id, drive_id, application_data = null) => {
   const student = await Student.findOne({ where: { user_id: student_id } });
-  if (!student) {
-    throw { status: 404, message: "Student profile not found" };
-  }
-
-  if (!student.is_verified) {
-    throw { status: 403, message: "Student verification required before applying to drives" };
-  }
+  if (!student) throw { status: 404, message: "Student profile not found" };
+  const StudentVerificationRequest = (await import("../models/student_verification_request.js")).default;
+  const vr = await StudentVerificationRequest.findOne({ where: { student_id: student.student_id } });
+  if (!vr || vr.coordinator_status !== "Approved") throw { status: 403, message: "Student verification required before applying to drives" };
 
   const existing = await studentApplicationRepository.findByStudentAndDrive(student.student_id, drive_id);
-  if (existing) {
-    throw { status: 400, message: "Already applied to this drive" };
+  if (existing) throw { status: 400, message: "Already applied to this drive" };
+
+  // Double Check Eligibility serverside blocking API forgery
+  const eligibleDrives = await listOpenDrivesForStudent(student_id);
+  const isEligible = eligibleDrives.some(d => d.drive_id === parseInt(drive_id) || d.id === parseInt(drive_id));
+  if (!isEligible) throw { status: 403, message: "You are not eligible to apply for this drive based on criteria." };
+
+  const fields = await DynamicFormField.findAll({ where: { drive_id } });
+  const responses = application_data || []; // Expects array of { fieldId, value }
+
+  // Type Validation & Requirements checks
+  for (const field of fields) {
+    const response = responses.find(r => r.fieldId === field.field_id);
+    if (field.is_required && (!response || response.value === undefined || response.value === "")) {
+      throw { status: 400, message: `Field '${field.field_label}' is required.` };
+    }
+    if (response && response.value !== "") {
+      if (field.field_type === "NUMBER" && isNaN(response.value)) {
+        throw { status: 400, message: `Field '${field.field_label}' must be a numeric value.` };
+      }
+    }
   }
 
-  return studentApplicationRepository.create({
-    student_id: student.student_id,
-    drive_id,
-    application_data,
-    application_status: "APPLIED"
-  });
+  const DynamicFormResponse = (await import("../models/dynamic_form_response.js")).default;
+  const StudentApplication = (await import("../models/student_application.js")).default;
+
+  const transaction = await sequelize.transaction();
+  try {
+    const application = await StudentApplication.create({
+      student_id: student.student_id,
+      drive_id,
+      application_status: "APPLIED"
+    }, { transaction });
+
+    if (responses.length > 0) {
+      const responsePayloads = responses.map(r => {
+        const field = fields.find(f => f.field_id === r.fieldId);
+        if (!field) return null;
+        return {
+          application_id: application.application_id,
+          field_id: field.field_id,
+          text_value: field.field_type === "TEXT" ? String(r.value) : null,
+          number_value: field.field_type === "NUMBER" ? parseFloat(r.value) : null,
+          file_url: field.field_type === "FILE" ? String(r.value) : null
+        };
+      }).filter(Boolean);
+
+      if (responsePayloads.length > 0) {
+        await DynamicFormResponse.bulkCreate(responsePayloads, { transaction });
+      }
+    }
+
+    await transaction.commit();
+    return application;
+  } catch (error) {
+    await transaction.rollback();
+    throw error;
+  }
 };
 
 const createDriveTransaction = async (driveData, staffId) => {
@@ -249,6 +350,7 @@ export default {
   listOpenDrivesForStudent,
   getStudentApplications,
   applyToDrive,
+  getDriveFormFields,
   createDriveTransaction,
   updateDriveTransaction,
   deleteDrive

@@ -109,8 +109,6 @@ const startServer = async () => {
         await Department.sync({alter: true});
         await Company.sync({alter: true});
         
-        // Force drop courses to safely apply new NOT NULL dept_id constraints
-        await sequelize.query('DROP TABLE IF EXISTS "courses" CASCADE');
         await Course.sync({alter: true});
         
         await PlacementPolicyRule.sync({alter: true});
@@ -120,8 +118,6 @@ const startServer = async () => {
         await StaffAdmin.sync({alter: true});
         await DepartmentTpoAssignment.sync({alter: true});
         
-        // Nullify dangling course references from old students before re-applying FK constraint
-        await sequelize.query('UPDATE students SET course_id = NULL').catch(() => {});
         await Student.sync({alter: true});
         // Fix: Sequelize alter doesn't always drop NOT NULL — force it
         await sequelize.query('ALTER TABLE students ALTER COLUMN dept_id DROP NOT NULL;').catch(() => {});
@@ -138,8 +134,6 @@ const startServer = async () => {
         // 4. Tables depending on drives
         await DriveAllowedDepartment.sync({alter: true});
         
-        // Wipe dangling allowed courses since the target courses table was truncated previously
-        await sequelize.query('DELETE FROM drive_allowed_courses').catch(() => {});
         await DriveAllowedCourse.sync({alter: true});
         await DriveEligibility.sync({alter: true});
         await DepartmentPolicyRule.sync({alter: true});
