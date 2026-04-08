@@ -39,6 +39,7 @@ import seedRolesAndAdmin from './seed.js';
 import seedCourses from './utils/seedCourses.js';
 import createTnpTrigger from './utils/createTnpTrigger.js';
 import createDriveTriggers from './utils/createDriveTriggers.js';
+import ensureDepartmentPolicyHistorySchema from './utils/ensureDepartmentPolicyHistorySchema.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -139,6 +140,7 @@ const startServer = async () => {
         await DriveAllowedCourse.sync({alter: true});
         await DriveEligibility.sync({alter: true});
         await DepartmentPolicyRule.sync({alter: true});
+        await ensureDepartmentPolicyHistorySchema();
         await DrivePolicyOverride.sync({alter: true});
         await DynamicFormField.sync({alter: true});
         await StudentApplication.sync({alter: true});

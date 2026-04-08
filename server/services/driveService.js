@@ -11,6 +11,9 @@ import DriveEligibility from "../models/drive_eligibility.js";
 import DynamicFormField from "../models/dynamic_form_field.js";
 import { uploadToCloudinary } from "../middleware/uploadMiddleware.js";
 import { getSignedCloudinaryDownloadUrl } from "../utils/cloudinaryFileUrl.js";
+import departmentPolicyService from "./departmentPolicyService.js";
+import StudentApplication from "../models/student_application.js";
+import Offer from "../models/offer.js";
 
 const attachSignedDriveDocuments = (drive) => {
   const plainDrive = drive.get ? drive.get({ plain: true }) : drive;
@@ -21,6 +24,85 @@ const attachSignedDriveDocuments = (drive) => {
   }));
 
   return plainDrive;
+};
+
+const PLACEMENT_OFFER_CATEGORIES = new Set(["Placement", "Internship+PPO", "PPO_Conversion"]);
+
+const getAcceptedOffersForStudent = async (studentId) => {
+  return StudentApplication.findAll({
+    where: { student_id: studentId },
+    include: [
+      {
+        model: Offer,
+        where: { acceptance_status: "Accepted" },
+        required: true,
+      },
+      {
+        model: Drive,
+        attributes: ["drive_id", "offer_type", "package_lpa"],
+        required: false,
+      },
+    ],
+  });
+};
+
+const getDepartmentPolicyContext = async (student) => {
+  const [policyAssignment, acceptedApplications] = await Promise.all([
+    departmentPolicyService.getDepartmentPolicyAt(student.dept_id),
+    getAcceptedOffersForStudent(student.student_id),
+  ]);
+
+  return { policyAssignment, acceptedApplications };
+};
+
+const evaluateDepartmentPlacementPolicy = (policyContext, drive) => {
+  const { policyAssignment, acceptedApplications } = policyContext;
+  const policy = policyAssignment?.PlacementPolicyRule;
+
+  if (!policy) {
+    return true;
+  }
+
+  if (acceptedApplications.length === 0) {
+    return true;
+  }
+
+  const acceptedOffers = acceptedApplications
+    .map((application) => ({
+      offer: application.Offer,
+      drive: application.Drive,
+    }))
+    .filter((record) => record.offer);
+
+  const hasAcceptedInternshipOnly = acceptedOffers.some(
+    ({ offer }) => offer.offer_category === "Internship"
+  );
+
+  const acceptedPlacementOffers = acceptedOffers.filter(({ offer }) =>
+    PLACEMENT_OFFER_CATEGORIES.has(offer.offer_category)
+  );
+
+  if (acceptedPlacementOffers.length === 0) {
+    return hasAcceptedInternshipOnly ? policy.allow_apply_after_internship !== false : true;
+  }
+
+  if (policy.allow_apply_after_placement === false) {
+    return false;
+  }
+
+  if (policy.ignore_package_condition) {
+    return true;
+  }
+
+  const highestAcceptedPackage = Math.max(
+    ...acceptedPlacementOffers.map(({ offer, drive: acceptedDrive }) =>
+      Number(offer.offered_package || acceptedDrive?.package_lpa || 0)
+    )
+  );
+  const drivePackage = Number(drive.package_lpa || 0);
+  const minGap = Number(policy.min_package_difference || 0);
+
+  return drivePackage - highestAcceptedPackage >= minGap;
 };
 
 const listOpenDrivesForStudent = async (student_id) => {
@@ -75,8 +157,17 @@ const listOpenDrivesForStudent = async (student_id) => {
 
     return true;
   });
+  const policyContext = await getDepartmentPolicyContext(student);
 
-  return eligibleDrives.map(d => {
+  const policyFilteredDrives = [];
+  for (const drive of eligibleDrives) {
+    const isAllowedByPolicy = evaluateDepartmentPlacementPolicy(policyContext, drive);
+    if (isAllowedByPolicy) {
+      policyFilteredDrives.push(drive);
+    }
+  }
+
+  return policyFilteredDrives.map(d => {
     const plain = attachSignedDriveDocuments(d);
     plain.company_name = plain.Company?.company_name || 'Unknown Company';
     return plain;

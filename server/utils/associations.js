@@ -114,8 +114,17 @@ DriveEligibility.belongsTo(Drive, {foreignKey: 'drive_id'});
 PlacementPolicyRule.hasMany(DepartmentPolicyRule, {foreignKey: 'policy_id'});
 DepartmentPolicyRule.belongsTo(PlacementPolicyRule, {foreignKey: 'policy_id'});
 
-Department.hasOne(DepartmentPolicyRule, {foreignKey: 'dept_id'});
+Department.hasMany(DepartmentPolicyRule, {foreignKey: 'dept_id'});
 DepartmentPolicyRule.belongsTo(Department, {foreignKey: 'dept_id'});
+
+StaffAdmin.hasMany(DepartmentPolicyRule, {
+    foreignKey: 'changed_by_staff',
+    as: 'departmentPolicyChanges',
+});
+DepartmentPolicyRule.belongsTo(StaffAdmin, {
+    foreignKey: 'changed_by_staff',
+    as: 'changedBy',
+});
 
 PlacementPolicyRule.hasMany(DrivePolicyOverride, {foreignKey: 'policy_id'});
 DrivePolicyOverride.belongsTo(PlacementPolicyRule, {foreignKey: 'policy_id'});

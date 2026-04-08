@@ -11,6 +11,7 @@ import DriveEligibility from "../models/drive_eligibility.js";
 import DynamicFormField from "../models/dynamic_form_field.js";
 import sequelize from "../config/db.js";
 import { getSignedCloudinaryDownloadUrl } from "../utils/cloudinaryFileUrl.js";
+import departmentPolicyService from "../services/departmentPolicyService.js";
 
 const getStaffContext = async (userId) => {
   const staffUser = await StaffAdmin.findOne({ where: { user_id: userId } });
@@ -204,6 +205,46 @@ const updateCoordinatorStatus = async (req, res) => {
   }
 };
 
+const getDepartmentPolicy = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const policy = await departmentPolicyService.getCurrentDepartmentPolicy(staffUser.dept_id);
+    return res.json(policy);
+  } catch (err) {
+    console.error("Error fetching department policy:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to fetch department policy" });
+  }
+};
+
+const getDepartmentPolicyHistory = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const history = await departmentPolicyService.getDepartmentPolicyHistory(staffUser.dept_id);
+    return res.json(history);
+  } catch (err) {
+    console.error("Error fetching department policy history:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to fetch department policy history" });
+  }
+};
+
+const updateDepartmentPolicy = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const policy = await departmentPolicyService.setDepartmentPolicy(
+      staffUser.dept_id,
+      staffUser.staff_id,
+      req.body
+    );
+    return res.json({
+      message: "Department policy updated successfully",
+      ...policy,
+    });
+  } catch (err) {
+    console.error("Error updating department policy:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to update department policy" });
+  }
+};
+
 const createCompany = async (req, res) => {
   const t = await sequelize.transaction();
   try {
@@ -278,5 +319,8 @@ export default {
   createCoordinator,
   deleteCoordinator,
   updateCoordinatorStatus,
+  getDepartmentPolicy,
+  getDepartmentPolicyHistory,
+  updateDepartmentPolicy,
   createCompany
 };

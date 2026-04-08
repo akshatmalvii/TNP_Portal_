@@ -27,6 +27,7 @@ import ApprovalsPage from './pages/tpo/ApprovalsPage';
 import AnalyticsPage from './pages/tpo/AnalyticsPage';
 import ManageCoordinatorsPage from './pages/tpo/ManageCoordinatorsPage';
 import TPOSettingsPage from './pages/tpo/TPOSettingsPage';
+import PlacementPolicyPage from './pages/tpo/PlacementPolicyPage';
 
 // TPO Head pages
 import TPOHeadDashboardPage from './pages/tpohead/TPOHeadDashboardPage';
@@ -96,6 +97,10 @@ function App() {
                     <Route
                         path='tpo/coordinators'
                         element={<ManageCoordinatorsPage />}
+                    />
+                    <Route
+                        path='tpo/policy'
+                        element={<PlacementPolicyPage />}
                     />
                     <Route path='tpo/drives' element={<TPODrivesPage />} />
                     <Route path='tpo/companies' element={<CompaniesPage />} />

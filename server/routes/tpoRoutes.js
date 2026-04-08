@@ -22,5 +22,8 @@ router.get("/coordinators", authorizeRoles("TPO"), tpoController.getCoordinators
 router.post("/coordinators", authorizeRoles("TPO"), tpoController.createCoordinator);
 router.put("/coordinators/:staff_id/status", authorizeRoles("TPO"), tpoController.updateCoordinatorStatus);
 router.delete("/coordinators/:staff_id", authorizeRoles("TPO"), tpoController.deleteCoordinator);
+router.get("/policy", authorizeRoles("TPO"), tpoController.getDepartmentPolicy);
+router.get("/policy/history", authorizeRoles("TPO"), tpoController.getDepartmentPolicyHistory);
+router.put("/policy", authorizeRoles("TPO"), tpoController.updateDepartmentPolicy);
 
 export default router;
