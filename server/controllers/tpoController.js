@@ -189,6 +189,21 @@ const deleteCoordinator = async (req, res) => {
   }
 };
 
+const updateCoordinatorStatus = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const coordinator = await adminService.updateCoordinatorStatusForDepartment(
+      req.params.staff_id,
+      staffUser.dept_id,
+      req.body.account_status
+    );
+    return res.json(coordinator);
+  } catch (err) {
+    console.error("Error updating coordinator status:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to update coordinator status" });
+  }
+};
+
 const createCompany = async (req, res) => {
   const t = await sequelize.transaction();
   try {
@@ -262,5 +277,6 @@ export default {
   getCoordinators,
   createCoordinator,
   deleteCoordinator,
+  updateCoordinatorStatus,
   createCompany
 };

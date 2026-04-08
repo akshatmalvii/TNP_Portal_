@@ -29,6 +29,7 @@ export default function ManageCoordinatorsPage() {
     const [form, setForm] = useState({email: '', password: ''});
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
+    const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
     const token = localStorage.getItem('token');
     const headers = {
@@ -113,6 +114,43 @@ export default function ManageCoordinatorsPage() {
         }
     };
 
+    const handleToggleStatus = async (coord) => {
+        const currentStatus = coord.User?.account_status || 'Active';
+        const nextStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+        const actionLabel = nextStatus === 'Inactive' ? 'deactivate' : 'activate';
+
+        if (
+            !confirm(
+                `Are you sure you want to ${actionLabel} this coordinator account?`,
+            )
+        ) {
+            return;
+        }
+
+        setUpdatingStatusId(coord.staff_id);
+        try {
+            const res = await fetch(
+                `${API_BASE}/tpo/coordinators/${coord.staff_id}/status`,
+                {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify({account_status: nextStatus}),
+                },
+            );
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to update status');
+            }
+
+            await fetchCoordinators();
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setUpdatingStatusId(null);
+        }
+    };
+
     return (
         <div className='p-6 space-y-6'>
             <div className='flex justify-between items-center'>
@@ -186,15 +224,37 @@ export default function ManageCoordinatorsPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className='text-right'>
-                                            <Button
-                                                variant='ghost'
-                                                size='icon'
-                                                onClick={() =>
-                                                    handleDelete(coord.staff_id)
-                                                }
-                                            >
-                                                <Trash2 className='w-4 h-4 text-red-500' />
-                                            </Button>
+                                            <div className='flex justify-end gap-2'>
+                                                <Button
+                                                    variant='outline'
+                                                    size='sm'
+                                                    onClick={() =>
+                                                        handleToggleStatus(coord)
+                                                    }
+                                                    disabled={
+                                                        updatingStatusId ===
+                                                        coord.staff_id
+                                                    }
+                                                >
+                                                    {updatingStatusId ===
+                                                    coord.staff_id
+                                                        ? 'Updating...'
+                                                        : coord.User
+                                                                ?.account_status ===
+                                                            'Active'
+                                                          ? 'Deactivate'
+                                                          : 'Activate'}
+                                                </Button>
+                                                <Button
+                                                    variant='ghost'
+                                                    size='icon'
+                                                    onClick={() =>
+                                                        handleDelete(coord.staff_id)
+                                                    }
+                                                >
+                                                    <Trash2 className='w-4 h-4 text-red-500' />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}

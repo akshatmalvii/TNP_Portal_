@@ -72,6 +72,9 @@ const updateStaff = async (staff_id, data) => {
 
   // Update account_status on user if provided
   if (data.account_status && staff.User) {
+    if (!["Active", "Inactive"].includes(data.account_status)) {
+      throw { status: 400, message: "account_status must be Active or Inactive" };
+    }
     staff.User.account_status = data.account_status;
     await staff.User.save();
   }
@@ -198,6 +201,37 @@ const deleteCoordinatorForDepartment = async (staff_id, dept_id) => {
   return deleteStaff(staff_id);
 };
 
+const updateCoordinatorStatusForDepartment = async (staff_id, dept_id, account_status) => {
+  if (!dept_id) {
+    throw { status: 400, message: "TPO department is required" };
+  }
+
+  if (!["Active", "Inactive"].includes(account_status)) {
+    throw { status: 400, message: "account_status must be Active or Inactive" };
+  }
+
+  const staff = await StaffAdmin.findByPk(staff_id, {
+    include: [{ model: User, include: [{ model: Role }] }]
+  });
+
+  if (!staff) {
+    throw { status: 404, message: "Coordinator not found" };
+  }
+
+  if (staff.dept_id !== dept_id) {
+    throw { status: 403, message: "You can only manage coordinators in your department" };
+  }
+
+  if (staff.User?.Role?.role_name !== "Placement_Coordinator") {
+    throw { status: 400, message: "Selected staff member is not a coordinator" };
+  }
+
+  staff.User.account_status = account_status;
+  await staff.User.save();
+
+  return staff;
+};
+
 export default {
   createStaff,
   updateStaff,
@@ -206,5 +240,6 @@ export default {
   assignDepartment,
   getCoordinatorsByDepartment,
   createCoordinatorForDepartment,
-  deleteCoordinatorForDepartment
+  deleteCoordinatorForDepartment,
+  updateCoordinatorStatusForDepartment
 };

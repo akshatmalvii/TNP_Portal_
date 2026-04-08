@@ -20,6 +20,7 @@ router.post("/drive/:id/documents", uploadPdfOnly.array("documents", 10), tpoCon
 router.delete("/drive/:id", tpoController.deleteDrive);
 router.get("/coordinators", authorizeRoles("TPO"), tpoController.getCoordinators);
 router.post("/coordinators", authorizeRoles("TPO"), tpoController.createCoordinator);
+router.put("/coordinators/:staff_id/status", authorizeRoles("TPO"), tpoController.updateCoordinatorStatus);
 router.delete("/coordinators/:staff_id", authorizeRoles("TPO"), tpoController.deleteCoordinator);
 
 export default router;
