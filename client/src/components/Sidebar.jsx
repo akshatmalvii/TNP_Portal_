@@ -42,6 +42,7 @@ export default function Sidebar({ userRole, isVerified = true }) {
 
   const tpoMenuItems = [
     { href: "/dashboard/tpo", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard/tpo/coordinators", label: "Manage Coordinators", icon: UserPlus },
     { href: "/dashboard/tpo/drives", label: "Job Drives", icon: Briefcase },
     { href: "/dashboard/tpo/companies", label: "Companies", icon: Building2 },
     { href: "/dashboard/tpo/approvals", label: "Approvals", icon: CheckCircle2 },
@@ -52,7 +53,6 @@ export default function Sidebar({ userRole, isVerified = true }) {
     { href: "/dashboard/tpohead", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/tpohead/departments", label: "Departments", icon: Building2 },
     { href: "/dashboard/tpohead/tpos", label: "Manage TPOs", icon: ShieldCheck },
-    { href: "/dashboard/tpohead/coordinators", label: "Manage Coordinators", icon: UserPlus },
     { href: "/dashboard/tpohead/reports", label: "Reports", icon: BarChart3 },
   ];
 
