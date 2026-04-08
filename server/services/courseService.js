@@ -1,4 +1,6 @@
-import Course from '../models/course.js';
+import { Op } from "sequelize";
+import Course from "../models/course.js";
+import Department from "../models/department.js";
 
 class CourseService {
     async getAll(query = {}) {
@@ -10,13 +12,13 @@ class CourseService {
 
             const courses = await Course.findAll({
                 where: whereClause,
-                order: [['course_name', 'ASC']],
+                order: [["dept_id", "ASC"], ["course_name", "ASC"]],
             });
             return courses;
         } catch (err) {
             throw {
                 status: 500,
-                message: 'Error fetching courses',
+                message: "Error fetching courses",
             };
         }
     }
@@ -27,7 +29,7 @@ class CourseService {
             if (!course) {
                 throw {
                     status: 404,
-                    message: 'Course not found',
+                    message: "Course not found",
                 };
             }
             return course;
@@ -38,27 +40,45 @@ class CourseService {
 
     async create(data) {
         try {
-            if (!data.course_name) {
+            const course_name = data.course_name?.trim();
+            const dept_id = data.dept_id;
+
+            if (!course_name) {
                 throw {
                     status: 400,
-                    message: 'Course name is required',
+                    message: "Course name is required",
                 };
             }
 
-            // Check for duplicates
+            if (!dept_id) {
+                throw {
+                    status: 400,
+                    message: "Department is required",
+                };
+            }
+
+            const department = await Department.findByPk(dept_id);
+            if (!department) {
+                throw {
+                    status: 404,
+                    message: "Department not found",
+                };
+            }
+
             const existing = await Course.findOne({
-                where: {course_name: data.course_name},
+                where: { course_name, dept_id },
             });
 
             if (existing) {
                 throw {
                     status: 400,
-                    message: 'Course with this name already exists',
+                    message: "Course with this name already exists for this department",
                 };
             }
 
             const course = await Course.create({
-                course_name: data.course_name,
+                course_name,
+                dept_id,
             });
 
             return course;
@@ -73,27 +93,42 @@ class CourseService {
             if (!course) {
                 throw {
                     status: 404,
-                    message: 'Course not found',
+                    message: "Course not found",
                 };
             }
 
-            if (data.course_name) {
+            const nextCourseName = data.course_name?.trim() || course.course_name;
+            const nextDeptId = data.dept_id || course.dept_id;
+
+            if (data.dept_id) {
+                const department = await Department.findByPk(data.dept_id);
+                if (!department) {
+                    throw {
+                        status: 404,
+                        message: "Department not found",
+                    };
+                }
+            }
+
+            if (data.course_name || data.dept_id) {
                 const existing = await Course.findOne({
                     where: {
-                        course_name: data.course_name,
-                        course_id: {[require('sequelize').Op.ne]: id},
+                        course_name: nextCourseName,
+                        dept_id: nextDeptId,
+                        course_id: { [Op.ne]: id },
                     },
                 });
 
                 if (existing) {
                     throw {
                         status: 400,
-                        message: 'Course with this name already exists',
+                        message: "Course with this name already exists for this department",
                     };
                 }
-
-                course.course_name = data.course_name;
             }
+
+            if (data.course_name) course.course_name = nextCourseName;
+            if (data.dept_id) course.dept_id = nextDeptId;
 
             await course.save();
             return course;
@@ -108,12 +143,12 @@ class CourseService {
             if (!course) {
                 throw {
                     status: 404,
-                    message: 'Course not found',
+                    message: "Course not found",
                 };
             }
 
             await course.destroy();
-            return {message: 'Course deleted successfully'};
+            return {message: "Course deleted successfully"};
         } catch (err) {
             throw err;
         }

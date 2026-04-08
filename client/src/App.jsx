@@ -25,13 +25,13 @@ import TPODrivesPage from './pages/tpo/TPODrivesPage';
 import CompaniesPage from './pages/tpo/CompaniesPage';
 import ApprovalsPage from './pages/tpo/ApprovalsPage';
 import AnalyticsPage from './pages/tpo/AnalyticsPage';
+import ManageCoordinatorsPage from './pages/tpo/ManageCoordinatorsPage';
 import TPOSettingsPage from './pages/tpo/TPOSettingsPage';
 
 // TPO Head pages
 import TPOHeadDashboardPage from './pages/tpohead/TPOHeadDashboardPage';
 import DepartmentsPage from './pages/tpohead/DepartmentsPage';
 import ManageTPOsPage from './pages/tpohead/ManageTPOsPage';
-import ManageCoordinatorsPage from './pages/tpohead/ManageCoordinatorsPage';
 import ReportsPage from './pages/tpohead/ReportsPage';
 import TPOHeadSettingsPage from './pages/tpohead/SettingsPage';
 
@@ -93,6 +93,10 @@ function App() {
 
                     {/* TPO */}
                     <Route path='tpo' element={<TPODashboardPage />} />
+                    <Route
+                        path='tpo/coordinators'
+                        element={<ManageCoordinatorsPage />}
+                    />
                     <Route path='tpo/drives' element={<TPODrivesPage />} />
                     <Route path='tpo/companies' element={<CompaniesPage />} />
                     <Route path='tpo/approvals' element={<ApprovalsPage />} />
@@ -106,10 +110,6 @@ function App() {
                         element={<DepartmentsPage />}
                     />
                     <Route path='tpohead/tpos' element={<ManageTPOsPage />} />
-                    <Route
-                        path='tpohead/coordinators'
-                        element={<ManageCoordinatorsPage />}
-                    />
                     <Route path='tpohead/reports' element={<ReportsPage />} />
                     <Route
                         path='tpohead/settings'

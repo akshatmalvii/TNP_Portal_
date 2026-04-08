@@ -13,6 +13,7 @@ import CompanyRole from '../models/company_role.js';
 import Drive from '../models/drive.js';
 import DriveAllowedDepartment from '../models/drive_allowed_department.js';
 import DriveAllowedCourse from '../models/drive_allowed_course.js';
+import DriveDocument from '../models/drive_document.js';
 import DriveEligibility from '../models/drive_eligibility.js';
 import PlacementPolicyRule from '../models/placement_policy_rule.js';
 import DepartmentPolicyRule from '../models/department_policy_rule.js';
@@ -102,6 +103,8 @@ DriveAllowedCourse.belongsTo(Drive, {foreignKey: 'drive_id'});
 
 Course.hasMany(DriveAllowedCourse, {foreignKey: 'course_id'});
 DriveAllowedCourse.belongsTo(Course, {foreignKey: 'course_id'});
+Drive.hasMany(DriveDocument, {foreignKey: 'drive_id'});
+DriveDocument.belongsTo(Drive, {foreignKey: 'drive_id'});
 
 // ─── DRIVE ↔ ELIGIBILITY ────────────────────────────────
 Drive.hasOne(DriveEligibility, {foreignKey: 'drive_id'});

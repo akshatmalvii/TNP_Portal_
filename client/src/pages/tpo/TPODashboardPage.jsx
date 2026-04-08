@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Building2,
   CheckCircle2,
+  UserPlus,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -197,6 +198,13 @@ export default function TPODashboard() {
             <Link to="/dashboard/tpo/analytics">
               <Button variant="outline" className="w-full">
                 View Analytics
+              </Button>
+            </Link>
+
+            <Link to="/dashboard/tpo/coordinators">
+              <Button variant="outline" className="w-full">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Manage Coordinators
               </Button>
             </Link>
           </CardContent>

@@ -1,14 +1,17 @@
-import express from 'express';
+import express from "express";
 import {
     getAllCourses,
     getCourseById,
     createCourse,
     updateCourse,
     deleteCourse,
-} from '../contollers/courseController.js';
-import {authorizeRoles} from '../middleware/roleMiddleware.js';
+} from "../contollers/courseController.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
+import {authorizeRoles} from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
+
+router.use(verifyToken);
 
 router.get('/', getAllCourses);
 router.get('/:id', getCourseById);

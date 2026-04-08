@@ -23,6 +23,7 @@ import CompanyRole from './models/company_role.js';
 import Drive from './models/drive.js';
 import DriveAllowedDepartment from './models/drive_allowed_department.js';
 import DriveAllowedCourse from './models/drive_allowed_course.js';
+import DriveDocument from './models/drive_document.js';
 import DriveEligibility from './models/drive_eligibility.js';
 import PlacementPolicyRule from './models/placement_policy_rule.js';
 import DepartmentPolicyRule from './models/department_policy_rule.js';
@@ -130,6 +131,7 @@ const startServer = async () => {
         await StudentDocument.sync({alter: true});
         await StudentVerificationRequest.sync({alter: true});
         await Drive.sync({alter: true});
+        await DriveDocument.sync({alter: true});
 
         // 4. Tables depending on drives
         await DriveAllowedDepartment.sync({alter: true});

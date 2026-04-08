@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Calendar, DollarSign, Search, X } from "lucide-react";
+import { Calendar, ExternalLink, FileText, IndianRupee, Search, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
@@ -11,10 +11,16 @@ export default function StudentDrivePage() {
   const [appliedDrives, setAppliedDrives] = useState([]);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [selectedDrive, setSelectedDrive] = useState(null);
+  const [detailsDrive, setDetailsDrive] = useState(null);
   const [formFields, setFormFields] = useState([]);
   const [formResponses, setFormResponses] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+
+  const formatPackage = (packageLpa) => {
+    if (!packageLpa) return "N/A";
+    return `₹ ${packageLpa} LPA`;
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -161,20 +167,99 @@ export default function StudentDrivePage() {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Active":
-        return "bg-green-100 text-green-700";
-      case "Closed":
-        return "bg-red-100 text-red-700";
-      case "Selected":
-        return "bg-blue-100 text-blue-700";
-      case "Shortlisted":
-        return "bg-yellow-100 text-yellow-700";
-      default:
-        return "bg-gray-100 text-gray-700";
-    }
-  };
+  if (detailsDrive) {
+    const detailsDeadline = detailsDrive.deadline ? new Date(detailsDrive.deadline) : null;
+
+    return (
+      <div className="p-6 max-w-3xl mx-auto space-y-6">
+        <div className="flex justify-between items-center bg-white p-4 rounded-lg border shadow-sm">
+          <div>
+            <h2 className="text-xl font-bold">{detailsDrive.company_name}</h2>
+            <p className="text-sm text-gray-600">Drive Details</p>
+          </div>
+          <Button variant="ghost" onClick={() => setDetailsDrive(null)}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <Card className="border-0 bg-card">
+          <CardHeader>
+            <CardTitle>{detailsDrive.role_title || "Job Details"}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div className="rounded-lg border p-4">
+                <p className="text-gray-500 mb-1">Offer Type</p>
+                <p className="font-semibold">{detailsDrive.offer_type || "N/A"}</p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <p className="text-gray-500 mb-1">CTC</p>
+                <p className="font-semibold">{formatPackage(detailsDrive.package_lpa)}</p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <p className="text-gray-500 mb-1">Deadline</p>
+                <p className="font-semibold">
+                  {detailsDeadline ? detailsDeadline.toLocaleDateString() : "N/A"}
+                </p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <p className="text-gray-500 mb-1">Status</p>
+                <p className="font-semibold">{detailsDrive.drive_status || "N/A"}</p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border p-4">
+              <p className="text-gray-500 mb-2 text-sm">Role Description</p>
+              <p className="text-sm leading-6 text-gray-700 whitespace-pre-wrap">
+                {detailsDrive.role_description || "No role description provided."}
+              </p>
+            </div>
+
+            {detailsDrive.DriveDocuments?.length > 0 && (
+              <div className="rounded-lg border p-4">
+                <p className="text-gray-500 mb-3 text-sm">Job Description PDFs</p>
+                <div className="flex flex-wrap gap-2">
+                  {detailsDrive.DriveDocuments.map((document) => (
+                    <a
+                      key={document.document_id}
+                      href={document.view_url || document.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm text-indigo-700 hover:bg-indigo-50"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      {document.file_name}
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setDetailsDrive(null)}>
+                Back to Drives
+              </Button>
+              <Button
+                onClick={() => {
+                  setDetailsDrive(null);
+                  handleApplyClick(detailsDrive);
+                }}
+                disabled={appliedDrives.includes(detailsDrive.drive_id || detailsDrive.id) || (detailsDeadline && detailsDeadline < new Date())}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {appliedDrives.includes(detailsDrive.drive_id || detailsDrive.id)
+                  ? "Applied"
+                  : detailsDeadline && detailsDeadline < new Date()
+                    ? "Expired"
+                    : "Apply Now"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (showApplicationForm && selectedDrive) {
     return (
@@ -339,20 +424,18 @@ export default function StudentDrivePage() {
                       <h3 className="font-bold text-lg">
                         {drive.company_name}
                       </h3>
-                      <p className="text-sm text-gray-500">
-                        {drive.role_title || drive.position}
-                      </p>
                     </div>
 
-                    {/* Details */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-gray-400" />
+                        <IndianRupee className="w-4 h-4 text-gray-400" />
                         <span className="text-sm font-semibold">
-                          {drive.package_lpa || "N/A"}
+                          {formatPackage(drive.package_lpa)}
                         </span>
                       </div>
+                    </div>
 
+                    <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-gray-400" />
                         <span className="text-sm text-gray-500">
@@ -363,25 +446,14 @@ export default function StudentDrivePage() {
                       </div>
                     </div>
 
-                    {/* Status */}
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`px-2 py-1 text-xs rounded ${getStatusColor(
-                          drive.drive_status
-                        )}`}
+                    {/* Actions */}
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setDetailsDrive(drive)}
                       >
-                        {drive.drive_status}
-                      </span>
-
-                      {hasApplied && (
-                        <span className="px-2 py-1 text-xs rounded bg-gray-200">
-                          Applied
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Action */}
-                    <div className="flex justify-end">
+                        View Details
+                      </Button>
                       {hasApplied ? (
                         <button
                           disabled

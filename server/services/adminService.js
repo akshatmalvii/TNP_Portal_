@@ -6,15 +6,9 @@ import DepartmentTpoAssignment from "../models/department_tpo_assignment.js";
 import sequelize from "../config/db.js";
 import bcrypt from "bcrypt";
 
-const createStaff = async ({ email, password, role_name, dept_id }) => {
+const createStaffAccount = async ({ email, password, role_name, dept_id }) => {
   if (!email || !password || !role_name) {
     throw { status: 400, message: "email, password, and role_name are required" };
-  }
-
-  // Validate role
-  const allowedRoles = ["TPO", "Placement_Coordinator"];
-  if (!allowedRoles.includes(role_name)) {
-    throw { status: 400, message: `role_name must be one of: ${allowedRoles.join(", ")}` };
   }
 
   return await sequelize.transaction(async (t) => {
@@ -55,6 +49,18 @@ const createStaff = async ({ email, password, role_name, dept_id }) => {
   });
 };
 
+const createStaff = async ({ email, password, role_name, dept_id }) => {
+  const allowedRoles = ["TPO"];
+  if (!allowedRoles.includes(role_name)) {
+    throw { status: 400, message: `role_name must be one of: ${allowedRoles.join(", ")}` };
+  }
+  if (!dept_id) {
+    throw { status: 400, message: "Department is required for TPO" };
+  }
+
+  return createStaffAccount({ email, password, role_name, dept_id });
+};
+
 const updateStaff = async (staff_id, data) => {
   const staff = await StaffAdmin.findByPk(staff_id, {
     include: [{ model: User, include: [{ model: Role }] }]
@@ -93,7 +99,7 @@ const deleteStaff = async (staff_id) => {
   });
 };
 
-const getAllStaff = async (role_filter) => {
+const getAllStaff = async (role_filter, dept_filter = null) => {
   const whereClause = {};
 
   const include = [
@@ -112,13 +118,13 @@ const getAllStaff = async (role_filter) => {
   const staffList = await StaffAdmin.findAll({ include });
 
   // Filter by role if specified
-  if (role_filter) {
-    return staffList.filter(s =>
-      s.User && s.User.Role && s.User.Role.role_name === role_filter
+  return staffList.filter((staff) => {
+    const matchesRole = !role_filter || (
+      staff.User && staff.User.Role && staff.User.Role.role_name === role_filter
     );
-  }
-
-  return staffList;
+    const matchesDept = !dept_filter || staff.dept_id === dept_filter;
+    return matchesRole && matchesDept;
+  });
 };
 
 const assignDepartment = async (staff_id, dept_id) => {
@@ -147,10 +153,58 @@ const assignDepartment = async (staff_id, dept_id) => {
   return { message: "Department assigned successfully", staff_id, dept_id };
 };
 
+const getCoordinatorsByDepartment = async (dept_id) => {
+  if (!dept_id) {
+    throw { status: 400, message: "TPO department is required" };
+  }
+
+  return getAllStaff("Placement_Coordinator", dept_id);
+};
+
+const createCoordinatorForDepartment = async ({ email, password, dept_id }) => {
+  if (!dept_id) {
+    throw { status: 400, message: "TPO department is required" };
+  }
+
+  return createStaffAccount({
+    email,
+    password,
+    role_name: "Placement_Coordinator",
+    dept_id,
+  });
+};
+
+const deleteCoordinatorForDepartment = async (staff_id, dept_id) => {
+  if (!dept_id) {
+    throw { status: 400, message: "TPO department is required" };
+  }
+
+  const staff = await StaffAdmin.findByPk(staff_id, {
+    include: [{ model: User, include: [{ model: Role }] }]
+  });
+
+  if (!staff) {
+    throw { status: 404, message: "Coordinator not found" };
+  }
+
+  if (staff.dept_id !== dept_id) {
+    throw { status: 403, message: "You can only manage coordinators in your department" };
+  }
+
+  if (staff.User?.Role?.role_name !== "Placement_Coordinator") {
+    throw { status: 400, message: "Selected staff member is not a coordinator" };
+  }
+
+  return deleteStaff(staff_id);
+};
+
 export default {
   createStaff,
   updateStaff,
   deleteStaff,
   getAllStaff,
-  assignDepartment
+  assignDepartment,
+  getCoordinatorsByDepartment,
+  createCoordinatorForDepartment,
+  deleteCoordinatorForDepartment
 };

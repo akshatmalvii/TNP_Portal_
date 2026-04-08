@@ -2,6 +2,7 @@ import express from "express";
 import tpoController from "../controllers/tpoController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/roleMiddleware.js";
+import { uploadPdfOnly } from "../middleware/uploadMiddleware.js";
 
 const router = express.Router();
 
@@ -15,6 +16,10 @@ router.get("/drive/:id", tpoController.getDrive);
 router.post("/company", tpoController.createCompany);
 router.post("/drive", tpoController.createDrive);
 router.put("/drive/:id", tpoController.updateDrive);
+router.post("/drive/:id/documents", uploadPdfOnly.array("documents", 10), tpoController.uploadDriveDocuments);
 router.delete("/drive/:id", tpoController.deleteDrive);
+router.get("/coordinators", authorizeRoles("TPO"), tpoController.getCoordinators);
+router.post("/coordinators", authorizeRoles("TPO"), tpoController.createCoordinator);
+router.delete("/coordinators/:staff_id", authorizeRoles("TPO"), tpoController.deleteCoordinator);
 
 export default router;

@@ -18,10 +18,24 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+const pdfOnlyFileFilter = (req, file, cb) => {
+  if (file.mimetype === "application/pdf") {
+    cb(null, true);
+  } else {
+    cb(new Error("Only PDF files are allowed"), false);
+  }
+};
+
 export const upload = multer({
   storage,
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
+export const uploadPdfOnly = multer({
+  storage,
+  fileFilter: pdfOnlyFileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB per PDF
 });
 
 // Upload buffer to cloudinary

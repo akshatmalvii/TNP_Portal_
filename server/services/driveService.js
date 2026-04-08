@@ -6,8 +6,22 @@ import Drive from "../models/drive.js";
 import Course from "../models/course.js";
 import DriveAllowedDepartment from "../models/drive_allowed_department.js";
 import DriveAllowedCourse from "../models/drive_allowed_course.js";
+import DriveDocument from "../models/drive_document.js";
 import DriveEligibility from "../models/drive_eligibility.js";
 import DynamicFormField from "../models/dynamic_form_field.js";
+import { uploadToCloudinary } from "../middleware/uploadMiddleware.js";
+import { getSignedCloudinaryDownloadUrl } from "../utils/cloudinaryFileUrl.js";
+
+const attachSignedDriveDocuments = (drive) => {
+  const plainDrive = drive.get ? drive.get({ plain: true }) : drive;
+
+  plainDrive.DriveDocuments = (plainDrive.DriveDocuments || []).map((document) => ({
+    ...document,
+    view_url: getSignedCloudinaryDownloadUrl(document.file_url),
+  }));
+
+  return plainDrive;
+};
 
 const listOpenDrivesForStudent = async (student_id) => {
   const student = await Student.findOne({ where: { user_id: student_id } });
@@ -32,7 +46,8 @@ const listOpenDrivesForStudent = async (student_id) => {
       { model: Company, attributes: ["company_name"] },
       { model: DriveAllowedDepartment },
       { model: DriveAllowedCourse },
-      { model: DriveEligibility }
+      { model: DriveEligibility },
+      { model: DriveDocument }
     ],
     order: [["created_at", "DESC"]]
   });
@@ -62,7 +77,7 @@ const listOpenDrivesForStudent = async (student_id) => {
   });
 
   return eligibleDrives.map(d => {
-    const plain = d.get({ plain: true });
+    const plain = attachSignedDriveDocuments(d);
     plain.company_name = plain.Company?.company_name || 'Unknown Company';
     return plain;
   });
@@ -82,6 +97,42 @@ const getDriveFormFields = async (drive_id) => {
     where: { drive_id },
     order: [['field_order', 'ASC']]
   });
+};
+
+const uploadDriveDocuments = async (drive_id, files = []) => {
+  const drive = await Drive.findByPk(drive_id);
+  if (!drive) {
+    throw { status: 404, message: "Drive not found" };
+  }
+
+  const validFiles = files.filter(Boolean);
+  if (validFiles.length === 0) {
+    return [];
+  }
+
+  for (const file of validFiles) {
+    if (file.mimetype !== "application/pdf") {
+      throw { status: 400, message: "Only PDF files are allowed for job descriptions" };
+    }
+  }
+
+  const uploadedDocuments = [];
+  for (const file of validFiles) {
+    const uploadResult = await uploadToCloudinary(file.buffer, `tnp_portal/drives/${drive_id}`);
+
+    const driveDocument = await DriveDocument.create({
+      drive_id,
+      file_name: file.originalname,
+      file_url: uploadResult.secure_url,
+    });
+
+    uploadedDocuments.push({
+      ...driveDocument.get({ plain: true }),
+      view_url: getSignedCloudinaryDownloadUrl(driveDocument.file_url),
+    });
+  }
+
+  return uploadedDocuments;
 };
 
 const applyToDrive = async (student_id, drive_id, application_data = null) => {
@@ -328,6 +379,7 @@ const deleteDrive = async (drive_id, staffId) => {
     // Wipe child dependencies natively to prevent Constraint blocks if DB lacks ON DELETE CASCADE
     await DriveAllowedDepartment.destroy({ where: { drive_id }, transaction });
     await DriveAllowedCourse.destroy({ where: { drive_id }, transaction });
+    await DriveDocument.destroy({ where: { drive_id }, transaction });
     await DriveEligibility.destroy({ where: { drive_id }, transaction });
     await DynamicFormField.destroy({ where: { drive_id }, transaction });
     
@@ -351,6 +403,7 @@ export default {
   getStudentApplications,
   applyToDrive,
   getDriveFormFields,
+  uploadDriveDocuments,
   createDriveTransaction,
   updateDriveTransaction,
   deleteDrive

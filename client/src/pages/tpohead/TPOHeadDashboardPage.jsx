@@ -119,15 +119,6 @@ export default function TPOHeadDashboardPage() {
                 </div>
               </div>
             </a>
-            <a href="/dashboard/tpohead/coordinators" className="block p-4 border rounded-lg hover:bg-gray-50 transition">
-              <div className="flex items-center gap-3">
-                <UserPlus className="w-5 h-5 text-purple-500" />
-                <div>
-                  <p className="font-medium">Manage Coordinators</p>
-                  <p className="text-sm text-gray-500">Add or remove placement coordinators</p>
-                </div>
-              </div>
-            </a>
           </CardContent>
         </Card>
 

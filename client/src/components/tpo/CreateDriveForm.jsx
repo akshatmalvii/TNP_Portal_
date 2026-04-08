@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../Card";
 import { Button } from "../Button";
 import { Input } from "../Input";
-import { Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Plus, Trash2 } from "lucide-react";
+
+const createDocumentInput = () => ({
+  id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  file: null,
+});
 
 export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
   const [formData, setFormData] = useState({
@@ -26,6 +31,8 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
   });
 
   const [dynamicFields, setDynamicFields] = useState([]);
+  const [driveDocumentInputs, setDriveDocumentInputs] = useState([]);
+  const [existingDriveDocuments, setExistingDriveDocuments] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -91,9 +98,14 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
                 order: f.field_order
               })));
             }
+
+            setExistingDriveDocuments(driveData.DriveDocuments || []);
+            setDriveDocumentInputs([]);
           }
         } else if (fetchedComps.length > 0) {
           setFormData(prev => ({ ...prev, company_id: fetchedComps[0].company_id }));
+          setExistingDriveDocuments([]);
+          setDriveDocumentInputs([]);
         }
       } catch (err) {
         console.error("Failed to fetch metadata or drive data", err);
@@ -150,6 +162,42 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
     setDynamicFields([...dynamicFields, { label: "", type: "TEXT", required: false, order: dynamicFields.length + 1 }]);
   };
 
+  const addDriveDocumentInput = () => {
+    setDriveDocumentInputs((prev) => [...prev, createDocumentInput()]);
+  };
+
+  const updateDriveDocumentInput = (id, file) => {
+    setDriveDocumentInputs((prev) =>
+      prev.map((entry) => (entry.id === id ? { ...entry, file } : entry))
+    );
+  };
+
+  const removeDriveDocumentInput = (id) => {
+    setDriveDocumentInputs((prev) => prev.filter((entry) => entry.id !== id));
+  };
+
+  const uploadDriveDocuments = async (driveId, token, files) => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("documents", file);
+    });
+
+    const response = await fetch(`http://localhost:5000/api/v1/tpo/drive/${driveId}/documents`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to upload job description PDFs");
+    }
+
+    return data.documents || [];
+  };
+
   const updateDynamicField = (index, key, value) => {
     const updated = [...dynamicFields];
     updated[index][key] = value;
@@ -168,6 +216,9 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
 
     try {
       const token = localStorage.getItem("token");
+      const selectedDriveDocuments = driveDocumentInputs
+        .map((entry) => entry.file)
+        .filter(Boolean);
       
       const validAllowedCourses = formData.allowed_courses.filter((id) =>
         visibleCourses.some((course) => course.course_id === id)
@@ -205,8 +256,20 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create drive");
+
+      const savedDrive = data.drive;
+
+      if (selectedDriveDocuments.length > 0) {
+        try {
+          await uploadDriveDocuments(savedDrive.drive_id || savedDrive.id, token, selectedDriveDocuments);
+        } catch (uploadError) {
+          window.alert(
+            `${initialData ? "Drive updated" : "Drive created"}, but the job description PDFs could not be uploaded. You can edit the drive and retry.\n\n${uploadError.message}`
+          );
+        }
+      }
       
-      onSuccess(data.drive);
+      onSuccess(savedDrive);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -299,6 +362,83 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
                 onChange={e => setFormData({...formData, deadline: e.target.value})} 
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 bg-card">
+          <CardHeader>
+            <div className="flex justify-between items-center gap-3">
+              <CardTitle>Job Description PDFs</CardTitle>
+              <Button type="button" size="sm" variant="outline" onClick={addDriveDocumentInput} className="gap-2">
+                <Plus className="w-4 h-4" /> Add PDF
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Optional. Upload one or more company-shared job description PDFs for this drive.
+            </p>
+
+            {existingDriveDocuments.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Uploaded PDFs</p>
+                <div className="flex flex-wrap gap-2">
+                  {existingDriveDocuments.map((document) => (
+                    <a
+                      key={document.document_id}
+                      href={document.view_url || document.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm text-primary hover:bg-primary/10"
+                    >
+                      <span>{document.file_name}</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {driveDocumentInputs.length === 0 ? (
+              <p className="text-sm text-gray-400 italic">No new PDFs selected.</p>
+            ) : (
+              <div className="space-y-3">
+                {driveDocumentInputs.map((entry, index) => (
+                  <div key={entry.id} className="rounded-lg border p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium">PDF {index + 1}</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeDriveDocumentInput(entry.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      className="w-full border rounded-md px-3 py-2 text-sm bg-white file:mr-3 file:rounded file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-primary"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        if (file && file.type !== "application/pdf") {
+                          setError("Only PDF files can be uploaded as job descriptions");
+                          e.target.value = "";
+                          return;
+                        }
+                        setError("");
+                        updateDriveDocumentInput(entry.id, file);
+                      }}
+                    />
+                    <p className="text-xs text-gray-500">
+                      {entry.file ? `Selected: ${entry.file.name}` : "No file selected yet"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

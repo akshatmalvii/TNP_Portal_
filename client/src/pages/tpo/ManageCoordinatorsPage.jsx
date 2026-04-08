@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from '../../components/Card';
 import {Button} from '../../components/Button';
 import {Input} from '../../components/Input';
@@ -22,12 +22,11 @@ import {Plus, Trash2} from 'lucide-react';
 
 const API_BASE = 'http://localhost:5000/api/v1';
 
-export default function ManageTPOsPage() {
-    const [tpos, setTpos] = useState([]);
-    const [departments, setDepartments] = useState([]);
+export default function ManageCoordinatorsPage() {
+    const [coordinators, setCoordinators] = useState([]);
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [form, setForm] = useState({email: '', password: '', dept_id: ''});
+    const [form, setForm] = useState({email: '', password: ''});
     const [error, setError] = useState('');
     const [saving, setSaving] = useState(false);
 
@@ -38,22 +37,24 @@ export default function ManageTPOsPage() {
     };
 
     useEffect(() => {
-        fetchData();
+        fetchCoordinators();
     }, []);
 
-    const fetchData = async () => {
+    const fetchCoordinators = async () => {
         try {
-            const [staffRes, deptRes] = await Promise.all([
-                fetch(`${API_BASE}/admin/staff?role=TPO`, {headers}),
-                fetch(`${API_BASE}/departments`, {headers}),
-            ]);
-            const staffData = await staffRes.json();
-            const deptData = await deptRes.json();
+            setLoading(true);
+            const res = await fetch(`${API_BASE}/tpo/coordinators`, {headers});
+            const data = await res.json();
 
-            setTpos(Array.isArray(staffData) ? staffData : []);
-            setDepartments(Array.isArray(deptData) ? deptData : []);
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to fetch coordinators');
+            }
+
+            setCoordinators(Array.isArray(data) ? data : []);
+            setError('');
         } catch (err) {
-            console.error('Error fetching data:', err);
+            setError(err.message);
+            setCoordinators([]);
         } finally {
             setLoading(false);
         }
@@ -64,30 +65,25 @@ export default function ManageTPOsPage() {
             setError('Email and password are required');
             return;
         }
-        if (!form.dept_id) {
-            setError('Department is required for TPO');
-            return;
-        }
+
         setSaving(true);
         setError('');
 
         try {
-            const res = await fetch(`${API_BASE}/admin/staff`, {
+            const res = await fetch(`${API_BASE}/tpo/coordinators`, {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({
-                    email: form.email,
-                    password: form.password,
-                    role_name: 'TPO',
-                    dept_id: form.dept_id,
-                }),
+                body: JSON.stringify(form),
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to create TPO');
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to create coordinator');
+            }
 
             setDialogOpen(false);
-            setForm({email: '', password: '', dept_id: ''});
-            fetchData();
+            setForm({email: '', password: ''});
+            fetchCoordinators();
         } catch (err) {
             setError(err.message);
         } finally {
@@ -96,23 +92,25 @@ export default function ManageTPOsPage() {
     };
 
     const handleDelete = async (staff_id) => {
-        if (!confirm('Are you sure you want to remove this TPO?')) return;
+        if (!confirm('Are you sure you want to remove this coordinator?')) {
+            return;
+        }
+
         try {
-            const res = await fetch(`${API_BASE}/admin/staff/${staff_id}`, {
+            const res = await fetch(`${API_BASE}/tpo/coordinators/${staff_id}`, {
                 method: 'DELETE',
                 headers,
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to delete');
-            fetchData();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to delete coordinator');
+            }
+
+            fetchCoordinators();
         } catch (err) {
             alert(err.message);
         }
-    };
-
-    const getDeptName = (dept_id) => {
-        const d = departments.find((dept) => dept.dept_id === dept_id);
-        return d ? `${d.dept_code} — ${d.dept_name}` : 'Unassigned';
     };
 
     return (
@@ -120,36 +118,42 @@ export default function ManageTPOsPage() {
             <div className='flex justify-between items-center'>
                 <div>
                     <h1 className='text-3xl font-bold text-gray-900'>
-                        Manage TPOs
+                        Manage Coordinators
                     </h1>
                     <p className='text-gray-500 mt-1'>
-                        Add and manage TPOs department-wise
+                        Create and manage coordinators for your department
                     </p>
                 </div>
                 <Button
                     onClick={() => {
                         setError('');
-                        setForm({email: '', password: '', dept_id: ''});
+                        setForm({email: '', password: ''});
                         setDialogOpen(true);
                     }}
                     className='flex items-center gap-2'
                 >
-                    <Plus className='w-4 h-4' /> Add TPO
+                    <Plus className='w-4 h-4' /> Add Coordinator
                 </Button>
             </div>
 
+            {error && !dialogOpen && (
+                <div className='p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm'>
+                    {error}
+                </div>
+            )}
+
             <Card className='border-0'>
                 <CardHeader>
-                    <CardTitle>TPO Accounts</CardTitle>
+                    <CardTitle>Department Coordinators</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
                         <p className='text-center py-8 text-gray-500'>
                             Loading...
                         </p>
-                    ) : tpos.length === 0 ? (
+                    ) : coordinators.length === 0 ? (
                         <p className='text-center py-8 text-gray-500'>
-                            No TPOs found. Click "Add TPO" to create one.
+                            No coordinators found for your department yet.
                         </p>
                     ) : (
                         <Table>
@@ -157,42 +161,36 @@ export default function ManageTPOsPage() {
                                 <TableRow>
                                     <TableHead>Email</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead>Department</TableHead>
                                     <TableHead className='text-right'>
                                         Actions
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {tpos.map((tpo) => (
-                                    <TableRow key={tpo.staff_id}>
+                                {coordinators.map((coord) => (
+                                    <TableRow key={coord.staff_id}>
                                         <TableCell className='font-medium'>
-                                            {tpo.User?.email || '—'}
+                                            {coord.User?.email || '—'}
                                         </TableCell>
                                         <TableCell>
                                             <Badge
                                                 className={
-                                                    tpo.User?.account_status ===
+                                                    coord.User?.account_status ===
                                                     'Active'
                                                         ? 'bg-green-100 text-green-700 border border-green-200'
                                                         : 'bg-gray-100 text-gray-600 border border-gray-200'
                                                 }
                                             >
-                                                {tpo.User?.account_status ||
+                                                {coord.User?.account_status ||
                                                     '—'}
                                             </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className='text-sm'>
-                                                {getDeptName(tpo.dept_id)}
-                                            </span>
                                         </TableCell>
                                         <TableCell className='text-right'>
                                             <Button
                                                 variant='ghost'
                                                 size='icon'
                                                 onClick={() =>
-                                                    handleDelete(tpo.staff_id)
+                                                    handleDelete(coord.staff_id)
                                                 }
                                             >
                                                 <Trash2 className='w-4 h-4 text-red-500' />
@@ -206,11 +204,10 @@ export default function ManageTPOsPage() {
                 </CardContent>
             </Card>
 
-            {/* Add TPO Dialog */}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add New TPO</DialogTitle>
+                        <DialogTitle>Add New Coordinator</DialogTitle>
                     </DialogHeader>
 
                     <div className='space-y-4 py-4'>
@@ -223,7 +220,7 @@ export default function ManageTPOsPage() {
                             <label className='text-sm font-medium'>Email</label>
                             <Input
                                 type='email'
-                                placeholder='tpo@college.edu.in'
+                                placeholder='coordinator@college.edu.in'
                                 value={form.email}
                                 onChange={(e) =>
                                     setForm({...form, email: e.target.value})
@@ -243,25 +240,6 @@ export default function ManageTPOsPage() {
                                 }
                             />
                         </div>
-                        <div>
-                            <label className='text-sm font-medium'>
-                                Department
-                            </label>
-                            <select
-                                value={form.dept_id}
-                                onChange={(e) =>
-                                    setForm({...form, dept_id: e.target.value})
-                                }
-                                className='w-full border rounded-md px-3 py-2 text-sm bg-white'
-                            >
-                                <option value=''>Select department</option>
-                                {departments.map((d) => (
-                                    <option key={d.dept_id} value={d.dept_id}>
-                                        {d.dept_code} — {d.dept_name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
                     </div>
 
                     <DialogFooter>
@@ -272,7 +250,7 @@ export default function ManageTPOsPage() {
                             Cancel
                         </Button>
                         <Button onClick={handleAdd} disabled={saving}>
-                            {saving ? 'Creating...' : 'Create TPO'}
+                            {saving ? 'Creating...' : 'Create Coordinator'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
