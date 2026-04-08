@@ -1,13 +1,25 @@
 import driveService from "../services/driveService.js";
+import adminService from "../services/adminService.js";
 import Company from "../models/company.js";
 import CompanyContact from "../models/company_contact.js";
 import StaffAdmin from "../models/staff_admin.js";
 import Drive from "../models/drive.js";
 import DriveAllowedDepartment from "../models/drive_allowed_department.js";
 import DriveAllowedCourse from "../models/drive_allowed_course.js";
+import DriveDocument from "../models/drive_document.js";
 import DriveEligibility from "../models/drive_eligibility.js";
 import DynamicFormField from "../models/dynamic_form_field.js";
 import sequelize from "../config/db.js";
+import { getSignedCloudinaryDownloadUrl } from "../utils/cloudinaryFileUrl.js";
+
+const getStaffContext = async (userId) => {
+  const staffUser = await StaffAdmin.findOne({ where: { user_id: userId } });
+  if (!staffUser) {
+    throw { status: 403, message: "Unmapped Staff Administrator. Access Denied." };
+  }
+
+  return staffUser;
+};
 
 const getCompanies = async (req, res) => {
   try {
@@ -46,27 +58,50 @@ const getDrive = async (req, res) => {
       include: [
         { model: DriveAllowedDepartment },
         { model: DriveAllowedCourse },
+        { model: DriveDocument },
         { model: DriveEligibility },
         { model: DynamicFormField }
       ]
     });
     if (!drive) return res.status(404).json({ error: "Drive not found" });
-    res.json(drive);
+
+    const plainDrive = drive.get({ plain: true });
+    plainDrive.DriveDocuments = (plainDrive.DriveDocuments || []).map((document) => ({
+      ...document,
+      view_url: getSignedCloudinaryDownloadUrl(document.file_url),
+    }));
+
+    res.json(plainDrive);
   } catch (err) {
     console.error("Error fetching drive details:", err);
     res.status(500).json({ error: "Failed to fetch drive details" });
   }
 };
 
+const uploadDriveDocuments = async (req, res) => {
+  try {
+    const driveId = req.params.id;
+    const files = req.files || [];
+
+    if (files.length === 0) {
+      return res.status(400).json({ error: "At least one PDF must be selected" });
+    }
+
+    const uploadedDocuments = await driveService.uploadDriveDocuments(driveId, files);
+    return res.status(201).json({
+      message: "Drive documents uploaded successfully",
+      documents: uploadedDocuments,
+    });
+  } catch (err) {
+    console.error("Error uploading drive documents:", err);
+    res.status(err.status || 500).json({ error: err.message || "Failed to upload drive documents" });
+  }
+};
+
 const createDrive = async (req, res) => {
   try {
     const userId = req.user.user_id;
-
-    // We must map global user_id to the relational staff_id FK inside staff_admins
-    const staffUser = await StaffAdmin.findOne({ where: { user_id: userId } });
-    if (!staffUser) {
-      return res.status(403).json({ error: "Unmapped Staff Administrator. Access Denied." });
-    }
+    const staffUser = await getStaffContext(userId);
     const staffId = staffUser.staff_id;
 
     const driveData = req.body;
@@ -93,11 +128,7 @@ const updateDrive = async (req, res) => {
   try {
     const driveId = req.params.id;
     const userId = req.user.user_id;
-
-    const staffUser = await StaffAdmin.findOne({ where: { user_id: userId } });
-    if (!staffUser) {
-      return res.status(403).json({ error: "Unmapped Staff Administrator. Access Denied." });
-    }
+    const staffUser = await getStaffContext(userId);
 
     const drive = await driveService.updateDriveTransaction(driveId, req.body, staffUser.staff_id);
     return res.json({ message: "Drive updated successfully", drive });
@@ -111,17 +142,50 @@ const deleteDrive = async (req, res) => {
   try {
     const driveId = req.params.id;
     const userId = req.user.user_id;
-
-    const staffUser = await StaffAdmin.findOne({ where: { user_id: userId } });
-    if (!staffUser) {
-      return res.status(403).json({ error: "Unmapped Staff Administrator. Access Denied." });
-    }
+    const staffUser = await getStaffContext(userId);
 
     await driveService.deleteDrive(driveId, staffUser.staff_id);
     return res.json({ message: "Drive deleted successfully" });
   } catch (err) {
     console.error("Error deleting drive:", err);
     res.status(err.status || 500).json({ error: err.message || "Failed to delete drive" });
+  }
+};
+
+const getCoordinators = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const coordinators = await adminService.getCoordinatorsByDepartment(staffUser.dept_id);
+    return res.json(coordinators);
+  } catch (err) {
+    console.error("Error fetching coordinators:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to fetch coordinators" });
+  }
+};
+
+const createCoordinator = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const coordinator = await adminService.createCoordinatorForDepartment({
+      email: req.body.email,
+      password: req.body.password,
+      dept_id: staffUser.dept_id,
+    });
+    return res.status(201).json(coordinator);
+  } catch (err) {
+    console.error("Error creating coordinator:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to create coordinator" });
+  }
+};
+
+const deleteCoordinator = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const result = await adminService.deleteCoordinatorForDepartment(req.params.staff_id, staffUser.dept_id);
+    return res.json(result);
+  } catch (err) {
+    console.error("Error deleting coordinator:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to delete coordinator" });
   }
 };
 
@@ -194,5 +258,9 @@ export default {
   getCompanies,
   getDrives,
   getDrive,
+  uploadDriveDocuments,
+  getCoordinators,
+  createCoordinator,
+  deleteCoordinator,
   createCompany
 };
