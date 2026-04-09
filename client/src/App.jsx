@@ -1,6 +1,8 @@
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import './index.css';
 import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardLayout from './components/DashboardLayout';
 
 // Student pages
@@ -42,6 +44,8 @@ function App() {
             <Routes>
                 <Route path='/' element={<LoginPage />} />
                 <Route path='/login' element={<LoginPage />} />
+                <Route path='/forgot-password' element={<ForgotPasswordPage />} />
+                <Route path='/reset-password' element={<ResetPasswordPage />} />
                 <Route path='/dashboard' element={<DashboardLayout />}>
                     {/* Student */}
                     <Route path='student' element={<StudentDashboardPage />} />
