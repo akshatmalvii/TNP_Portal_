@@ -1,10 +1,14 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import userRepository from "../repositories/userRepository.js";
 import studentRepository from "../repositories/studentRepository.js";
 import Role from "../models/role.js";
+import { sendPasswordResetEmail, isMailerConfigured } from "../utils/mailer.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TTL_MINUTES || 30);
 
 const register = async ({ email, password, confirmPassword }) => {
   if (!email || !password || !confirmPassword) {
@@ -82,7 +86,90 @@ const login = async ({ email, password }) => {
   };
 };
 
+const forgotPassword = async ({ email }) => {
+  if (!email) {
+    throw { status: 400, message: "Email is required" };
+  }
+
+  const user = await userRepository.findByEmail(email);
+
+  if (!user) {
+    return {
+      message: "If an account exists for that email, a reset link has been sent.",
+    };
+  }
+
+  if (!isMailerConfigured()) {
+    throw { status: 500, message: "Reset email service is not configured" };
+  }
+
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_TTL_MINUTES * 60 * 1000);
+
+  user.password_reset_token_hash = tokenHash;
+  user.password_reset_expires_at = expiresAt;
+  await user.save();
+
+  const resetLink = `${FRONTEND_URL}/reset-password?token=${rawToken}`;
+  await sendPasswordResetEmail({
+    to: user.email,
+    resetLink,
+  });
+
+  return {
+    message: "If an account exists for that email, a reset link has been sent.",
+  };
+};
+
+const validateResetToken = async (token) => {
+  if (!token) {
+    throw { status: 400, message: "Reset token is required" };
+  }
+
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const user = await userRepository.findByResetTokenHash(tokenHash);
+
+  if (!user) {
+    throw { status: 400, message: "This reset link is invalid or has expired" };
+  }
+
+  return { valid: true };
+};
+
+const resetPassword = async ({ token, password, confirmPassword }) => {
+  if (!token || !password || !confirmPassword) {
+    throw { status: 400, message: "Token, password, and confirmPassword are required" };
+  }
+
+  if (password !== confirmPassword) {
+    throw { status: 400, message: "Password and confirm password do not match" };
+  }
+
+  if (password.length < 6) {
+    throw { status: 400, message: "Password must be at least 6 characters" };
+  }
+
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const user = await userRepository.findByResetTokenHash(tokenHash);
+
+  if (!user) {
+    throw { status: 400, message: "This reset link is invalid or has expired" };
+  }
+
+  user.password_hash = await bcrypt.hash(password, 10);
+  user.password_reset_token_hash = null;
+  user.password_reset_expires_at = null;
+  user.updated_at = new Date();
+  await user.save();
+
+  return { message: "Password reset successfully" };
+};
+
 export default {
   register,
-  login
+  login,
+  forgotPassword,
+  validateResetToken,
+  resetPassword,
 };

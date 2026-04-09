@@ -33,6 +33,16 @@ const User = sequelize.define(
       }
     },
 
+    password_reset_token_hash: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+
+    password_reset_expires_at: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
