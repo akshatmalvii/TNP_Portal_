@@ -5,8 +5,10 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Search, Plus, Edit2, Trash2 } from "lucide-react";
 import CreateDriveForm from "../../components/tpo/CreateDriveForm";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 
 export default function TPODrivesPage() {
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [searchTerm, setSearchTerm] = useState("");
   const [drives, setDrives] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -40,7 +42,14 @@ export default function TPODrivesPage() {
   );
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to completely erase this Drive? This action cannot be undone.")) return;
+    const shouldDelete = await confirm({
+      title: "Delete drive?",
+      description:
+        "This will permanently remove the drive and its related setup from the portal.",
+      confirmText: "Delete Drive",
+    });
+
+    if (!shouldDelete) return;
     
     try {
       const token = localStorage.getItem("token");
@@ -203,6 +212,8 @@ export default function TPODrivesPage() {
           ))
         )}
       </div>
+
+      {confirmDialog}
     </div>
   );
 }

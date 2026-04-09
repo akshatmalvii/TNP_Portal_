@@ -19,10 +19,12 @@ import {
 } from '../../components/Dialog';
 import {Badge} from '../../components/Badge';
 import {Plus, Trash2} from 'lucide-react';
+import {useConfirmDialog} from '../../components/ConfirmDialog';
 
 const API_BASE = 'http://localhost:5000/api/v1';
 
 export default function ManageTPOsPage() {
+    const {confirm, confirmDialog} = useConfirmDialog();
     const [tpos, setTpos] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -97,7 +99,14 @@ export default function ManageTPOsPage() {
     };
 
     const handleDelete = async (staff_id) => {
-        if (!confirm('Are you sure you want to remove this TPO?')) return;
+        const shouldDelete = await confirm({
+            title: 'Remove TPO account?',
+            description:
+                'This will remove the TPO account from the portal.',
+            confirmText: 'Remove TPO',
+        });
+
+        if (!shouldDelete) return;
         try {
             const res = await fetch(`${API_BASE}/admin/staff/${staff_id}`, {
                 method: 'DELETE',
@@ -116,7 +125,15 @@ export default function ManageTPOsPage() {
         const nextStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
         const actionLabel = nextStatus === 'Inactive' ? 'deactivate' : 'activate';
 
-        if (!confirm(`Are you sure you want to ${actionLabel} this TPO account?`)) {
+        const shouldContinue = await confirm({
+            title: `${actionLabel === 'deactivate' ? 'Deactivate' : 'Activate'} TPO account?`,
+            description: `This TPO will ${nextStatus === 'Inactive' ? 'lose' : 'regain'} access to the portal until the status is changed again.`,
+            confirmText:
+                nextStatus === 'Inactive' ? 'Deactivate' : 'Activate',
+            tone: nextStatus === 'Inactive' ? 'danger' : 'neutral',
+        });
+
+        if (!shouldContinue) {
             return;
         }
 
@@ -330,6 +347,8 @@ export default function ManageTPOsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {confirmDialog}
         </div>
     );
 }

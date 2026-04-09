@@ -18,10 +18,12 @@ import {
   DialogFooter,
 } from "../../components/Dialog";
 import { Plus, Pencil, Trash2, BookOpen } from "lucide-react";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 
 const API_BASE = "http://localhost:5000/api/v1";
 
 export default function DepartmentsPage() {
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [departments, setDepartments] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,14 @@ export default function DepartmentsPage() {
   };
 
   const handleDelete = async (deptId) => {
-    if (!confirm("Are you sure you want to delete this department?")) return;
+    const shouldDelete = await confirm({
+      title: "Delete department?",
+      description:
+        "This will remove the department record. Related records may block the deletion if they still depend on it.",
+      confirmText: "Delete Department",
+    });
+
+    if (!shouldDelete) return;
 
     try {
       const res = await fetch(`${API_BASE}/departments/${deptId}`, {
@@ -230,7 +239,13 @@ export default function DepartmentsPage() {
   };
 
   const handleDeleteCourse = async (course) => {
-    if (!confirm(`Delete course "${course.course_name}" from ${selectedDept?.dept_code}?`)) {
+    const shouldDelete = await confirm({
+      title: "Delete course?",
+      description: `Remove "${course.course_name}" from ${selectedDept?.dept_code}? Students and drives linked to it may no longer match as expected.`,
+      confirmText: "Delete Course",
+    });
+
+    if (!shouldDelete) {
       return;
     }
 
@@ -534,6 +549,8 @@ export default function DepartmentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {confirmDialog}
     </div>
   );
 }

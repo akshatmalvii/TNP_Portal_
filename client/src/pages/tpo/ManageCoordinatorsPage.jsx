@@ -19,10 +19,12 @@ import {
 } from '../../components/Dialog';
 import {Badge} from '../../components/Badge';
 import {Plus, Trash2} from 'lucide-react';
+import {useConfirmDialog} from '../../components/ConfirmDialog';
 
 const API_BASE = 'http://localhost:5000/api/v1';
 
 export default function ManageCoordinatorsPage() {
+    const {confirm, confirmDialog} = useConfirmDialog();
     const [coordinators, setCoordinators] = useState([]);
     const [loading, setLoading] = useState(true);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -93,7 +95,14 @@ export default function ManageCoordinatorsPage() {
     };
 
     const handleDelete = async (staff_id) => {
-        if (!confirm('Are you sure you want to remove this coordinator?')) {
+        const shouldDelete = await confirm({
+            title: 'Remove coordinator account?',
+            description:
+                'This will remove the coordinator account from your department.',
+            confirmText: 'Remove Coordinator',
+        });
+
+        if (!shouldDelete) {
             return;
         }
 
@@ -119,11 +128,15 @@ export default function ManageCoordinatorsPage() {
         const nextStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
         const actionLabel = nextStatus === 'Inactive' ? 'deactivate' : 'activate';
 
-        if (
-            !confirm(
-                `Are you sure you want to ${actionLabel} this coordinator account?`,
-            )
-        ) {
+        const shouldContinue = await confirm({
+            title: `${actionLabel === 'deactivate' ? 'Deactivate' : 'Activate'} coordinator account?`,
+            description: `This coordinator will ${nextStatus === 'Inactive' ? 'lose' : 'regain'} access to the portal until the status is changed again.`,
+            confirmText:
+                nextStatus === 'Inactive' ? 'Deactivate' : 'Activate',
+            tone: nextStatus === 'Inactive' ? 'danger' : 'neutral',
+        });
+
+        if (!shouldContinue) {
             return;
         }
 
@@ -315,6 +328,8 @@ export default function ManageCoordinatorsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {confirmDialog}
         </div>
     );
 }

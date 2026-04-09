@@ -3,10 +3,12 @@ import { Card, CardContent } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { CheckCircle2, XCircle, Clock, FileText, User, ExternalLink } from "lucide-react";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 
 const API_BASE = "http://localhost:5000/api/v1/verification";
 
 export default function VerificationsPage() {
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [pendingStudents, setPendingStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -77,7 +79,15 @@ export default function VerificationsPage() {
   };
 
   const handleReject = async (student_id) => {
-    if (!confirm("Are you sure you want to reject this student's verification?")) return;
+    const shouldReject = await confirm({
+      title: "Reject verification request?",
+      description:
+        "This student will remain unverified until their documents are submitted and reviewed again.",
+      confirmText: "Reject Request",
+    });
+
+    if (!shouldReject) return;
+
     setActionLoading(student_id);
     try {
       const res = await fetch(`${API_BASE}/coordinator/${student_id}`, {
@@ -318,6 +328,8 @@ export default function VerificationsPage() {
           })
         )}
       </div>
+
+      {confirmDialog}
     </div>
   );
 }

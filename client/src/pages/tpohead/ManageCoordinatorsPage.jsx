@@ -19,10 +19,12 @@ import {
 } from '../../components/Dialog';
 import {Badge} from '../../components/Badge';
 import {Plus, Trash2} from 'lucide-react';
+import {useConfirmDialog} from '../../components/ConfirmDialog';
 
 const API_BASE = 'http://localhost:5000/api/v1';
 
 export default function ManageCoordinatorsPage() {
+    const {confirm, confirmDialog} = useConfirmDialog();
     const [coordinators, setCoordinators] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -99,8 +101,14 @@ export default function ManageCoordinatorsPage() {
     };
 
     const handleDelete = async (staff_id) => {
-        if (!confirm('Are you sure you want to remove this coordinator?'))
-            return;
+        const shouldDelete = await confirm({
+            title: 'Remove coordinator account?',
+            description:
+                'This will remove the coordinator account from the portal.',
+            confirmText: 'Remove Coordinator',
+        });
+
+        if (!shouldDelete) return;
         try {
             const res = await fetch(`${API_BASE}/admin/staff/${staff_id}`, {
                 method: 'DELETE',
@@ -283,6 +291,8 @@ export default function ManageCoordinatorsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {confirmDialog}
         </div>
     );
 }
