@@ -15,12 +15,24 @@ import {
   LayoutDashboard,
   Landmark,
 } from "lucide-react";
+import { confirmDialogIcons, useConfirmDialog } from "./ConfirmDialog";
 
 export default function Sidebar({ userRole, isVerified = true }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { confirm, confirmDialog } = useConfirmDialog();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const shouldLogout = await confirm({
+      title: "Logout from your account?",
+      description: "You will need to log in again to access the portal.",
+      confirmText: "Logout",
+      tone: "neutral",
+      icon: confirmDialogIcons.logout,
+    });
+
+    if (!shouldLogout) return;
+
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -169,6 +181,8 @@ export default function Sidebar({ userRole, isVerified = true }) {
         </button>
 
       </div>
+
+      {confirmDialog}
     </div>
   );
 }
