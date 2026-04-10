@@ -15,6 +15,7 @@ import {
   UserPlus,
   LayoutDashboard,
   Landmark,
+  Plus,
 } from "lucide-react";
 import { confirmDialogIcons, useConfirmDialog } from "./ConfirmDialog";
 
@@ -52,8 +53,9 @@ export default function Sidebar({ userRole, isVerified = true }) {
     { href: "/dashboard/coordinator", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/coordinator/students", label: "Students", icon: Users },
     { href: "/dashboard/coordinator/verifications", label: "Verifications", icon: CheckCircle2 },
+    { href: "/dashboard/coordinator/create-drive", label: "Create Drive", icon: Plus },
     { href: "/dashboard/coordinator/drive-updates", label: "Drive Updates", icon: Briefcase },
-    { href: "/dashboard/coordinator/pending", label: "Pending", icon: Clock },
+    { href: "/dashboard/coordinator/companies", label: "Companies", icon: Building2 },
   ];
 
   const tpoMenuItems = [
