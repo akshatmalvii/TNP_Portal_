@@ -1,29 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
-import { Badge } from "../../components/Badge";
-import { Button } from "../../components/Button";
-import { Input } from "../../components/Input";
-import { Building2, Plus, Globe, Mail, Phone, Trash2, X } from "lucide-react";
+import { Card, CardContent } from "../../components/Card";
+import { Building2, Globe } from "lucide-react";
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  const [formData, setFormData] = useState({
-    company_name: "",
-    company_website: "",
-    contacts: [{ name: "", email: "", phone: "", designation: "" }]
-  });
 
   const fetchCompanies = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
       const res = await fetch("http://localhost:5000/api/v1/tpo/companies", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         setCompanies(await res.json());
@@ -39,137 +27,6 @@ export default function CompaniesPage() {
     fetchCompanies();
   }, []);
 
-  const handleAddContact = () => {
-    setFormData({
-      ...formData,
-      contacts: [...formData.contacts, { name: "", email: "", phone: "", designation: "" }]
-    });
-  };
-
-  const handleRemoveContact = (index) => {
-    const updatedContacts = formData.contacts.filter((_, i) => i !== index);
-    setFormData({ ...formData, contacts: updatedContacts });
-  };
-
-  const handleContactChange = (index, field, value) => {
-    const updatedContacts = [...formData.contacts];
-    updatedContacts[index][field] = value;
-    setFormData({ ...formData, contacts: updatedContacts });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/v1/tpo/company", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to add company");
-
-      setShowAddModal(false);
-      setFormData({
-        company_name: "",
-        company_website: "",
-        contacts: [{ name: "", email: "", phone: "", designation: "" }]
-      });
-      fetchCompanies(); // Refresh the list
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (showAddModal) {
-    return (
-      <div className="p-6 max-w-3xl mx-auto space-y-6">
-        <div className="flex justify-between items-center bg-white p-4 rounded-lg border shadow-sm">
-          <h2 className="text-xl font-bold flex items-center gap-2"><Building2 className="w-5 h-5 text-primary" /> Add New Company</h2>
-          <Button variant="ghost" onClick={() => setShowAddModal(false)}><X className="w-5 h-5" /></Button>
-        </div>
-
-        {error && (
-          <div className="p-3 bg-red-100 border border-red-200 text-red-700 rounded-md">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Card className="border-0 bg-card">
-            <CardHeader><CardTitle>Company Details</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Company Name *</label>
-                <Input required value={formData.company_name} onChange={e => setFormData({...formData, company_name: e.target.value})} placeholder="e.g. Google, Amazon" />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Website</label>
-                <Input type="url" value={formData.company_website} onChange={e => setFormData({...formData, company_website: e.target.value})} placeholder="https://www.example.com" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 bg-card">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>HR / Contacts</CardTitle>
-                <Button type="button" size="sm" variant="outline" onClick={handleAddContact} className="gap-2">
-                  <Plus className="w-4 h-4" /> Add Contact
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.contacts.map((contact, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-gray-50/50 relative">
-                  {formData.contacts.length > 1 && (
-                    <button type="button" onClick={() => handleRemoveContact(index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 p-1">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-gray-500">Name</label>
-                      <Input value={contact.name} onChange={e => handleContactChange(index, "name", e.target.value)} placeholder="Recruiter Name" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-500">Designation</label>
-                      <Input value={contact.designation} onChange={e => handleContactChange(index, "designation", e.target.value)} placeholder="e.g. Talent Acquisition" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-500">Email</label>
-                      <Input type="email" value={contact.email} onChange={e => handleContactChange(index, "email", e.target.value)} placeholder="hr@company.com" />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-500">Phone</label>
-                      <Input type="tel" value={contact.phone} onChange={e => handleContactChange(index, "phone", e.target.value)} placeholder="e.g. 9876543210" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving..." : "Save Company"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -177,13 +34,9 @@ export default function CompaniesPage() {
         <div>
           <h1 className="text-3xl font-bold">Companies</h1>
           <p className="text-muted-foreground mt-1">
-            Manage recruiting companies and their information.
+            View all recruiting companies created by your coordinators.
           </p>
         </div>
-
-        <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 gap-2">
-          <Plus className="w-4 h-4" /> Add Company
-        </Button>
       </div>
 
       {loading ? (
@@ -192,7 +45,7 @@ export default function CompaniesPage() {
         <div className="text-center py-20 bg-gray-50 rounded-lg border border-dashed text-gray-500">
           <Building2 className="w-12 h-12 mx-auto text-gray-300 mb-3" />
           <h3 className="text-lg font-medium text-gray-900">No companies added yet</h3>
-          <p className="mt-1">Click "Add Company" to start building your placement network.</p>
+          <p className="mt-1">Your coordinators can add new companies from the coordinator dashboard.</p>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BellRing, CalendarDays, MapPin, Upload, Users } from "lucide-react";
 import {
   Card,
@@ -29,12 +30,14 @@ export default function DriveUpdatesPage() {
   const [selectedDriveId, setSelectedDriveId] = useState(null);
   const [processLoading, setProcessLoading] = useState(false);
   const [processData, setProcessData] = useState(null);
+  const navigate = useNavigate();
   const [roundForm, setRoundForm] = useState(initialRoundForm);
   const [creatingRound, setCreatingRound] = useState(false);
   const [uploadingRoundId, setUploadingRoundId] = useState(null);
   const [uploadFiles, setUploadFiles] = useState({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [coordinatorContext, setCoordinatorContext] = useState(null);
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
@@ -70,6 +73,21 @@ export default function DriveUpdatesPage() {
     }
   };
 
+  const fetchCoordinatorContext = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/context`, { headers });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch coordinator context");
+      }
+
+      setCoordinatorContext(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const fetchProcess = async (driveId) => {
     if (!driveId) return;
 
@@ -93,6 +111,7 @@ export default function DriveUpdatesPage() {
   };
 
   useEffect(() => {
+    fetchCoordinatorContext();
     fetchDrives();
   }, []);
 
@@ -198,13 +217,23 @@ export default function DriveUpdatesPage() {
     }
   };
 
+  const minRoundDateTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+  const canManageRounds =
+    processData?.drive?.approval_status === "Approved" &&
+    processData?.drive?.drive_status === "Active";
+
+
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Drive Updates</h1>
-        <p className="text-gray-500 mt-1">
-          Create rounds, notify applicants, and upload result sheets by TNP ID.
-        </p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Drive Updates</h1>
+          <p className="text-gray-500 mt-1">
+            Manage approved drives and rounds for your department.
+          </p>
+        </div>
       </div>
 
       {error && (
@@ -332,6 +361,7 @@ export default function DriveUpdatesPage() {
                     <label className="text-sm font-medium">Schedule</label>
                     <Input
                       type="datetime-local"
+                      min={minRoundDateTime}
                       value={roundForm.scheduled_at}
                       onChange={(event) =>
                         setRoundForm((current) => ({
@@ -391,9 +421,13 @@ export default function DriveUpdatesPage() {
                     </div>
                   </label>
 
-                  <Button type="submit" disabled={creatingRound} className="w-full">
+                  <Button type="submit" disabled={creatingRound || !canManageRounds} className="w-full">
                     <BellRing className="w-4 h-4 mr-2" />
-                    {creatingRound ? "Creating..." : "Create Round & Notify"}
+                    {creatingRound
+                      ? "Creating..."
+                      : !canManageRounds
+                        ? "Approval Required First"
+                        : "Create Round & Notify"}
                   </Button>
                 </form>
               </CardContent>
@@ -416,10 +450,14 @@ export default function DriveUpdatesPage() {
                       {processData.drive.role_title} • {processData.applications.length} applications
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                     <div className="rounded-lg border p-4">
                       <p className="text-sm text-gray-500">Drive Status</p>
                       <p className="font-semibold mt-1">{processData.drive.drive_status}</p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                      <p className="text-sm text-gray-500">Approval</p>
+                      <p className="font-semibold mt-1">{processData.drive.approval_status}</p>
                     </div>
                     <div className="rounded-lg border p-4">
                       <p className="text-sm text-gray-500">Deadline</p>
@@ -435,6 +473,16 @@ export default function DriveUpdatesPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {processData.drive.approval_status !== "Approved" && (
+                  <Card className="border-0">
+                    <CardContent className="pt-6">
+                      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        This drive is still waiting for TPO approval. Students cannot see or apply to it until the TPO approves and publishes it.
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <Card className="border-0">
                   <CardHeader>
@@ -516,13 +564,14 @@ export default function DriveUpdatesPage() {
                                   }))
                                 }
                                 className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-                                disabled={round.resultsUploaded}
+                                disabled={round.resultsUploaded || !canManageRounds}
                               />
                             </div>
                             <Button
                               type="button"
                               onClick={() => handleUploadResults(round)}
                               disabled={
+                                !canManageRounds ||
                                 round.resultsUploaded ||
                                 uploadingRoundId === round.round_id
                               }

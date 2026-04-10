@@ -79,6 +79,61 @@ const getDrive = async (req, res) => {
   }
 };
 
+const getPendingDriveApprovals = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const drives = await driveService.listPendingDriveApprovals(staffUser.dept_id);
+    return res.json(drives);
+  } catch (err) {
+    console.error("Error fetching pending drive approvals:", err);
+    return res
+      .status(err.status || 500)
+      .json({ error: err.message || "Failed to fetch pending drive approvals" });
+  }
+};
+
+const approveDrive = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const drive = await driveService.updateDriveApprovalStatus(
+      req.params.id,
+      staffUser.dept_id,
+      staffUser.staff_id,
+      "Approved"
+    );
+    return res.json({
+      message: "Drive approved and published successfully",
+      drive,
+    });
+  } catch (err) {
+    console.error("Error approving drive:", err);
+    return res
+      .status(err.status || 500)
+      .json({ error: err.message || "Failed to approve drive" });
+  }
+};
+
+const rejectDriveApproval = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const drive = await driveService.updateDriveApprovalStatus(
+      req.params.id,
+      staffUser.dept_id,
+      staffUser.staff_id,
+      "Rejected"
+    );
+    return res.json({
+      message: "Drive approval rejected",
+      drive,
+    });
+  } catch (err) {
+    console.error("Error rejecting drive approval:", err);
+    return res
+      .status(err.status || 500)
+      .json({ error: err.message || "Failed to reject drive approval" });
+  }
+};
+
 const uploadDriveDocuments = async (req, res) => {
   try {
     const driveId = req.params.id;
@@ -314,6 +369,9 @@ export default {
   getCompanies,
   getDrives,
   getDrive,
+  getPendingDriveApprovals,
+  approveDrive,
+  rejectDriveApproval,
   uploadDriveDocuments,
   getCoordinators,
   createCoordinator,

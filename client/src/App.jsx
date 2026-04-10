@@ -17,11 +17,12 @@ import StudentNotificationsPage from './pages/student/StudentNotificationsPage';
 
 // Coordinator pages
 import CoordinatorDashboardPage from './pages/coordinator/CoordinatorDashboardPage';
-import PendingPage from './pages/coordinator/PendingPage';
 import SettingsPage from './pages/coordinator/SettingsPage';
 import StudentsPage from './pages/coordinator/StudentsPage';
 import VerificationsPage from './pages/coordinator/VerificationsPage';
 import DriveUpdatesPage from './pages/coordinator/DriveUpdatesPage';
+import CreateDrivePage from './pages/coordinator/CreateDrivePage';
+import CoordinatorCompaniesPage from './pages/coordinator/CompaniesPage';
 
 // TPO pages
 import TPODashboardPage from './pages/tpo/TPODashboardPage';
@@ -86,10 +87,6 @@ function App() {
                         element={<CoordinatorDashboardPage />}
                     />
                     <Route
-                        path='coordinator/pending'
-                        element={<PendingPage />}
-                    />
-                    <Route
                         path='coordinator/settings'
                         element={<SettingsPage />}
                     />
@@ -102,8 +99,16 @@ function App() {
                         element={<VerificationsPage />}
                     />
                     <Route
+                        path='coordinator/create-drive'
+                        element={<CreateDrivePage />}
+                    />
+                    <Route
                         path='coordinator/drive-updates'
                         element={<DriveUpdatesPage />}
+                    />
+                    <Route
+                        path='coordinator/companies'
+                        element={<CoordinatorCompaniesPage />}
                     />
 
                     {/* TPO */}

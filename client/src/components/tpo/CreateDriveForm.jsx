@@ -9,7 +9,15 @@ const createDocumentInput = () => ({
   file: null,
 });
 
-export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
+export default function CreateDriveForm({
+  onCancel,
+  onSuccess,
+  initialData,
+  apiBase = "http://localhost:5000/api/v1/tpo",
+  fixedDepartmentId = null,
+  fixedDepartmentLabel = "",
+  submitLabel = "",
+}) {
   const [formData, setFormData] = useState({
     company_id: "",
     role_title: "",
@@ -50,7 +58,7 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
         const [depRes, crsRes, compRes] = await Promise.all([
           fetch("http://localhost:5000/api/v1/departments", { headers }),
           fetch("http://localhost:5000/api/v1/courses", { headers }),
-          fetch("http://localhost:5000/api/v1/tpo/companies", { headers })
+          fetch(`${apiBase}/companies`, { headers })
         ]);
 
         if (depRes.ok) setDepartments(await depRes.json());
@@ -64,7 +72,7 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
 
         if (initialData) {
           const driveId = initialData.drive_id || initialData.id;
-          const driveRes = await fetch(`http://localhost:5000/api/v1/tpo/drive/${driveId}`, { headers });
+          const driveRes = await fetch(`${apiBase}/drive/${driveId}`, { headers });
           if (driveRes.ok) {
             const driveData = await driveRes.json();
             
@@ -103,7 +111,11 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
             setDriveDocumentInputs([]);
           }
         } else if (fetchedComps.length > 0) {
-          setFormData(prev => ({ ...prev, company_id: fetchedComps[0].company_id }));
+          setFormData(prev => ({
+            ...prev,
+            company_id: fetchedComps[0].company_id,
+            allowed_departments: fixedDepartmentId ? [fixedDepartmentId] : prev.allowed_departments,
+          }));
           setExistingDriveDocuments([]);
           setDriveDocumentInputs([]);
         }
@@ -112,7 +124,25 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
       }
     };
     fetchMetadata();
-  }, [initialData]);
+  }, [initialData, apiBase, fixedDepartmentId]);
+
+  useEffect(() => {
+    if (!fixedDepartmentId) return;
+
+    setFormData((prev) => {
+      if (
+        prev.allowed_departments.length === 1 &&
+        prev.allowed_departments[0] === fixedDepartmentId
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        allowed_departments: [fixedDepartmentId],
+      };
+    });
+  }, [fixedDepartmentId]);
 
   useEffect(() => {
     setFormData((prev) => {
@@ -182,7 +212,7 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
       formData.append("documents", file);
     });
 
-    const response = await fetch(`http://localhost:5000/api/v1/tpo/drive/${driveId}/documents`, {
+    const response = await fetch(`${apiBase}/drive/${driveId}/documents`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -228,6 +258,9 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
         ...formData,
         package_lpa: parseFloat(formData.package_lpa) || 0,
         company_id: parseInt(formData.company_id) || null,
+        allowed_departments: fixedDepartmentId
+          ? [fixedDepartmentId]
+          : formData.allowed_departments,
         allowed_courses: validAllowedCourses,
         eligibility: {
           min_cgpa: parseFloat(eligibility.min_cgpa) || null,
@@ -242,8 +275,8 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
 
       const method = initialData ? "PUT" : "POST";
       const url = initialData 
-        ? `http://localhost:5000/api/v1/tpo/drive/${initialData.drive_id || initialData.id}` 
-        : "http://localhost:5000/api/v1/tpo/drive";
+        ? `${apiBase}/drive/${initialData.drive_id || initialData.id}` 
+        : `${apiBase}/drive`;
 
       const res = await fetch(url, {
         method,
@@ -448,20 +481,32 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
           <CardContent className="space-y-6">
             <div>
               <label className="text-sm font-medium block mb-2">Allowed Departments *</label>
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                {departments.map(d => (
-                  <label key={d.dept_id} className="flex items-center gap-2 text-sm">
-                    <input 
-                      type="checkbox" 
-                      className="rounded"
-                      checked={formData.allowed_departments.includes(d.dept_id)}
-                      onChange={() => handleToggleArray("allowed_departments", d.dept_id)}
-                    />
-                    {d.dept_code} - {d.dept_name}
-                  </label>
-                ))}
-                {departments.length === 0 && <span className="text-gray-400 text-sm">No departments loaded</span>}
-              </div>
+              {fixedDepartmentId ? (
+                <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                  This drive will be created only for{" "}
+                  <span className="font-semibold">
+                    {fixedDepartmentLabel ||
+                      departments.find((d) => d.dept_id === fixedDepartmentId)?.dept_name ||
+                      "your department"}
+                  </span>
+                  .
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                  {departments.map(d => (
+                    <label key={d.dept_id} className="flex items-center gap-2 text-sm">
+                      <input 
+                        type="checkbox" 
+                        className="rounded"
+                        checked={formData.allowed_departments.includes(d.dept_id)}
+                        onChange={() => handleToggleArray("allowed_departments", d.dept_id)}
+                      />
+                      {d.dept_code} - {d.dept_name}
+                    </label>
+                  ))}
+                  {departments.length === 0 && <span className="text-gray-400 text-sm">No departments loaded</span>}
+                </div>
+              )}
             </div>
 
             <div>
@@ -607,7 +652,7 @@ export default function CreateDriveForm({ onCancel, onSuccess, initialData }) {
 
         <div className="flex justify-end pt-4 border-t">
           <Button type="submit" disabled={submitting} className="min-w-[150px]">
-            {submitting ? "Saving..." : (initialData ? "Update Drive" : "Publish Drive")}
+            {submitting ? "Saving..." : (submitLabel || (initialData ? "Update Drive" : "Publish Drive"))}
           </Button>
         </div>
       </form>

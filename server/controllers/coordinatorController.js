@@ -1,4 +1,84 @@
 import coordinatorDriveService from "../services/coordinatorDriveService.js";
+import driveService from "../services/driveService.js";
+import StaffAdmin from "../models/staff_admin.js";
+import Department from "../models/department.js";
+import Company from "../models/company.js";
+import CompanyContact from "../models/company_contact.js";
+import sequelize from "../config/db.js";
+
+const getCoordinatorContext = async (req, res) => {
+  try {
+    const staffUser = await StaffAdmin.findOne({
+      where: { user_id: req.user.user_id },
+      include: [{ model: Department, attributes: ["dept_id", "dept_code", "dept_name"] }],
+    });
+
+    if (!staffUser) {
+      return res.status(404).json({ error: "Coordinator context not found" });
+    }
+
+    return res.json({
+      staff_id: staffUser.staff_id,
+      dept_id: staffUser.dept_id,
+      Department: staffUser.Department,
+    });
+  } catch (err) {
+    console.error("Error fetching coordinator context:", err);
+    return res.status(500).json({ error: "Failed to fetch coordinator context" });
+  }
+};
+
+const listCompanies = async (req, res) => {
+  try {
+    const companies = await Company.findAll();
+    return res.json(companies);
+  } catch (err) {
+    console.error("Error fetching companies for coordinator:", err);
+    return res.status(500).json({ error: "Failed to fetch companies" });
+  }
+};
+
+const createCompany = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const { company_name, company_website, contacts } = req.body;
+
+    if (!company_name) {
+      await t.rollback();
+      return res.status(400).json({ error: "company_name is required" });
+    }
+
+    const existing = await Company.findOne({ where: { company_name }, transaction: t });
+    if (existing) {
+      await t.rollback();
+      return res.status(409).json({ error: "Company with this name already exists" });
+    }
+
+    const newCompany = await Company.create({
+      company_name,
+      company_website: company_website || null,
+    }, { transaction: t });
+
+    if (Array.isArray(contacts) && contacts.length > 0) {
+      const contactPayloads = contacts.map((c) => ({
+        company_id: newCompany.company_id,
+        contact_name: c.name || null,
+        contact_email: c.email || null,
+        contact_phone: c.phone || null,
+        designation: c.designation || null,
+      }));
+
+      await CompanyContact.bulkCreate(contactPayloads, { transaction: t });
+    }
+
+    await t.commit();
+    return res.status(201).json({ message: "Company created successfully", company: newCompany });
+  } catch (err) {
+    await t.rollback();
+    console.error("Error creating company for coordinator:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to create company" });
+  }
+};
 
 const listDrives = async (req, res) => {
   try {
@@ -68,9 +148,68 @@ const uploadRoundResults = async (req, res) => {
   }
 };
 
+const createDrive = async (req, res) => {
+  try {
+    const staffUser = await StaffAdmin.findOne({
+      where: { user_id: req.user.user_id },
+    });
+
+    if (!staffUser?.dept_id) {
+      return res.status(400).json({ error: "Coordinator department not found" });
+    }
+
+    const drive = await driveService.createDriveTransaction(
+      req.body,
+      staffUser.staff_id,
+      {
+        driveStatus: "Draft",
+        approvalStatus: "Pending",
+        enforceDeptId: staffUser.dept_id,
+      }
+    );
+
+    return res.status(201).json({
+      message: "Drive created and sent for TPO approval",
+      drive,
+    });
+  } catch (err) {
+    console.error("Error creating coordinator drive:", err);
+    return res
+      .status(err.status || 500)
+      .json({ error: err.message || "Failed to create drive" });
+  }
+};
+
+const uploadDriveDocuments = async (req, res) => {
+  try {
+    const driveId = req.params.id;
+    const files = req.files || [];
+
+    if (files.length === 0) {
+      return res.status(400).json({ error: "At least one PDF must be selected" });
+    }
+
+    const uploadedDocuments = await driveService.uploadDriveDocuments(driveId, files);
+    return res.status(201).json({
+      message: "Drive documents uploaded successfully",
+      documents: uploadedDocuments,
+    });
+  } catch (err) {
+    console.error("Error uploading drive documents for coordinator:", err);
+    return res
+      .status(err.status || 500)
+      .json({ error: err.message || "Failed to upload drive documents" });
+  }
+};
+
 export default {
+  getCoordinatorContext,
+  listCompanies,
   listDrives,
   getDriveProcess,
   createRound,
   uploadRoundResults,
+  createDrive,
+  createCompany,
+  uploadDriveDocuments,
 };

@@ -3,6 +3,7 @@ import driveRepository from "../repositories/driveRepository.js";
 import studentApplicationRepository from "../repositories/studentApplicationRepository.js";
 import Student from "../models/student.js";
 import Drive from "../models/drive.js";
+import Company from "../models/company.js";
 import Course from "../models/course.js";
 import DriveAllowedDepartment from "../models/drive_allowed_department.js";
 import DriveAllowedCourse from "../models/drive_allowed_course.js";
@@ -121,7 +122,6 @@ const listOpenDrivesForStudent = async (student_id) => {
   const tenth_percent = ssc ? parseFloat(ssc.percentage) : 0;
   const twelfth_percent = hsc ? parseFloat(hsc.percentage) : 0;
 
-  const Company = (await import("../models/company.js")).default;
   const drives = await Drive.findAll({
     where: { drive_status: "Active", approval_status: "Approved" },
     include: [
@@ -294,7 +294,7 @@ const applyToDrive = async (student_id, drive_id, application_data = null) => {
   }
 };
 
-const createDriveTransaction = async (driveData, staffId) => {
+const createDriveTransaction = async (driveData, staffId, options = {}) => {
   const {
     company_id,
     role_title,
@@ -308,7 +308,17 @@ const createDriveTransaction = async (driveData, staffId) => {
     dynamic_form_fields 
   } = driveData;
 
-  if (!allowed_departments || allowed_departments.length === 0) {
+  const {
+    driveStatus = "Active",
+    approvalStatus = "Approved",
+    enforceDeptId = null,
+  } = options;
+
+  const normalizedAllowedDepartments = enforceDeptId
+    ? [enforceDeptId]
+    : allowed_departments;
+
+  if (!normalizedAllowedDepartments || normalizedAllowedDepartments.length === 0) {
     throw { status: 400, message: "At least one department must be selected" };
   }
   if (!allowed_courses || allowed_courses.length === 0) {
@@ -320,7 +330,7 @@ const createDriveTransaction = async (driveData, staffId) => {
     where: { course_id: allowed_courses }
   });
 
-  const invalidCourses = validCourses.some(c => !allowed_departments.includes(c.dept_id));
+  const invalidCourses = validCourses.some(c => !normalizedAllowedDepartments.includes(c.dept_id));
   if (validCourses.length !== allowed_courses.length || invalidCourses) {
     throw { status: 400, message: "One or more selected courses do not belong to the allowed departments." };
   }
@@ -336,12 +346,12 @@ const createDriveTransaction = async (driveData, staffId) => {
       offer_type,
       package_lpa,
       deadline,
-      drive_status: "Active",
-      approval_status: "Approved"
+      drive_status: driveStatus,
+      approval_status: approvalStatus
     }, { transaction });
 
     await DriveAllowedDepartment.bulkCreate(
-      allowed_departments.map(dept_id => ({ drive_id: drive.drive_id, dept_id })),
+      normalizedAllowedDepartments.map(dept_id => ({ drive_id: drive.drive_id, dept_id })),
       { transaction }
     );
 
@@ -489,6 +499,57 @@ const deleteDrive = async (drive_id, staffId) => {
   }
 };
 
+const listPendingDriveApprovals = async (deptId) => {
+  const drives = await Drive.findAll({
+    where: { approval_status: "Pending" },
+    include: [
+      { model: Company, attributes: ["company_name"] },
+      {
+        model: DriveAllowedDepartment,
+        where: { dept_id: deptId },
+        required: true,
+      },
+      { model: DriveAllowedCourse, required: false },
+      { model: DriveEligibility, required: false },
+    ],
+    order: [["created_at", "DESC"]],
+  });
+
+  return drives.map((drive) => {
+    const plain = drive.get({ plain: true });
+    plain.company_name = plain.Company?.company_name || "Unknown Company";
+    return plain;
+  });
+};
+
+const updateDriveApprovalStatus = async (driveId, deptId, tpoStaffId, approvalStatus) => {
+  const drive = await Drive.findOne({
+    where: { drive_id: driveId, approval_status: "Pending" },
+    include: [
+      {
+        model: DriveAllowedDepartment,
+        where: { dept_id: deptId },
+        required: true,
+      },
+    ],
+  });
+
+  if (!drive) {
+    throw { status: 404, message: "Pending drive not found for your department" };
+  }
+
+  const nextDriveStatus = approvalStatus === "Approved" ? "Active" : "Draft";
+
+  await drive.update({
+    approval_status: approvalStatus,
+    drive_status: nextDriveStatus,
+    approved_by_staff: tpoStaffId,
+    updated_at: new Date(),
+  });
+
+  return drive;
+};
+
 export default {
   listOpenDrivesForStudent,
   getStudentApplications,
@@ -497,5 +558,7 @@ export default {
   uploadDriveDocuments,
   createDriveTransaction,
   updateDriveTransaction,
-  deleteDrive
+  deleteDrive,
+  listPendingDriveApprovals,
+  updateDriveApprovalStatus
 };

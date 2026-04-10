@@ -3,7 +3,7 @@ import { Card, CardContent } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
-import { Search, Plus, Edit2, Trash2 } from "lucide-react";
+import { Search, Edit2, Trash2 } from "lucide-react";
 import CreateDriveForm from "../../components/tpo/CreateDriveForm";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
 
@@ -107,14 +107,9 @@ export default function TPODrivesPage() {
         <div>
           <h1 className="text-3xl font-bold">Job Drives</h1>
           <p className="text-muted-foreground mt-1">
-            Create and manage job drives for companies.
+            Review and manage department drives after coordinator submission.
           </p>
         </div>
-
-        <Button className="bg-primary hover:bg-primary/90 gap-2" onClick={() => setIsCreating(true)}>
-          <Plus className="w-4 h-4" />
-          New Drive
-        </Button>
       </div>
 
       {/* Search */}

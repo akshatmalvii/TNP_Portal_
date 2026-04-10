@@ -1,66 +1,112 @@
-import React, { useState } from "react";
-import { Card, CardContent } from "../../components/Card";
+import React, { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
-import { CheckCircle2, XCircle, Clock } from "lucide-react";
+import { CheckCircle2, Clock, IndianRupee, XCircle } from "lucide-react";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
+
+const API_BASE = "http://localhost:5000/api/v1/tpo";
 
 export default function ApprovalsPage() {
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionId, setActionId] = useState(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleApprove = (id) => {
-    setRequests(
-      requests.map((r) =>
-        r.id === id ? { ...r, status: "Approved" } : r
-      )
-    );
-  };
+  const token = localStorage.getItem("token");
+  const headers = { Authorization: `Bearer ${token}` };
 
-  const handleReject = (id) => {
-    setRequests(requests.filter((r) => r.id !== id));
-  };
+  const fetchRequests = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/drive-approvals`, { headers });
+      const data = await res.json();
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Approved":
-        return "bg-green-500/10 text-green-700 border-green-200";
-      case "Pending Approval":
-        return "bg-yellow-500/10 text-yellow-700 border-yellow-200";
-      default:
-        return "bg-gray-500/10 text-gray-700 border-gray-200";
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch pending approvals");
+      }
+
+      setRequests(Array.isArray(data) ? data : []);
+      setError("");
+    } catch (err) {
+      setError(err.message);
+      setRequests([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const approved = requests.filter(
-    (r) => r.status === "Approved"
-  );
-  const pending = requests.filter(
-    (r) => r.status === "Pending Approval"
-  );
+  useEffect(() => {
+    fetchRequests();
+  }, []);
+
+  const handleDecision = async (request, action) => {
+    const shouldContinue = await confirm({
+      title: `${action === "approve" ? "Approve" : "Reject"} drive request?`,
+      description:
+        action === "approve"
+          ? "Approving will publish this drive to eligible students immediately."
+          : "Rejecting will keep this drive hidden from students until the coordinator updates and resubmits it.",
+      confirmText: action === "approve" ? "Approve Drive" : "Reject Drive",
+      tone: action === "approve" ? "neutral" : "danger",
+    });
+
+    if (!shouldContinue) return;
+
+    setActionId(request.drive_id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await fetch(`${API_BASE}/drive-approvals/${request.drive_id}/${action}`, {
+        method: "POST",
+        headers,
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || `Failed to ${action} drive`);
+      }
+
+      setSuccess(data.message || `Drive ${action}d successfully`);
+      await fetchRequests();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setActionId(null);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold">
-          Company Approvals
-        </h1>
+        <h1 className="text-3xl font-bold">Drive Approvals</h1>
         <p className="text-muted-foreground mt-1">
-          Review and approve company recruitment requests.
+          Review coordinator-created drives and publish them for students after approval.
         </p>
       </div>
 
-      {/* Summary */}
+      {error && (
+        <div className="p-3 rounded-md text-sm bg-red-100 text-red-700">
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="p-3 rounded-md text-sm bg-green-100 text-green-700">
+          {success}
+        </div>
+      )}
+
       <div className="grid sm:grid-cols-3 gap-4">
         <Card className="border-0 bg-card">
           <CardContent className="pt-6 flex items-center gap-3">
             <Clock className="w-5 h-5 text-yellow-500" />
             <div>
-              <p className="text-sm text-muted-foreground">
-                Pending
-              </p>
-              <p className="text-2xl font-bold">
-                {pending.length}
-              </p>
+              <p className="text-sm text-muted-foreground">Pending</p>
+              <p className="text-2xl font-bold">{requests.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -69,142 +115,105 @@ export default function ApprovalsPage() {
           <CardContent className="pt-6 flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-green-500" />
             <div>
-              <p className="text-sm text-muted-foreground">
-                Approved
-              </p>
-              <p className="text-2xl font-bold">
-                {approved.length}
-              </p>
+              <p className="text-sm text-muted-foreground">Ready To Publish</p>
+              <p className="text-2xl font-bold">{requests.length}</p>
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-0 bg-card">
           <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">
-              Total Requests
-            </p>
+            <p className="text-sm text-muted-foreground">Department Queue</p>
             <p className="text-2xl font-bold mt-1">
-              {requests.length}
+              {loading ? "..." : requests.length}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Pending */}
-      {pending.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold">
-            Pending Requests
-          </h2>
+      <Card className="border-0 bg-card">
+        <CardHeader>
+          <CardTitle>Pending Drive Requests</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading pending requests...</p>
+          ) : requests.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+              No pending drive requests for your department right now.
+            </div>
+          ) : (
+            requests.map((req) => (
+              <Card key={req.drive_id} className="border bg-white shadow-none">
+                <CardContent className="pt-6 space-y-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg">{req.company_name}</h3>
+                      <p className="text-sm text-muted-foreground">{req.role_title}</p>
+                    </div>
 
-          {pending.map((req) => (
-            <Card
-              key={req.id}
-              className="border-0 bg-card hover:shadow-md"
-            >
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex justify-between">
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      {req.company}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {req.position}
-                    </p>
+                    <Badge className="bg-yellow-500/10 text-yellow-700 border border-yellow-200">
+                      Pending Approval
+                    </Badge>
                   </div>
 
-                  <Badge
-                    className={
-                      getStatusColor(req.status) + " border"
-                    }
-                  >
-                    {req.status}
-                  </Badge>
-                </div>
+                  <div className="grid md:grid-cols-4 gap-4 pt-4 border-t">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Package</p>
+                      <p className="font-semibold inline-flex items-center gap-1">
+                        <IndianRupee className="w-3.5 h-3.5" />
+                        {req.package_lpa || "N/A"} LPA
+                      </p>
+                    </div>
 
-                {/* Details */}
-                <div className="grid md:grid-cols-3 gap-4 pt-4 border-t">
-                  <div>
-                    <p className="text-xs text-muted-foreground">
-                      Salary
-                    </p>
-                    <p className="font-semibold">
-                      {req.salary}
-                    </p>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Deadline</p>
+                      <p className="font-semibold">
+                        {req.deadline ? new Date(req.deadline).toLocaleDateString() : "N/A"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-muted-foreground">Offer Type</p>
+                      <p className="font-semibold">{req.offer_type || "N/A"}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-muted-foreground">Created</p>
+                      <p className="font-semibold">
+                        {req.created_at ? new Date(req.created_at).toLocaleDateString() : "N/A"}
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <p className="text-xs text-muted-foreground">
-                      CGPA
-                    </p>
-                    <p className="font-semibold">
-                      {req.requiredCGPA}
-                    </p>
+                  <div className="flex gap-2 pt-4">
+                    <Button
+                      onClick={() => handleDecision(req, "approve")}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      disabled={actionId === req.drive_id}
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      {actionId === req.drive_id ? "Processing..." : "Approve & Publish"}
+                    </Button>
+
+                    <Button
+                      onClick={() => handleDecision(req, "reject")}
+                      variant="destructive"
+                      className="flex-1"
+                      disabled={actionId === req.drive_id}
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Reject
+                    </Button>
                   </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </CardContent>
+      </Card>
 
-                  <div>
-                    <p className="text-xs text-muted-foreground">
-                      Department
-                    </p>
-                    <p className="font-semibold">
-                      {req.department}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-4">
-                  <Button
-                    onClick={() => handleApprove(req.id)}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Approve
-                  </Button>
-
-                  <Button
-                    onClick={() => handleReject(req.id)}
-                    variant="destructive"
-                    className="flex-1"
-                  >
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Reject
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Approved */}
-      {approved.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold">
-            Approved Requests
-          </h2>
-
-          {approved.map((req) => (
-            <Card key={req.id} className="border-0 bg-card">
-              <CardContent className="pt-6 flex justify-between">
-                <div>
-                  <h3 className="font-bold">
-                    {req.company}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {req.position}
-                  </p>
-                </div>
-
-                <Badge className="bg-green-500/10 text-green-700 border border-green-200">
-                  Approved
-                </Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {confirmDialog}
     </div>
   );
 }
