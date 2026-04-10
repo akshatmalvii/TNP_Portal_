@@ -9,6 +9,18 @@ const createDocumentInput = () => ({
   file: null,
 });
 
+const getPlacementSeasonOptions = () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const currentSeasonStartYear = currentMonth >= 6 ? currentYear : currentYear - 1;
+
+  return Array.from({ length: 5 }, (_, index) => {
+    const startYear = currentSeasonStartYear - 2 + index;
+    return `${startYear}-${startYear + 1}`;
+  });
+};
+
 export default function CreateDriveForm({
   onCancel,
   onSuccess,
@@ -24,6 +36,7 @@ export default function CreateDriveForm({
     role_description: "",
     offer_type: "Placement",
     package_lpa: "",
+    placement_season: "",
     deadline: "",
     allowed_departments: [],
     allowed_courses: [],
@@ -48,6 +61,7 @@ export default function CreateDriveForm({
   const [departments, setDepartments] = useState([]);
   const [courses, setCourses] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const placementSeasonOptions = getPlacementSeasonOptions();
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -82,6 +96,7 @@ export default function CreateDriveForm({
               role_description: driveData.role_description || "",
               offer_type: driveData.offer_type || "Placement",
               package_lpa: driveData.package_lpa || "",
+              placement_season: driveData.placement_season || placementSeasonOptions[2] || "",
               deadline: driveData.deadline ? driveData.deadline.split("T")[0] : "",
               allowed_departments: driveData.DriveAllowedDepartments?.map(d => d.dept_id) || [],
               allowed_courses: driveData.DriveAllowedCourses?.map(c => c.course_id) || [],
@@ -114,6 +129,7 @@ export default function CreateDriveForm({
           setFormData(prev => ({
             ...prev,
             company_id: fetchedComps[0].company_id,
+            placement_season: prev.placement_season || placementSeasonOptions[2] || "",
             allowed_departments: fixedDepartmentId ? [fixedDepartmentId] : prev.allowed_departments,
           }));
           setExistingDriveDocuments([]);
@@ -258,6 +274,7 @@ export default function CreateDriveForm({
         ...formData,
         package_lpa: parseFloat(formData.package_lpa) || 0,
         company_id: parseInt(formData.company_id) || null,
+        placement_season: formData.placement_season,
         allowed_departments: fixedDepartmentId
           ? [fixedDepartmentId]
           : formData.allowed_departments,
@@ -384,6 +401,22 @@ export default function CreateDriveForm({
                 onChange={e => setFormData({...formData, package_lpa: e.target.value})} 
                 placeholder="e.g. 12.5" 
               />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Placement Season *</label>
+              <select
+                required
+                className="w-full border rounded-md px-3 py-2 text-sm bg-white"
+                value={formData.placement_season}
+                onChange={e => setFormData({...formData, placement_season: e.target.value})}
+              >
+                <option value="">Select placement season</option>
+                {placementSeasonOptions.map((season) => (
+                  <option key={season} value={season}>
+                    {season}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="text-sm font-medium">Deadline *</label>

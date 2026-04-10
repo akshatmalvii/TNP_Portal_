@@ -49,3 +49,23 @@ export const resetPassword = async (req, res) => {
     return res.status(err.status || 500).json({ error: err.message || "Failed to reset password" });
   }
 };
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    const result = await authService.getCurrentUser(req.user.user_id);
+    return res.json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to fetch current user" });
+  }
+};
+
+export const updateCurrentUser = async (req, res) => {
+  try {
+    const result = await authService.updateCurrentUser(req.user.user_id, req.body);
+    return res.json({ message: "Profile updated successfully", user: result });
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to update profile" });
+  }
+};

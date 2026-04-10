@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 
 const API_BASE = "http://localhost:5000/api/v1/student-profile";
+const AUTH_API_BASE = "http://localhost:5000/api/v1/auth";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isVerified, setIsVerified] = useState(true); // default true for non-students
   const [checkingVerification, setCheckingVerification] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch {
+      return {};
+    }
+  });
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -29,9 +37,47 @@ export default function DashboardLayout() {
 
   const userRole = getRoleKey();
 
-  // Get display name
-  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const userName = storedUser.email || "User";
+  const userName =
+    currentUser.display_name ||
+    currentUser.full_name ||
+    currentUser.email ||
+    "User";
+  const isStaffNameIncomplete =
+    userRole !== "student" && currentUser.name_completed === false;
+
+  useEffect(() => {
+    if (!token) return;
+
+    const syncCurrentUser = async () => {
+      try {
+        const res = await fetch(`${AUTH_API_BASE}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        setCurrentUser(data);
+        localStorage.setItem("user", JSON.stringify(data));
+      } catch (err) {
+        console.error("Failed to sync current user", err);
+      }
+    };
+
+    syncCurrentUser();
+
+    const handleUserUpdated = () => {
+      try {
+        setCurrentUser(JSON.parse(localStorage.getItem("user") || "{}"));
+      } catch {
+        setCurrentUser({});
+      }
+      syncCurrentUser();
+    };
+
+    window.addEventListener("tnp-user-updated", handleUserUpdated);
+    return () => window.removeEventListener("tnp-user-updated", handleUserUpdated);
+  }, [token]);
 
   // Check verification status for students
   useEffect(() => {
@@ -97,6 +143,21 @@ export default function DashboardLayout() {
           userRole={userRole}
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
         />
+        {isStaffNameIncomplete && (
+          <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-900">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <p>
+                Complete your name in Settings before creating, approving, updating, or deleting records.
+              </p>
+              <Link
+                to={`/dashboard/${userRole}/settings`}
+                className="font-medium text-amber-900 underline underline-offset-2"
+              >
+                Open Settings
+              </Link>
+            </div>
+          </div>
+        )}
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>

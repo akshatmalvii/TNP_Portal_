@@ -43,6 +43,7 @@ import seedCourses from './utils/seedCourses.js';
 import createTnpTrigger from './utils/createTnpTrigger.js';
 import createDriveTriggers from './utils/createDriveTriggers.js';
 import ensureDepartmentPolicyHistorySchema from './utils/ensureDepartmentPolicyHistorySchema.js';
+import ensureDrivePlacementSeasonSchema from './utils/ensureDrivePlacementSeasonSchema.js';
 
 // Routes
 import authRoutes from './routes/authRoutes.js';
@@ -139,6 +140,7 @@ const startServer = async () => {
         await StudentDocument.sync({alter: true});
         await StudentVerificationRequest.sync({alter: true});
         await Drive.sync({alter: true});
+        await ensureDrivePlacementSeasonSchema();
         await DriveDocument.sync({alter: true});
         await DriveRound.sync({alter: true});
 

@@ -15,6 +15,7 @@ import { getSignedCloudinaryDownloadUrl } from "../utils/cloudinaryFileUrl.js";
 import departmentPolicyService from "./departmentPolicyService.js";
 import StudentApplication from "../models/student_application.js";
 import Offer from "../models/offer.js";
+import { normalizePlacementSeason } from "../utils/placementSeason.js";
 
 const attachSignedDriveDocuments = (drive) => {
   const plainDrive = drive.get ? drive.get({ plain: true }) : drive;
@@ -302,6 +303,7 @@ const createDriveTransaction = async (driveData, staffId, options = {}) => {
     offer_type,
     package_lpa,
     deadline,
+    placement_season,
     allowed_departments, 
     allowed_courses, 
     eligibility, 
@@ -325,6 +327,8 @@ const createDriveTransaction = async (driveData, staffId, options = {}) => {
     throw { status: 400, message: "At least one course must be selected" };
   }
 
+  const normalizedPlacementSeason = normalizePlacementSeason(placement_season);
+
   // Deep Validation: Check if selected courses actually belong to the selected departments
   const validCourses = await Course.findAll({
     where: { course_id: allowed_courses }
@@ -346,6 +350,7 @@ const createDriveTransaction = async (driveData, staffId, options = {}) => {
       offer_type,
       package_lpa,
       deadline,
+      placement_season: normalizedPlacementSeason,
       drive_status: driveStatus,
       approval_status: approvalStatus
     }, { transaction });
@@ -401,9 +406,11 @@ const updateDriveTransaction = async (drive_id, driveData, staffId) => {
 
     const {
       company_id, role_title, role_description, offer_type,
-      package_lpa, deadline, drive_status, approval_status,
+      package_lpa, deadline, placement_season, drive_status, approval_status,
       allowed_departments, allowed_courses, eligibility, dynamic_form_fields
     } = driveData;
+
+    const normalizedPlacementSeason = normalizePlacementSeason(placement_season);
 
     // 1. Update root Drive record
     await drive.update({
@@ -413,6 +420,7 @@ const updateDriveTransaction = async (drive_id, driveData, staffId) => {
       offer_type,
       package_lpa: package_lpa || null,
       deadline,
+      placement_season: normalizedPlacementSeason,
       drive_status: drive_status || drive.drive_status,
       approval_status: approval_status || drive.approval_status
     }, { transaction });

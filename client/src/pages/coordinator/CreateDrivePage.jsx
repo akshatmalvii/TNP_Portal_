@@ -56,7 +56,7 @@ export default function CreateDrivePage() {
           fixedDepartmentId={coordinatorContext?.dept_id}
           fixedDepartmentLabel={coordinatorContext?.Department?.dept_name || coordinatorContext?.Department?.dept_code}
           onSuccess={handleSuccess}
-          submitLabel="Create Drive"
+          submitLabel="Send For Approval"
         />
       </div>
     </div>

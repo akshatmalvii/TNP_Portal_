@@ -29,6 +29,11 @@ const Drive = sequelize.define(
       allowNull: true
     },
 
+    placement_season: {
+      type: DataTypes.STRING(9),
+      allowNull: true
+    },
+
     created_by_staff: {
       type: DataTypes.INTEGER,
       allowNull: true

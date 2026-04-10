@@ -4,11 +4,45 @@ import crypto from "crypto";
 import userRepository from "../repositories/userRepository.js";
 import studentRepository from "../repositories/studentRepository.js";
 import Role from "../models/role.js";
+import User from "../models/users.js";
+import Student from "../models/student.js";
 import { sendPasswordResetEmail, isMailerConfigured } from "../utils/mailer.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TTL_MINUTES || 30);
+
+const buildCurrentUserPayload = async (userId) => {
+  const user = await User.findByPk(userId, {
+    include: [
+      { model: Role, attributes: ["role_id", "role_name"] },
+      { model: Student, attributes: ["student_id", "full_name"], required: false },
+    ],
+  });
+
+  if (!user) {
+    throw { status: 404, message: "User not found" };
+  }
+
+  const role = user.Role ? user.Role.role_name : "Student";
+  const studentFullName = user.Student?.full_name || "";
+  const staffFullName = user.full_name || "";
+  const displayName = role === "Student"
+    ? studentFullName || user.email
+    : staffFullName || user.email;
+  const nameCompleted = role === "Student"
+    ? Boolean(String(studentFullName).trim())
+    : Boolean(String(staffFullName).trim());
+
+  return {
+    user_id: user.user_id,
+    email: user.email,
+    role,
+    full_name: role === "Student" ? studentFullName : staffFullName,
+    display_name: displayName,
+    name_completed: nameCompleted,
+  };
+};
 
 const register = async ({ email, password, confirmPassword }) => {
   if (!email || !password || !confirmPassword) {
@@ -79,10 +113,7 @@ const login = async ({ email, password }) => {
   return {
     token,
     role,
-    user: {
-      user_id: user.user_id,
-      email: user.email
-    }
+    user: await buildCurrentUserPayload(user.user_id),
   };
 };
 
@@ -166,10 +197,42 @@ const resetPassword = async ({ token, password, confirmPassword }) => {
   return { message: "Password reset successfully" };
 };
 
+const getCurrentUser = async (userId) => {
+  return buildCurrentUserPayload(userId);
+};
+
+const updateCurrentUser = async (userId, { full_name }) => {
+  const normalizedFullName = String(full_name || "").trim();
+
+  if (!normalizedFullName) {
+    throw { status: 400, message: "full_name is required" };
+  }
+
+  const user = await User.findByPk(userId, {
+    include: [{ model: Role, attributes: ["role_id", "role_name"] }],
+  });
+
+  if (!user) {
+    throw { status: 404, message: "User not found" };
+  }
+
+  if (user.Role?.role_name === "Student") {
+    throw { status: 403, message: "Students should update their name from the student profile page" };
+  }
+
+  user.full_name = normalizedFullName;
+  user.updated_at = new Date();
+  await user.save();
+
+  return buildCurrentUserPayload(user.user_id);
+};
+
 export default {
   register,
   login,
   forgotPassword,
   validateResetToken,
   resetPassword,
+  getCurrentUser,
+  updateCurrentUser,
 };
