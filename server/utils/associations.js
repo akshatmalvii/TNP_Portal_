@@ -25,6 +25,9 @@ import DriveSelection from '../models/drive_selection.js';
 import Offer from '../models/offer.js';
 import StudentVerificationRequest from '../models/student_verification_request.js';
 import AuditLog from '../models/audit_log.js';
+import DriveRound from '../models/drive_round.js';
+import DriveRoundResult from '../models/drive_round_result.js';
+import StudentNotification from '../models/student_notification.js';
 
 // ─── ROLE ↔ USER ────────────────────────────────────────
 Role.hasMany(User, {foreignKey: 'role_id'});
@@ -105,6 +108,17 @@ Course.hasMany(DriveAllowedCourse, {foreignKey: 'course_id'});
 DriveAllowedCourse.belongsTo(Course, {foreignKey: 'course_id'});
 Drive.hasMany(DriveDocument, {foreignKey: 'drive_id'});
 DriveDocument.belongsTo(Drive, {foreignKey: 'drive_id'});
+Drive.hasMany(DriveRound, {foreignKey: 'drive_id'});
+DriveRound.belongsTo(Drive, {foreignKey: 'drive_id'});
+
+StaffAdmin.hasMany(DriveRound, {
+    foreignKey: 'created_by_staff',
+    as: 'createdRounds',
+});
+DriveRound.belongsTo(StaffAdmin, {
+    foreignKey: 'created_by_staff',
+    as: 'createdBy',
+});
 
 // ─── DRIVE ↔ ELIGIBILITY ────────────────────────────────
 Drive.hasOne(DriveEligibility, {foreignKey: 'drive_id'});
@@ -159,6 +173,42 @@ DriveSelection.belongsTo(StudentApplication, {foreignKey: 'application_id'});
 // ─── APPLICATION ↔ OFFER ────────────────────────────────
 StudentApplication.hasOne(Offer, {foreignKey: 'application_id'});
 Offer.belongsTo(StudentApplication, {foreignKey: 'application_id'});
+
+DriveRound.hasMany(DriveRoundResult, {foreignKey: 'round_id'});
+DriveRoundResult.belongsTo(DriveRound, {foreignKey: 'round_id'});
+
+StudentApplication.hasMany(DriveRoundResult, {foreignKey: 'application_id'});
+DriveRoundResult.belongsTo(StudentApplication, {foreignKey: 'application_id'});
+
+StaffAdmin.hasMany(DriveRoundResult, {
+    foreignKey: 'updated_by_staff',
+    as: 'updatedRoundResults',
+});
+DriveRoundResult.belongsTo(StaffAdmin, {
+    foreignKey: 'updated_by_staff',
+    as: 'updatedBy',
+});
+
+Student.hasMany(StudentNotification, {foreignKey: 'student_id'});
+StudentNotification.belongsTo(Student, {foreignKey: 'student_id'});
+
+Drive.hasMany(StudentNotification, {foreignKey: 'drive_id'});
+StudentNotification.belongsTo(Drive, {foreignKey: 'drive_id'});
+
+StudentApplication.hasMany(StudentNotification, {foreignKey: 'application_id'});
+StudentNotification.belongsTo(StudentApplication, {foreignKey: 'application_id'});
+
+DriveRound.hasMany(StudentNotification, {foreignKey: 'round_id'});
+StudentNotification.belongsTo(DriveRound, {foreignKey: 'round_id'});
+
+StaffAdmin.hasMany(StudentNotification, {
+    foreignKey: 'created_by_staff',
+    as: 'createdNotifications',
+});
+StudentNotification.belongsTo(StaffAdmin, {
+    foreignKey: 'created_by_staff',
+    as: 'createdBy',
+});
 
 // ─── STUDENT ↔ VERIFICATION REQUEST ─────────────────────
 Student.hasOne(StudentVerificationRequest, {foreignKey: 'student_id'});

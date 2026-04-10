@@ -35,6 +35,9 @@ import DriveSelection from './models/drive_selection.js';
 import Offer from './models/offer.js';
 import StudentVerificationRequest from './models/student_verification_request.js';
 import AuditLog from './models/audit_log.js';
+import DriveRound from './models/drive_round.js';
+import DriveRoundResult from './models/drive_round_result.js';
+import StudentNotification from './models/student_notification.js';
 import seedRolesAndAdmin from './seed.js';
 import seedCourses from './utils/seedCourses.js';
 import createTnpTrigger from './utils/createTnpTrigger.js';
@@ -53,6 +56,8 @@ import courseRoutes from './routes/courseRoutes.js';
 import driveAllowedCourseRoutes from './routes/driveAllowedCourseRoutes.js';
 import studentProfileRoutes from './routes/studentProfileRoutes.js';
 import tpoRoutes from './routes/tpoRoutes.js';
+import coordinatorRoutes from './routes/coordinatorRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -89,10 +94,12 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/roles', rolesRoutes);
 app.use('/api/v1/drives', driveRoutes);
 app.use('/api/v1/tpo', tpoRoutes);
+app.use('/api/v1/coordinator', coordinatorRoutes);
 app.use('/api/v1/departments', departmentRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/drive-allowed-courses', driveAllowedCourseRoutes);
 app.use('/api/v1/student-profile', studentProfileRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Health check
 app.get('/', (req, res) => {
@@ -133,6 +140,7 @@ const startServer = async () => {
         await StudentVerificationRequest.sync({alter: true});
         await Drive.sync({alter: true});
         await DriveDocument.sync({alter: true});
+        await DriveRound.sync({alter: true});
 
         // 4. Tables depending on drives
         await DriveAllowedDepartment.sync({alter: true});
@@ -144,10 +152,12 @@ const startServer = async () => {
         await DrivePolicyOverride.sync({alter: true});
         await DynamicFormField.sync({alter: true});
         await StudentApplication.sync({alter: true});
+        await StudentNotification.sync({alter: true});
 
         // 5. Tables depending on applications / form fields
         await DynamicFormResponse.sync({alter: true});
         await DriveSelection.sync({alter: true});
+        await DriveRoundResult.sync({alter: true});
         await Offer.sync({alter: true});
 
         // 6. Audit

@@ -83,8 +83,10 @@ export default function StudentDashboardPage() {
       color: "text-green-500",
     },
     {
-      title: "Shortlisted",
-      value: applications.filter((a) => a.application_status === "SHORTLISTED").length,
+      title: "In Process",
+      value: applications.filter((a) =>
+        ["SHORTLISTED", "IN_PROGRESS"].includes(a.application_status)
+      ).length,
       icon: AlertCircle,
       color: "text-yellow-500",
     },

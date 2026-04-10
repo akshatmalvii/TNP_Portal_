@@ -26,6 +26,19 @@ const pdfOnlyFileFilter = (req, file, cb) => {
   }
 };
 
+const spreadsheetFileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+  ];
+
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only Excel files (.xlsx or .xls) are allowed"), false);
+  }
+};
+
 export const upload = multer({
   storage,
   fileFilter,
@@ -36,6 +49,12 @@ export const uploadPdfOnly = multer({
   storage,
   fileFilter: pdfOnlyFileFilter,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB per PDF
+});
+
+export const uploadSpreadsheet = multer({
+  storage,
+  fileFilter: spreadsheetFileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB per spreadsheet
 });
 
 // Upload buffer to cloudinary

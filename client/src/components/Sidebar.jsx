@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
+  Bell,
   FileText,
   LogOut,
   Settings,
@@ -43,6 +44,7 @@ export default function Sidebar({ userRole, isVerified = true }) {
     { href: "/dashboard/student", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/student/drives", label: "Job Drives", icon: Briefcase },
     { href: "/dashboard/student/applications", label: "My Applications", icon: FileText },
+    { href: "/dashboard/student/notifications", label: "Notifications", icon: Bell },
     { href: "/dashboard/student/profile", label: "My Profile", icon: Users },
   ];
 
@@ -50,6 +52,7 @@ export default function Sidebar({ userRole, isVerified = true }) {
     { href: "/dashboard/coordinator", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/coordinator/students", label: "Students", icon: Users },
     { href: "/dashboard/coordinator/verifications", label: "Verifications", icon: CheckCircle2 },
+    { href: "/dashboard/coordinator/drive-updates", label: "Drive Updates", icon: Briefcase },
     { href: "/dashboard/coordinator/pending", label: "Pending", icon: Clock },
   ];
 

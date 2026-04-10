@@ -1,5 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { CheckCircle2, Clock, FileText } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { CheckCircle2, Clock, FileText, XCircle } from "lucide-react";
+
+const getCompanyName = (application) =>
+  application.Drive?.company_name ||
+  application.Drive?.Company?.company_name ||
+  "Unknown Company";
+
+const getLatestRoundResult = (application) => {
+  const results = Array.isArray(application.DriveRoundResults)
+    ? application.DriveRoundResults
+    : [];
+
+  if (results.length === 0) return null;
+
+  return [...results].sort((a, b) => {
+    const aOrder = a.DriveRound?.round_number || 0;
+    const bOrder = b.DriveRound?.round_number || 0;
+    return bOrder - aOrder;
+  })[0];
+};
 
 export default function StudentApplicationPage() {
   const [applications, setApplications] = useState([]);
@@ -10,11 +29,12 @@ export default function StudentApplicationPage() {
     const fetchApplications = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/v1/drives/applications", {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
+
         if (res.ok) {
           const data = await res.json();
-          setApplications(data);
+          setApplications(Array.isArray(data) ? data : []);
         }
       } catch (err) {
         console.error("Failed to fetch applications", err);
@@ -33,7 +53,10 @@ export default function StudentApplicationPage() {
       case "SELECTED":
         return <CheckCircle2 className="w-5 h-5 text-green-500" />;
       case "SHORTLISTED":
+      case "IN_PROGRESS":
         return <Clock className="w-5 h-5 text-yellow-500" />;
+      case "REJECTED":
+        return <XCircle className="w-5 h-5 text-red-500" />;
       default:
         return <FileText className="w-5 h-5 text-blue-500" />;
     }
@@ -44,7 +67,10 @@ export default function StudentApplicationPage() {
       case "SELECTED":
         return "bg-green-100 text-green-700";
       case "SHORTLISTED":
+      case "IN_PROGRESS":
         return "bg-yellow-100 text-yellow-700";
+      case "REJECTED":
+        return "bg-red-100 text-red-700";
       case "APPLIED":
         return "bg-blue-100 text-blue-700";
       default:
@@ -52,11 +78,66 @@ export default function StudentApplicationPage() {
     }
   };
 
-  const groupedApplications = {
-    selected: applications.filter((a) => a.application_status === "SELECTED"),
-    shortlisted: applications.filter((a) => a.application_status === "SHORTLISTED"),
-    applied: applications.filter((a) => a.application_status === "APPLIED"),
+  const getSummaryText = (application) => {
+    const latestRound = getLatestRoundResult(application);
+    const status = application.application_status?.toUpperCase();
+
+    if (status === "SELECTED") {
+      return application.Offer
+        ? "Final selection confirmed"
+        : "Selected for this drive";
+    }
+
+    if (status === "REJECTED" && latestRound?.DriveRound) {
+      return `Rejected in ${latestRound.DriveRound.round_name}`;
+    }
+
+    if ((status === "SHORTLISTED" || status === "IN_PROGRESS") && latestRound?.DriveRound) {
+      return `Cleared ${latestRound.DriveRound.round_name}`;
+    }
+
+    if (status === "SHORTLISTED") {
+      return "Shortlisted for the process";
+    }
+
+    if (status === "IN_PROGRESS") {
+      return "Still active in the selection process";
+    }
+
+    return "Application submitted and under review";
   };
+
+  const groupedApplications = {
+    selected: applications.filter((app) => app.application_status === "SELECTED"),
+    activeProcess: applications.filter((app) =>
+      ["SHORTLISTED", "IN_PROGRESS"].includes(app.application_status)
+    ),
+    applied: applications.filter((app) => app.application_status === "APPLIED"),
+    rejected: applications.filter((app) => app.application_status === "REJECTED"),
+  };
+
+  const sections = [
+    {
+      key: "selected",
+      title: "Selected",
+      items: groupedApplications.selected,
+    },
+    {
+      key: "activeProcess",
+      title: "In Process",
+      items: groupedApplications.activeProcess,
+    },
+    {
+      key: "applied",
+      title: "Under Review",
+      items: groupedApplications.applied,
+    },
+    {
+      key: "rejected",
+      title: "Rejected",
+      items: groupedApplications.rejected,
+    },
+  ];
 
   if (loading) {
     return (
@@ -68,23 +149,17 @@ export default function StudentApplicationPage() {
 
   return (
     <div className="p-6 space-y-6">
-
-      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">My Applications</h1>
         <p className="text-gray-500 mt-1">
-          Track the status of all your job applications.
+          Track the latest status of every drive you have applied to.
         </p>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-white shadow rounded-lg p-5">
           <p className="text-sm text-gray-500">Total Applications</p>
-          <p className="text-3xl font-bold mt-2">
-            {applications.length}
-          </p>
+          <p className="text-3xl font-bold mt-2">{applications.length}</p>
         </div>
 
         <div className="bg-white shadow rounded-lg p-5">
@@ -95,173 +170,83 @@ export default function StudentApplicationPage() {
         </div>
 
         <div className="bg-white shadow rounded-lg p-5">
-          <p className="text-sm text-gray-500">Shortlisted</p>
+          <p className="text-sm text-gray-500">In Process</p>
           <p className="text-3xl font-bold text-yellow-600 mt-2">
-            {groupedApplications.shortlisted.length}
+            {groupedApplications.activeProcess.length}
           </p>
         </div>
 
+        <div className="bg-white shadow rounded-lg p-5">
+          <p className="text-sm text-gray-500">Rejected</p>
+          <p className="text-3xl font-bold text-red-600 mt-2">
+            {groupedApplications.rejected.length}
+          </p>
+        </div>
       </div>
 
-      {(groupedApplications.selected.length > 0 ||
-        groupedApplications.shortlisted.length > 0 ||
-        groupedApplications.applied.length > 0) ? (
-        <>
-
-          {/* Selected */}
-          {groupedApplications.selected.length > 0 && (
-            <div className="space-y-4">
-
-              <h2 className="text-xl font-bold">Selected</h2>
-
-              {groupedApplications.selected.map((app) => (
-                <div
-                  key={app.application_id}
-                  className="bg-white shadow rounded-lg p-5 hover:shadow-md"
-                >
-                  <div className="flex justify-between">
-
-                    <div className="flex gap-4">
-
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        {getStatusIcon(app.application_status)}
-                      </div>
-
-                      <div>
-                        <h3 className="font-bold text-lg">{app.Drive?.company_name || 'Unknown Company'}</h3>
-
-                        <p className="text-sm text-gray-500">
-                          Applied on{" "}
-                          {new Date(app.applied_at || app.updated_at).toLocaleDateString()}
-                        </p>
-
-                        <p className="text-sm text-green-600 font-medium mt-2">
-                          {/* We don't have result dynamically right now, placeholder */}
-                          {app.application_status === 'SELECTED' ? 'Offer Extended' : ''}
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <span
-                      className={`px-2 py-1 text-xs rounded ${getStatusColor(
-                        app.application_status
-                      )}`}
-                    >
-                      {app.application_status}
-                    </span>
-
-                  </div>
-                </div>
-              ))}
-
-            </div>
-          )}
-
-          {/* Shortlisted */}
-          {groupedApplications.shortlisted.length > 0 && (
-            <div className="space-y-4">
-
-              <h2 className="text-xl font-bold">Shortlisted</h2>
-
-              {groupedApplications.shortlisted.map((app) => (
-                <div
-                  key={app.application_id}
-                  className="bg-white shadow rounded-lg p-5 hover:shadow-md"
-                >
-                  <div className="flex justify-between">
-
-                    <div className="flex gap-4">
-
-                      <div className="p-2 bg-yellow-100 rounded-lg">
-                        {getStatusIcon(app.application_status)}
-                      </div>
-
-                      <div>
-                        <h3 className="font-bold text-lg">{app.Drive?.company_name || 'Unknown Company'}</h3>
-
-                        <p className="text-sm text-gray-500">
-                          Applied on{" "}
-                          {new Date(app.applied_at || app.updated_at).toLocaleDateString()}
-                        </p>
-
-                        <p className="text-sm text-yellow-600 font-medium mt-2">
-                          {/* Placeholder */}
-                          {app.application_status === 'SHORTLISTED' ? 'Under Review' : ''}
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <span
-                      className={`px-2 py-1 text-xs rounded ${getStatusColor(
-                        app.application_status
-                      )}`}
-                    >
-                      {app.application_status}
-                    </span>
-
-                  </div>
-                </div>
-              ))}
-
-            </div>
-          )}
-
-          {/* Applied */}
-          {groupedApplications.applied.length > 0 && (
-            <div className="space-y-4">
-
-              <h2 className="text-xl font-bold">Under Review</h2>
-
-              {groupedApplications.applied.map((app) => (
-                <div
-                  key={app.application_id}
-                  className="bg-white shadow rounded-lg p-5 hover:shadow-md"
-                >
-                  <div className="flex justify-between">
-
-                    <div className="flex gap-4">
-
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        {getStatusIcon(app.application_status)}
-                      </div>
-
-                      <div>
-                        <h3 className="font-bold text-lg">{app.Drive?.company_name || 'Unknown Company'}</h3>
-
-                        <p className="text-sm text-gray-500">
-                          Applied on{" "}
-                          {new Date(app.applied_at || app.updated_at).toLocaleDateString()}
-                        </p>
-
-                        <p className="text-sm text-blue-600 font-medium mt-2">
-                           Application received
-                        </p>
-                      </div>
-
-                    </div>
-
-                    <span
-                      className={`px-2 py-1 text-xs rounded ${getStatusColor(
-                        app.application_status
-                      )}`}
-                    >
-                      {app.application_status}
-                    </span>
-
-                  </div>
-                </div>
-              ))}
-
-            </div>
-          )}
-
-        </>
-      ) : (
+      {applications.length === 0 ? (
         <div className="bg-white shadow rounded-lg p-6 text-center text-gray-400">
-          No applications yet. Start applying to job drives!
+          No applications found yet.
         </div>
+      ) : (
+        sections.map((section) =>
+          section.items.length > 0 ? (
+            <div key={section.key} className="space-y-4">
+              <h2 className="text-xl font-bold">{section.title}</h2>
+
+              {section.items.map((application) => {
+                const latestRound = getLatestRoundResult(application);
+
+                return (
+                  <div
+                    key={application.application_id}
+                    className="bg-white shadow rounded-lg p-5 hover:shadow-md"
+                  >
+                    <div className="flex justify-between gap-4">
+                      <div className="flex gap-4">
+                        <div className="p-2 bg-gray-100 rounded-lg">
+                          {getStatusIcon(application.application_status)}
+                        </div>
+
+                        <div>
+                          <h3 className="font-bold text-lg">
+                            {getCompanyName(application)}
+                          </h3>
+
+                          <p className="text-sm text-gray-500">
+                            Applied on{" "}
+                            {new Date(
+                              application.applied_at || application.updated_at
+                            ).toLocaleDateString()}
+                          </p>
+
+                          <p className="text-sm font-medium mt-2 text-gray-700">
+                            {getSummaryText(application)}
+                          </p>
+
+                          {latestRound?.DriveRound && (
+                            <p className="text-xs text-gray-500 mt-2">
+                              Latest round: Round {latestRound.DriveRound.round_number} -{" "}
+                              {latestRound.DriveRound.round_name}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <span
+                        className={`h-fit px-2 py-1 text-xs rounded ${getStatusColor(
+                          application.application_status
+                        )}`}
+                      >
+                        {application.application_status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null
+        )
       )}
     </div>
   );
