@@ -238,6 +238,13 @@ const createDriveRound = async (userId, driveId, data) => {
     throw { status: 400, message: "This drive has already been completed" };
   }
 
+  if (drive.approval_status !== "Approved" || drive.drive_status !== "Active") {
+    throw {
+      status: 400,
+      message: "Drive rounds can only be created after the TPO approves and publishes the drive",
+    };
+  }
+
   const roundName = String(data.round_name || "").trim();
   const roundType = String(data.round_type || "").trim();
   const venue = String(data.venue || "").trim();
@@ -249,6 +256,15 @@ const createDriveRound = async (userId, driveId, data) => {
     throw {
       status: 400,
       message: "Round name, round type, and valid schedule are required",
+    };
+  }
+
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  if (scheduledAt < startOfToday) {
+    throw {
+      status: 400,
+      message: "Round schedule cannot be set in the past",
     };
   }
 
