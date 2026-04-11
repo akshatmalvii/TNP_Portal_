@@ -13,6 +13,7 @@ router.use(authorizeRoles("Placement_Coordinator"));
 router.get("/context", coordinatorController.getCoordinatorContext);
 router.get("/companies", coordinatorController.listCompanies);
 router.post("/company", requireStaffFullName, coordinatorController.createCompany);
+router.get("/courses", coordinatorController.getCourses);
 router.get("/drives", coordinatorController.listDrives);
 router.post("/drives", requireStaffFullName, coordinatorController.createDrive);
 router.post("/drive", requireStaffFullName, coordinatorController.createDrive);
