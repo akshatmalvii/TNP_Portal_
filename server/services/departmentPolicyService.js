@@ -5,6 +5,7 @@ import DepartmentPolicyRule from "../models/department_policy_rule.js";
 import PlacementPolicyRule from "../models/placement_policy_rule.js";
 import StaffAdmin from "../models/staff_admin.js";
 import User from "../models/users.js";
+import { normalizePlacementSeason } from "../utils/placementSeason.js";
 
 const DEFAULT_POLICY = {
   allow_apply_after_internship: true,
@@ -42,6 +43,7 @@ const buildPolicySummary = (assignment, dept) => {
             dept_id: dept.dept_id,
             dept_code: dept.dept_code,
             dept_name: dept.dept_name,
+            current_placement_season: dept.current_placement_season || null,
           }
         : null,
       current_policy: null,
@@ -56,12 +58,14 @@ const buildPolicySummary = (assignment, dept) => {
           dept_id: assignment.Department.dept_id,
           dept_code: assignment.Department.dept_code,
           dept_name: assignment.Department.dept_name,
+          current_placement_season: assignment.Department.current_placement_season || null,
         }
       : dept
         ? {
             dept_id: dept.dept_id,
             dept_code: dept.dept_code,
             dept_name: dept.dept_name,
+            current_placement_season: dept.current_placement_season || null,
           }
         : null,
     current_policy: {
@@ -100,7 +104,7 @@ const getPolicyInclude = () => ([
   },
   {
     model: Department,
-    attributes: ["dept_id", "dept_code", "dept_name"],
+    attributes: ["dept_id", "dept_code", "dept_name", "current_placement_season"],
   },
   {
     model: StaffAdmin,
@@ -134,7 +138,7 @@ const getDepartmentPolicyAt = async (dept_id, at = new Date(), options = {}) => 
 
 const getCurrentDepartmentPolicy = async (dept_id) => {
   const dept = await Department.findByPk(dept_id, {
-    attributes: ["dept_id", "dept_code", "dept_name"],
+    attributes: ["dept_id", "dept_code", "dept_name", "current_placement_season"],
   });
 
   if (!dept) {
@@ -147,7 +151,7 @@ const getCurrentDepartmentPolicy = async (dept_id) => {
 
 const getDepartmentPolicyHistory = async (dept_id) => {
   const dept = await Department.findByPk(dept_id, {
-    attributes: ["dept_id", "dept_code", "dept_name"],
+    attributes: ["dept_id", "dept_code", "dept_name", "current_placement_season"],
   });
 
   if (!dept) {
@@ -165,6 +169,7 @@ const getDepartmentPolicyHistory = async (dept_id) => {
       dept_id: dept.dept_id,
       dept_code: dept.dept_code,
       dept_name: dept.dept_name,
+      current_placement_season: dept.current_placement_season || null,
     },
     history: history.map((assignment) => ({
       assignment_id: assignment.id,
@@ -249,12 +254,21 @@ const setDepartmentPolicy = async (dept_id, changed_by_staff, data = {}) => {
       ),
     };
 
+    let nextPlacementSeason = dept.current_placement_season;
+    if (data.current_placement_season !== undefined) {
+      nextPlacementSeason = null;
+      if (typeof data.current_placement_season === "string" && data.current_placement_season.trim() !== "") {
+        nextPlacementSeason = normalizePlacementSeason(data.current_placement_season);
+      }
+    }
+
     const hasRealChange =
       !currentPolicy ||
       currentPolicy.allow_apply_after_internship !== nextPolicy.allow_apply_after_internship ||
       currentPolicy.allow_apply_after_placement !== nextPolicy.allow_apply_after_placement ||
       Number(currentPolicy.min_package_difference || 0) !== Number(nextPolicy.min_package_difference) ||
-      currentPolicy.ignore_package_condition !== nextPolicy.ignore_package_condition;
+      currentPolicy.ignore_package_condition !== nextPolicy.ignore_package_condition ||
+      nextPlacementSeason !== dept.current_placement_season;
 
     if (!hasRealChange && currentAssignment) {
       const latest = await getDepartmentPolicyAt(dept_id);
@@ -262,6 +276,10 @@ const setDepartmentPolicy = async (dept_id, changed_by_staff, data = {}) => {
     }
 
     const now = new Date();
+    if (data.current_placement_season !== undefined) {
+      await dept.update({ current_placement_season: nextPlacementSeason }, { transaction });
+    }
+
     const ruleName =
       data.rule_name?.trim() ||
       `${dept.dept_code} Policy ${now.toISOString()}`;
