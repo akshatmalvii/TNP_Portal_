@@ -4,8 +4,10 @@ import StudentDocument from "../models/student_document.js";
 import StudentEducation from "../models/student_education.js";
 import Department from "../models/department.js";
 import Course from "../models/course.js";
+import User from "../models/users.js";
 import sequelize from "../config/db.js";
 import { getSignedCloudinaryDownloadUrl } from "../utils/cloudinaryFileUrl.js";
+import { Op } from "sequelize";
 
 const attachSignedDocumentUrls = (students) =>
   students.map((student) => {
@@ -39,18 +41,32 @@ const getCoordinatorPending = async (dept_id) => {
   return attachSignedDocumentUrls(students);
 };
 
-// Get all students (all statuses) for coordinator's department
+// Get all VERIFIED students for coordinator's department student directory
 const getCoordinatorAll = async (dept_id) => {
   const students = await Student.findAll({
-    where: { dept_id },
+    where: { 
+      dept_id,
+    },
     include: [
-      { model: StudentVerificationRequest, required: false },
+      { 
+        model: StudentVerificationRequest, 
+        where: { coordinator_status: "Approved" },
+        required: true, // Only show verified students
+      },
+      { model: User, attributes: ["email"] },
       { model: Department, attributes: ["dept_id", "dept_code", "dept_name"] },
       { model: Course, attributes: ["course_id", "course_name"] },
     ],
   });
 
-  return students.map((student) => student.get({ plain: true }));
+  return students.map((student) => {
+    const plain = student.get({ plain: true });
+    // Robust email fallback
+    if (!plain.email && plain.User?.email) {
+      plain.email = plain.User.email;
+    }
+    return plain;
+  });
 };
 
 // Coordinator approves student → DB trigger generates TNP ID
