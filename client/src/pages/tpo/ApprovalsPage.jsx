@@ -100,37 +100,6 @@ export default function ApprovalsPage() {
         </div>
       )}
 
-      <div className="grid sm:grid-cols-3 gap-4">
-        <Card className="border-0 bg-card">
-          <CardContent className="pt-6 flex items-center gap-3">
-            <Clock className="w-5 h-5 text-yellow-500" />
-            <div>
-              <p className="text-sm text-muted-foreground">Pending</p>
-              <p className="text-2xl font-bold">{requests.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 bg-card">
-          <CardContent className="pt-6 flex items-center gap-3">
-            <CheckCircle2 className="w-5 h-5 text-green-500" />
-            <div>
-              <p className="text-sm text-muted-foreground">Ready To Publish</p>
-              <p className="text-2xl font-bold">{requests.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 bg-card">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground">Department Queue</p>
-            <p className="text-2xl font-bold mt-1">
-              {loading ? "..." : requests.length}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card className="border-0 bg-card">
         <CardHeader>
           <CardTitle>Pending Drive Requests</CardTitle>
