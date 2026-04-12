@@ -1,8 +1,11 @@
 import driveService from "../services/driveService.js";
 import adminService from "../services/adminService.js";
+import reportService from "../services/reportService.js";
 import Company from "../models/company.js";
 import CompanyContact from "../models/company_contact.js";
 import StaffAdmin from "../models/staff_admin.js";
+import Department from "../models/department.js";
+import Course from "../models/course.js";
 import Drive from "../models/drive.js";
 import DriveAllowedDepartment from "../models/drive_allowed_department.js";
 import DriveAllowedCourse from "../models/drive_allowed_course.js";
@@ -12,6 +15,7 @@ import DynamicFormField from "../models/dynamic_form_field.js";
 import sequelize from "../config/db.js";
 import { getSignedCloudinaryDownloadUrl } from "../utils/cloudinaryFileUrl.js";
 import departmentPolicyService from "../services/departmentPolicyService.js";
+import { normalizePlacementSeason } from "../utils/placementSeason.js";
 
 const getStaffContext = async (userId) => {
   const staffUser = await StaffAdmin.findOne({ where: { user_id: userId } });
@@ -20,6 +24,28 @@ const getStaffContext = async (userId) => {
   }
 
   return staffUser;
+};
+
+const parseOptionalCourseId = (courseId) => {
+  if (courseId === undefined || courseId === null || courseId === "") {
+    return null;
+  }
+
+  const parsedCourseId = Number.parseInt(courseId, 10);
+  if (Number.isNaN(parsedCourseId)) {
+    throw { status: 400, message: "Invalid course_id" };
+  }
+
+  return parsedCourseId;
+};
+
+const parseRequiredDepartmentId = (deptId) => {
+  const parsedDeptId = Number.parseInt(deptId, 10);
+  if (Number.isNaN(parsedDeptId)) {
+    throw { status: 400, message: "dept_id is required" };
+  }
+
+  return parsedDeptId;
 };
 
 const getCompanies = async (req, res) => {
@@ -32,9 +58,23 @@ const getCompanies = async (req, res) => {
   }
 };
 
+const getCourses = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const courses = await Course.findAll({
+      where: { dept_id: staffUser.dept_id },
+    });
+    res.json(courses);
+  } catch (err) {
+    console.error("Error fetching courses:", err);
+    res.status(500).json({ error: "Failed to fetch courses" });
+  }
+};
+
 const getDrives = async (req, res) => {
   try {
     const drives = await Drive.findAll({
+      attributes: ['drive_id', 'company_id', 'role_title', 'role_description', 'offer_type', 'package_lpa', 'deadline', 'placement_season', 'drive_status', 'approval_status', 'created_at'],
       include: [{ model: Company, attributes: ["company_name"] }],
       order: [["created_at", "DESC"]]
     });
@@ -160,7 +200,21 @@ const createDrive = async (req, res) => {
     const staffUser = await getStaffContext(userId);
     const staffId = staffUser.staff_id;
 
-    const driveData = req.body;
+    const department = await Department.findByPk(staffUser.dept_id, {
+      attributes: ["dept_id", "current_placement_season"],
+    });
+
+    if (!department?.current_placement_season) {
+      return res.status(400).json({
+        error:
+          "The current placement season must be set before creating drives.",
+      });
+    }
+
+    const driveData = {
+      ...req.body,
+      placement_season: department.current_placement_season,
+    };
     
     if (!driveData.company_id || !driveData.role_title || !driveData.deadline) {
       return res.status(400).json({ error: "company_id, role_title, and deadline are required" });
@@ -185,6 +239,21 @@ const updateDrive = async (req, res) => {
     const driveId = req.params.id;
     const userId = req.user.user_id;
     const staffUser = await getStaffContext(userId);
+
+    // If placement_season not provided and drive doesn't have one, set from department
+    if (!req.body.placement_season) {
+      const existingDrive = await Drive.findByPk(driveId, {
+        attributes: ["placement_season"]
+      });
+      if (!existingDrive?.placement_season) {
+        const department = await Department.findByPk(staffUser.dept_id, {
+          attributes: ["current_placement_season"],
+        });
+        if (department?.current_placement_season) {
+          req.body.placement_season = department.current_placement_season;
+        }
+      }
+    }
 
     const drive = await driveService.updateDriveTransaction(driveId, req.body, staffUser.staff_id);
     return res.json({ message: "Drive updated successfully", drive });
@@ -300,14 +369,81 @@ const updateDepartmentPolicy = async (req, res) => {
   }
 };
 
+const getPlacementSeason = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const department = await Department.findByPk(staffUser.dept_id, {
+      attributes: ["dept_id", "dept_code", "dept_name", "current_placement_season"],
+    });
+
+    if (!department) {
+      return res.status(404).json({ error: "Department not found" });
+    }
+
+    return res.json({
+      dept_id: department.dept_id,
+      dept_code: department.dept_code,
+      dept_name: department.dept_name,
+      current_placement_season: department.current_placement_season || null,
+    });
+  } catch (err) {
+    console.error("Error fetching placement season:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to fetch placement season" });
+  }
+};
+
+const setPlacementSeason = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const { placement_season } = req.body;
+
+    if (!placement_season) {
+      return res.status(400).json({ error: "placement_season is required" });
+    }
+
+    const normalizedSeason = normalizePlacementSeason(placement_season);
+
+    const department = await Department.findByPk(staffUser.dept_id);
+    if (!department) {
+      return res.status(404).json({ error: "Department not found" });
+    }
+
+    await department.update({ current_placement_season: normalizedSeason });
+
+    return res.json({
+      message: "Placement season updated successfully",
+      current_placement_season: normalizedSeason,
+      dept_id: department.dept_id,
+      dept_name: department.dept_name,
+    });
+  } catch (err) {
+    console.error("Error setting placement season:", err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to set placement season" });
+  }
+};
+
 const createCompany = async (req, res) => {
   const t = await sequelize.transaction();
   try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const department = await Department.findByPk(staffUser.dept_id, {
+      attributes: ["dept_id", "current_placement_season"],
+      transaction: t,
+    });
+
     const { company_name, company_website, contacts } = req.body;
 
     if (!company_name) {
       await t.rollback();
       return res.status(400).json({ error: "company_name is required" });
+    }
+
+    if (!department?.current_placement_season) {
+      await t.rollback();
+      return res.status(400).json({
+        error:
+          "The current placement season must be set before creating companies.",
+      });
     }
 
     // Check for duplicates
@@ -320,7 +456,8 @@ const createCompany = async (req, res) => {
     // Insert Company
     const newCompany = await Company.create({
       company_name,
-      company_website: company_website || null
+      company_website: company_website || null,
+      placement_season: department.current_placement_season,
     }, { transaction: t });
 
     // Insert Contacts
@@ -335,24 +472,6 @@ const createCompany = async (req, res) => {
       await CompanyContact.bulkCreate(contactPayloads, { transaction: t });
     }
 
-    // Attempt to log audit trail natively (Silently) if AuditLog exists
-    try {
-      const AuditLog = (await import("../models/audit_log.js")).default;
-      if (AuditLog) {
-        await AuditLog.create({
-          user_id: req.user.user_id,
-          action_type: "CREATE_COMPANY",
-          entity_name: "companies",
-          entity_id: newCompany.company_id,
-          old_values: null,
-          new_values: { company_name, company_website },
-          ip_address: req.ip || null
-        }, { transaction: t });
-      }
-    } catch (e) {
-      // Ignore if audit log fails or doesn't exist
-    }
-
     await t.commit();
     res.status(201).json({ message: "Company created successfully", company: newCompany });
   } catch (err) {
@@ -362,11 +481,136 @@ const createCompany = async (req, res) => {
   }
 };
 
+const getReportSeasons = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const seasons = await reportService.getAvailableSeasons(staffUser.dept_id);
+    res.json(seasons);
+  } catch (err) {
+    console.error("Error fetching report seasons:", err);
+    res.status(500).json({ error: "Failed to fetch report seasons" });
+  }
+};
+
+const getHeadReportSeasons = async (req, res) => {
+  try {
+    const deptId = req.query.dept_id ? parseRequiredDepartmentId(req.query.dept_id) : null;
+    const seasons = await reportService.getAvailableSeasons(deptId);
+    res.json(seasons);
+  } catch (err) {
+    console.error("Error fetching TPO Head report seasons:", err);
+    res.status(err.status || 500).json({ error: err.message || "Failed to fetch report seasons" });
+  }
+};
+
+const getPlacementReport = async (req, res) => {
+  try {
+    const { season } = req.params;
+    const courseId = parseOptionalCourseId(req.query.course_id);
+    const staffUser = await getStaffContext(req.user.user_id);
+    const report = await reportService.getPlacementReport(staffUser.dept_id, season, {
+      course_id: courseId,
+    });
+    res.json(report);
+  } catch (err) {
+    console.error("Error fetching placement report:", err);
+    res.status(err.status || 500).json({ error: err.message || "Failed to fetch placement report" });
+  }
+};
+
+const downloadPlacementReport = async (req, res) => {
+  try {
+    const { season } = req.params;
+    const courseId = parseOptionalCourseId(req.query.course_id);
+    const staffUser = await getStaffContext(req.user.user_id);
+    const report = await reportService.getPlacementReport(staffUser.dept_id, season, {
+      course_id: courseId,
+    });
+    const workbookBuffer = reportService.buildPlacementReportWorkbook(report);
+    const safeSeason = String(season || "report").replace(/[^a-zA-Z0-9_-]+/g, "-");
+    const safeDepartment = String(report.department?.dept_code || report.department?.dept_name || "department").replace(/[^a-zA-Z0-9_-]+/g, "-");
+    const safeCourse = String(report.course?.course_name || "all-courses").replace(/[^a-zA-Z0-9_-]+/g, "-");
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="placement-report-${safeDepartment}-${safeCourse}-${safeSeason}.xlsx"`
+    );
+
+    res.send(workbookBuffer);
+  } catch (err) {
+    console.error("Error downloading placement report:", err);
+    res.status(500).json({ error: "Failed to download placement report" });
+  }
+};
+
+const getHeadPlacementReport = async (req, res) => {
+  try {
+    const { season } = req.params;
+    const deptId = parseRequiredDepartmentId(req.query.dept_id);
+    const courseId = parseOptionalCourseId(req.query.course_id);
+    const report = await reportService.getPlacementReport(deptId, season, {
+      course_id: courseId,
+    });
+    res.json(report);
+  } catch (err) {
+    console.error("Error fetching TPO Head placement report:", err);
+    res.status(err.status || 500).json({ error: err.message || "Failed to fetch placement report" });
+  }
+};
+
+const downloadHeadPlacementReport = async (req, res) => {
+  try {
+    const { season } = req.params;
+    const deptId = parseRequiredDepartmentId(req.query.dept_id);
+    const courseId = parseOptionalCourseId(req.query.course_id);
+    const report = await reportService.getPlacementReport(deptId, season, {
+      course_id: courseId,
+    });
+    const workbookBuffer = reportService.buildPlacementReportWorkbook(report);
+    const safeSeason = String(season || "report").replace(/[^a-zA-Z0-9_-]+/g, "-");
+    const safeDepartment = String(report.department?.dept_code || report.department?.dept_name || "department").replace(/[^a-zA-Z0-9_-]+/g, "-");
+    const safeCourse = String(report.course?.course_name || "all-courses").replace(/[^a-zA-Z0-9_-]+/g, "-");
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="placement-report-${safeDepartment}-${safeCourse}-${safeSeason}.xlsx"`
+    );
+
+    res.send(workbookBuffer);
+  } catch (err) {
+    console.error("Error downloading TPO Head placement report:", err);
+    res.status(err.status || 500).json({ error: err.message || "Failed to download placement report" });
+  }
+};
+
+const getOfferLetters = async (req, res) => {
+  try {
+    const staffUser = await getStaffContext(req.user.user_id);
+    const letters = await reportService.getSubmittedOfferLetters(staffUser.dept_id, {
+      season: req.query.season || null,
+      course_id: req.query.course_id || null,
+    });
+    res.json(letters);
+  } catch (err) {
+    console.error("Error fetching offer letters:", err);
+    res.status(err.status || 500).json({ error: err.message || "Failed to fetch offer letters" });
+  }
+};
+
 export default {
   createDrive,
   updateDrive,
   deleteDrive,
   getCompanies,
+  getCourses,
   getDrives,
   getDrive,
   getPendingDriveApprovals,
@@ -380,5 +624,14 @@ export default {
   getDepartmentPolicy,
   getDepartmentPolicyHistory,
   updateDepartmentPolicy,
-  createCompany
+  createCompany,
+  getPlacementSeason,
+  setPlacementSeason,
+  getReportSeasons,
+  getHeadReportSeasons,
+  getPlacementReport,
+  getHeadPlacementReport,
+  downloadPlacementReport,
+  downloadHeadPlacementReport,
+  getOfferLetters
 };

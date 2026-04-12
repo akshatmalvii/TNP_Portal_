@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Calendar, ExternalLink, FileText, IndianRupee, Search, X } from "lucide-react";
+import { Calendar, ExternalLink, FileText, IndianRupee, Search, X, Briefcase } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
@@ -43,7 +43,7 @@ export default function StudentDrivePage() {
         }
         if (appsRes.ok) {
           const appData = await appsRes.json();
-          setAppliedDrives(appData.map((a) => a.drive_id));
+          setAppliedDrives(appData);
         }
       } catch (error) {
         console.error("Error loading drives", error);
@@ -61,11 +61,27 @@ export default function StudentDrivePage() {
       companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       position.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const status = drive.drive_status || "";
-    const matchesStatus =
-      statusFilter === "all" || status === statusFilter;
+    if (!matchesSearch) return false;
 
-    return matchesSearch && matchesStatus;
+    if (statusFilter === "all") return true;
+
+    const application = appliedDrives.find(a => a.drive_id === (drive.drive_id || drive.id));
+    const appStatus = application ? application.application_status : null;
+
+    if (statusFilter === "Active") {
+      // Applied but neither SELECTED nor REJECTED
+      return application && appStatus !== "SELECTED" && appStatus !== "REJECTED";
+    }
+
+    if (statusFilter === "Selected") {
+      return appStatus === "SELECTED";
+    }
+
+    if (statusFilter === "Rejected") {
+      return appStatus === "REJECTED";
+    }
+
+    return true;
   });
 
   const handleApplyClick = async (drive) => {
@@ -99,23 +115,17 @@ export default function StudentDrivePage() {
 
   const handleFileChange = (fieldId, file) => {
     if (file) {
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         setFormError(`File size exceeds 5MB limit for field "${formFields.find(f => f.field_id === fieldId)?.field_label}"`);
         return;
       }
-      
-      // Convert file to base64 for transmission
       const reader = new FileReader();
       reader.onload = (e) => {
         setFormResponses({
           ...formResponses,
-          [fieldId]: e.target.result // base64 encoded string
+          [fieldId]: e.target.result
         });
-      };
-      reader.onerror = () => {
-        setFormError("Failed to read file. Please try again.");
       };
       reader.readAsDataURL(file);
     }
@@ -130,19 +140,10 @@ export default function StudentDrivePage() {
 
     try {
       const token = localStorage.getItem("token");
-      
-      // Build form data with proper field mapping
       const responses = formFields.map(field => {
         const value = formResponses[field.field_id];
-        return {
-          fieldId: field.field_id,
-          value: value || ""
-        };
+        return { fieldId: field.field_id, value: value || "" };
       });
-
-      const payload = {
-        responses
-      };
 
       const res = await fetch(`http://localhost:5000/api/v1/drives/${selectedDrive.drive_id || selectedDrive.id}/apply`, {
         method: "POST",
@@ -150,13 +151,21 @@ export default function StudentDrivePage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ responses })
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to apply");
 
-      setAppliedDrives((prev) => [...prev, selectedDrive.drive_id || selectedDrive.id]);
+      // Refresh applied drives list
+      const appsRes = await fetch("http://localhost:5000/api/v1/drives/applications", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (appsRes.ok) {
+        const appData = await appsRes.json();
+        setAppliedDrives(appData);
+      }
+
       setShowApplicationForm(false);
       alert("Application submitted successfully!");
     } catch (error) {
@@ -196,6 +205,24 @@ export default function StudentDrivePage() {
                 <p className="text-gray-500 mb-1">CTC</p>
                 <p className="font-semibold">{formatPackage(detailsDrive.package_lpa)}</p>
               </div>
+              {detailsDrive.stipend_pm && (
+                <div className="rounded-lg border p-4 bg-indigo-50/50">
+                  <p className="text-indigo-600 mb-1 font-medium">Stipend</p>
+                  <p className="font-semibold">{detailsDrive.stipend_pm}</p>
+                </div>
+              )}
+              {detailsDrive.has_bond && (
+                <div className="rounded-lg border p-4 bg-amber-50/40">
+                  <p className="text-amber-700 mb-1 font-medium">Service Agreement / Bond</p>
+                  <p className="font-semibold">{detailsDrive.bond_months} Months</p>
+                </div>
+              )}
+              {detailsDrive.has_security_deposit && (
+                <div className="rounded-lg border p-4 bg-amber-50/40">
+                  <p className="text-amber-700 mb-1 font-medium">Security Cheque / Deposit</p>
+                  <p className="font-semibold">{detailsDrive.security_deposit_amount}</p>
+                </div>
+              )}
               <div className="rounded-lg border p-4">
                 <p className="text-gray-500 mb-1">Deadline</p>
                 <p className="font-semibold">
@@ -245,10 +272,10 @@ export default function StudentDrivePage() {
                   setDetailsDrive(null);
                   handleApplyClick(detailsDrive);
                 }}
-                disabled={appliedDrives.includes(detailsDrive.drive_id || detailsDrive.id) || (detailsDeadline && detailsDeadline < new Date())}
+                disabled={appliedDrives.some(a => a.drive_id === (detailsDrive.drive_id || detailsDrive.id)) || (detailsDeadline && detailsDeadline < new Date())}
                 className="bg-indigo-600 hover:bg-indigo-700"
               >
-                {appliedDrives.includes(detailsDrive.drive_id || detailsDrive.id)
+                {appliedDrives.some(a => a.drive_id === (detailsDrive.drive_id || detailsDrive.id))
                   ? "Applied"
                   : detailsDeadline && detailsDeadline < new Date()
                     ? "Expired"
@@ -356,12 +383,11 @@ export default function StudentDrivePage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Job Drives</h1>
-        <p className="text-gray-500 mt-1">
-          Browse and apply to available job drives.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold font-heading">Job Drives</h1>
+          <p className="text-gray-500 mt-1">Browse and apply to available job drives.</p>
+        </div>
       </div>
 
       {/* Search + Filter */}
@@ -379,14 +405,14 @@ export default function StudentDrivePage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {["all", "Active", "Shortlisted", "Selected"].map((filter) => (
+            {["all", "Active", "Selected", "Rejected"].map((filter) => (
               <button
                 key={filter}
                 onClick={() => setStatusFilter(filter)}
-                className={`px-3 py-1 rounded border text-sm ${
+                className={`px-3 py-1 rounded border text-sm font-medium transition-colors ${
                   statusFilter === filter
-                    ? "bg-indigo-600 text-white"
-                    : "hover:bg-gray-100"
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                    : "hover:bg-gray-50 bg-white"
                 }`}
               >
                 {filter === "all" ? "All Drives" : filter}
@@ -400,48 +426,48 @@ export default function StudentDrivePage() {
       <div className="space-y-4">
         {filteredDrives.length === 0 ? (
           <Card className="border-0 bg-card">
-            <CardContent className="pt-6">
-              <p className="text-center text-gray-400 py-8">
-                No drives found matching your criteria
-              </p>
+            <CardContent className="pt-12 pb-12 flex flex-col items-center">
+              <div className="p-4 bg-gray-50 rounded-full mb-4">
+                <Briefcase className="w-8 h-8 text-gray-300" />
+              </div>
+              <p className="text-gray-500 font-medium">No drives found matching your criteria</p>
             </CardContent>
           </Card>
         ) : (
           filteredDrives.map((drive) => {
-            const hasApplied = appliedDrives.includes(drive.drive_id || drive.id);
+            const application = appliedDrives.find(a => a.drive_id === (drive.drive_id || drive.id));
+            const hasApplied = !!application;
             const deadline = new Date(drive.deadline);
             const isExpired = deadline < new Date();
 
             return (
               <Card
                 key={drive.drive_id || drive.id}
-                className="border-0 bg-card hover:shadow-md transition"
+                className="border-0 bg-card hover:shadow-md transition-shadow group"
               >
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {/* Company */}
-                    <div>
-                      <h3 className="font-bold text-lg">
+                <CardContent className="pt-6 pb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-center">
+                    {/* Company info */}
+                    <div className="md:col-span-1">
+                      <h3 className="font-bold text-xl text-gray-900 group-hover:text-indigo-600 transition-colors">
                         {drive.company_name}
                       </h3>
+                      <p className="text-sm text-gray-500 font-medium mt-0.5">{drive.role_title}</p>
                     </div>
 
+                    {/* Meta info */}
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <IndianRupee className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-semibold">
-                          {formatPackage(drive.package_lpa)}
-                        </span>
+                      <div className="flex items-center gap-2 text-gray-600 font-medium">
+                        <IndianRupee className="w-4 h-4 text-indigo-500" />
+                        <span>{formatPackage(drive.package_lpa)}</span>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-500">
-                          {isExpired
-                            ? "Expired"
-                            : `Deadline: ${deadline.toLocaleDateString()}`}
+                      <div className="flex items-center gap-2 text-gray-600 font-medium">
+                        <Calendar className="w-4 h-4 text-indigo-500" />
+                        <span className={isExpired ? "text-red-500" : ""}>
+                          {isExpired ? "Expired" : `Deadline: ${deadline.toLocaleDateString()}`}
                         </span>
                       </div>
                     </div>
@@ -451,27 +477,27 @@ export default function StudentDrivePage() {
                       <Button
                         variant="outline"
                         onClick={() => setDetailsDrive(drive)}
+                        className="border-gray-200"
                       >
                         View Details
                       </Button>
+                      
                       {hasApplied ? (
-                        <button
-                          disabled
-                          className="px-4 py-2 border rounded bg-gray-100 text-gray-500"
-                        >
-                          Applied
-                        </button>
+                        <div className={`px-4 py-2 border rounded text-sm font-semibold 
+                          ${application.application_status === 'SELECTED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                            application.application_status === 'REJECTED' ? 'bg-red-50 text-red-700 border-red-200' : 
+                            'bg-indigo-50 text-indigo-700 border-indigo-200'}`}>
+                          {application.application_status === 'SELECTED' ? 'Placed' : 
+                           application.application_status === 'REJECTED' ? 'Rejected' : 'Applied'}
+                        </div>
                       ) : isExpired ? (
-                        <button
-                          disabled
-                          className="px-4 py-2 border rounded bg-gray-100 text-gray-500"
-                        >
+                        <div className="px-4 py-2 border rounded bg-gray-50 text-gray-400 text-sm font-semibold border-gray-200 cursor-not-allowed">
                           Expired
-                        </button>
+                        </div>
                       ) : (
                         <Button
                           onClick={() => handleApplyClick(drive)}
-                          className="bg-indigo-600 hover:bg-indigo-700"
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
                         >
                           Apply Now
                         </Button>

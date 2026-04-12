@@ -50,15 +50,25 @@ export default function CreateDrivePage() {
         </div>
       )}
 
-      <div className="space-y-6">
-        <CreateDriveForm
-          apiBase="http://localhost:5000/api/v1/coordinator"
-          fixedDepartmentId={coordinatorContext?.dept_id}
-          fixedDepartmentLabel={coordinatorContext?.Department?.dept_name || coordinatorContext?.Department?.dept_code}
-          onSuccess={handleSuccess}
-          submitLabel="Send For Approval"
-        />
-      </div>
+      {coordinatorContext && !coordinatorContext.current_placement_season ? (
+        <div className="p-8 text-center bg-amber-50 border border-amber-200 rounded-lg">
+          <h2 className="text-xl font-semibold text-amber-800">Placement Season Not Set</h2>
+          <p className="mt-2 text-amber-700">
+            You cannot create job drives until the Training and Placement Officer (TPO) sets the active placement season for your department.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <CreateDriveForm
+            apiBase="http://localhost:5000/api/v1/coordinator"
+            fixedDepartmentId={coordinatorContext?.dept_id}
+            fixedDepartmentLabel={coordinatorContext?.Department?.dept_name || coordinatorContext?.Department?.dept_code}
+            onSuccess={handleSuccess}
+            submitLabel="Send For Approval"
+            activePlacementSeason={coordinatorContext?.current_placement_season}
+          />
+        </div>
+      )}
     </div>
   );
 }

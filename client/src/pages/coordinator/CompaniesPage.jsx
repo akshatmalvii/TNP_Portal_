@@ -12,6 +12,7 @@ export default function CompaniesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [coordinatorContext, setCoordinatorContext] = useState(null);
   const [formData, setFormData] = useState({
     company_name: "",
     company_website: "",
@@ -36,7 +37,22 @@ export default function CompaniesPage() {
   };
 
   useEffect(() => {
+    const fetchContext = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE}/context`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          setCoordinatorContext(await res.json());
+        }
+      } catch (err) {
+        console.error("Failed to fetch context", err);
+      }
+    };
+
     fetchCompanies();
+    fetchContext();
   }, []);
 
   const handleAddContact = () => {
@@ -65,6 +81,15 @@ export default function CompaniesPage() {
     e.preventDefault();
     setSubmitting(true);
     setError("");
+
+    // Validate phone numbers
+    for (const contact of formData.contacts) {
+      if (contact.phone && !/^\d{10}$/.test(contact.phone)) {
+        setError("Phone number must be exactly 10 digits");
+        setSubmitting(false);
+        return;
+      }
+    }
 
     try {
       const token = localStorage.getItem("token");
@@ -102,8 +127,17 @@ export default function CompaniesPage() {
           <p className="text-muted-foreground mt-1">
             Add recruiting companies and manage company contacts for drive setup.
           </p>
+          {coordinatorContext && !coordinatorContext.current_placement_season && (
+            <p className="text-amber-600 text-sm font-medium mt-2 bg-amber-50 p-2 rounded-md inline-block border border-amber-200">
+              ⚠️ TPO has not set the placement season yet. You cannot add companies.
+            </p>
+          )}
         </div>
-        <Button onClick={() => setShowAddModal(true)} className="bg-primary hover:bg-primary/90 gap-2">
+        <Button 
+          onClick={() => setShowAddModal(true)} 
+          className="bg-primary hover:bg-primary/90 gap-2"
+          disabled={coordinatorContext && !coordinatorContext.current_placement_season}
+        >
           <Plus className="w-4 h-4" /> Add Company
         </Button>
       </div>
@@ -205,6 +239,7 @@ export default function CompaniesPage() {
                         <label className="text-xs font-medium text-gray-500">Phone</label>
                         <Input
                           type="tel"
+                          pattern="[0-9]{10}"
                           value={contact.phone}
                           onChange={(e) => handleContactChange(index, "phone", e.target.value)}
                           placeholder="e.g. 9876543210"

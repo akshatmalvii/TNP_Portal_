@@ -1,4 +1,4 @@
-import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
+import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
 import './index.css';
 import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -14,9 +14,9 @@ import StudentSettingPage from './pages/student/StudentSettingPage';
 import StudentProfileFormPage from './pages/student/StudentProfileFormPage';
 import VerificationPendingPage from './pages/student/VerificationPendingPage';
 import StudentNotificationsPage from './pages/student/StudentNotificationsPage';
+import OfferLetterPage from './pages/student/OfferLetterPage';
 
 // Coordinator pages
-import CoordinatorDashboardPage from './pages/coordinator/CoordinatorDashboardPage';
 import SettingsPage from './pages/coordinator/SettingsPage';
 import StudentsPage from './pages/coordinator/StudentsPage';
 import VerificationsPage from './pages/coordinator/VerificationsPage';
@@ -25,14 +25,15 @@ import CreateDrivePage from './pages/coordinator/CreateDrivePage';
 import CoordinatorCompaniesPage from './pages/coordinator/CompaniesPage';
 
 // TPO pages
-import TPODashboardPage from './pages/tpo/TPODashboardPage';
 import TPODrivesPage from './pages/tpo/TPODrivesPage';
 import CompaniesPage from './pages/tpo/CompaniesPage';
+import TPOOfferLettersPage from './pages/tpo/OfferLettersPage';
 import ApprovalsPage from './pages/tpo/ApprovalsPage';
-import AnalyticsPage from './pages/tpo/AnalyticsPage';
 import ManageCoordinatorsPage from './pages/tpo/ManageCoordinatorsPage';
 import TPOSettingsPage from './pages/tpo/TPOSettingsPage';
 import PlacementPolicyPage from './pages/tpo/PlacementPolicyPage';
+import TPOReportsPage from './pages/tpo/ReportsPage';
+import PlacementSeasonPage from './pages/tpo/PlacementSeasonPage';
 
 // TPO Head pages
 import TPOHeadDashboardPage from './pages/tpohead/TPOHeadDashboardPage';
@@ -69,6 +70,10 @@ function App() {
                         element={<StudentNotificationsPage />}
                     />
                     <Route
+                        path='student/offer-letter'
+                        element={<OfferLetterPage />}
+                    />
+                    <Route
                         path='student/settings'
                         element={<StudentSettingPage />}
                     />
@@ -84,7 +89,7 @@ function App() {
                     {/* Coordinator */}
                     <Route
                         path='coordinator'
-                        element={<CoordinatorDashboardPage />}
+                        element={<Navigate to='/dashboard/coordinator/students' replace />}
                     />
                     <Route
                         path='coordinator/settings'
@@ -112,10 +117,17 @@ function App() {
                     />
 
                     {/* TPO */}
-                    <Route path='tpo' element={<TPODashboardPage />} />
+                    <Route
+                        path='tpo'
+                        element={<Navigate to='/dashboard/tpo/placement-season' replace />}
+                    />
                     <Route
                         path='tpo/coordinators'
                         element={<ManageCoordinatorsPage />}
+                    />
+                    <Route
+                        path='tpo/placement-season'
+                        element={<PlacementSeasonPage />}
                     />
                     <Route
                         path='tpo/policy'
@@ -124,7 +136,12 @@ function App() {
                     <Route path='tpo/drives' element={<TPODrivesPage />} />
                     <Route path='tpo/companies' element={<CompaniesPage />} />
                     <Route path='tpo/approvals' element={<ApprovalsPage />} />
-                    <Route path='tpo/analytics' element={<AnalyticsPage />} />
+                    <Route path='tpo/offer-letters' element={<TPOOfferLettersPage />} />
+                    <Route
+                        path='tpo/analytics'
+                        element={<Navigate to='/dashboard/tpo/reports' replace />}
+                    />
+                    <Route path='tpo/reports' element={<TPOReportsPage />} />
                     <Route path='tpo/settings' element={<TPOSettingsPage />} />
 
                     {/* TPO Head */}

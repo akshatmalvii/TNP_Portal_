@@ -9,18 +9,6 @@ const createDocumentInput = () => ({
   file: null,
 });
 
-const getPlacementSeasonOptions = () => {
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth();
-  const currentSeasonStartYear = currentMonth >= 6 ? currentYear : currentYear - 1;
-
-  return Array.from({ length: 5 }, (_, index) => {
-    const startYear = currentSeasonStartYear - 2 + index;
-    return `${startYear}-${startYear + 1}`;
-  });
-};
-
 export default function CreateDriveForm({
   onCancel,
   onSuccess,
@@ -29,6 +17,7 @@ export default function CreateDriveForm({
   fixedDepartmentId = null,
   fixedDepartmentLabel = "",
   submitLabel = "",
+  activePlacementSeason = null,
 }) {
   const [formData, setFormData] = useState({
     company_id: "",
@@ -36,7 +25,11 @@ export default function CreateDriveForm({
     role_description: "",
     offer_type: "Placement",
     package_lpa: "",
-    placement_season: "",
+    stipend_pm: "",
+    has_bond: false,
+    bond_months: "",
+    has_security_deposit: false,
+    security_deposit_amount: "",
     deadline: "",
     allowed_departments: [],
     allowed_courses: [],
@@ -61,7 +54,7 @@ export default function CreateDriveForm({
   const [departments, setDepartments] = useState([]);
   const [courses, setCourses] = useState([]);
   const [companies, setCompanies] = useState([]);
-  const placementSeasonOptions = getPlacementSeasonOptions();
+  const [fetchedSeason, setFetchedSeason] = useState(null);
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -96,7 +89,11 @@ export default function CreateDriveForm({
               role_description: driveData.role_description || "",
               offer_type: driveData.offer_type || "Placement",
               package_lpa: driveData.package_lpa || "",
-              placement_season: driveData.placement_season || placementSeasonOptions[2] || "",
+              stipend_pm: driveData.stipend_pm || "",
+              has_bond: driveData.has_bond || false,
+              bond_months: driveData.bond_months || "",
+              has_security_deposit: driveData.has_security_deposit || false,
+              security_deposit_amount: driveData.security_deposit_amount || "",
               deadline: driveData.deadline ? driveData.deadline.split("T")[0] : "",
               allowed_departments: driveData.DriveAllowedDepartments?.map(d => d.dept_id) || [],
               allowed_courses: driveData.DriveAllowedCourses?.map(c => c.course_id) || [],
@@ -129,7 +126,6 @@ export default function CreateDriveForm({
           setFormData(prev => ({
             ...prev,
             company_id: fetchedComps[0].company_id,
-            placement_season: prev.placement_season || placementSeasonOptions[2] || "",
             allowed_departments: fixedDepartmentId ? [fixedDepartmentId] : prev.allowed_departments,
           }));
           setExistingDriveDocuments([]);
@@ -274,7 +270,11 @@ export default function CreateDriveForm({
         ...formData,
         package_lpa: parseFloat(formData.package_lpa) || 0,
         company_id: parseInt(formData.company_id) || null,
-        placement_season: formData.placement_season,
+        stipend_pm: formData.offer_type !== "Placement" ? formData.stipend_pm : null,
+        has_bond: formData.has_bond,
+        bond_months: formData.has_bond ? (parseInt(formData.bond_months) || null) : null,
+        has_security_deposit: formData.has_security_deposit,
+        security_deposit_amount: formData.has_security_deposit ? formData.security_deposit_amount : null,
         allowed_departments: fixedDepartmentId
           ? [fixedDepartmentId]
           : formData.allowed_departments,
@@ -402,21 +402,81 @@ export default function CreateDriveForm({
                 placeholder="e.g. 12.5" 
               />
             </div>
+
+            {formData.offer_type !== "Placement" && (
+              <div>
+                <label className="text-sm font-medium">Stipend (Per Month)</label>
+                <Input 
+                  value={formData.stipend_pm} 
+                  onChange={e => setFormData({...formData, stipend_pm: e.target.value})} 
+                  placeholder="e.g. 25000 or 25K" 
+                />
+              </div>
+            )}
+
+            <div className="md:col-span-2 border-t pt-4 mt-2">
+              <h4 className="text-sm font-semibold mb-3">Additional Contract Details</h4>
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Bond */}
+                <div className="space-y-3 p-3 border rounded-lg bg-gray-50/50">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <input 
+                      type="checkbox" 
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                      checked={formData.has_bond}
+                      onChange={e => setFormData({...formData, has_bond: e.target.checked})}
+                    />
+                    Requires Service Bond / Agreement
+                  </label>
+                  {formData.has_bond && (
+                    <div className="pl-6 transition-all duration-200">
+                      <label className="text-xs font-medium text-gray-500 block mb-1">Duration (Months) *</label>
+                      <Input 
+                        type="number" 
+                        min="1"
+                        value={formData.bond_months} 
+                        onChange={e => setFormData({...formData, bond_months: e.target.value})} 
+                        placeholder="e.g. 24" 
+                        required={formData.has_bond}
+                        className="bg-white"
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Security Deposit */}
+                <div className="space-y-3 p-3 border rounded-lg bg-gray-50/50">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <input 
+                      type="checkbox" 
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                      checked={formData.has_security_deposit}
+                      onChange={e => setFormData({...formData, has_security_deposit: e.target.checked})}
+                    />
+                    Requires Security Cheque / Deposit
+                  </label>
+                  {formData.has_security_deposit && (
+                    <div className="pl-6 transition-all duration-200">
+                      <label className="text-xs font-medium text-gray-500 block mb-1">Amount / Details *</label>
+                      <Input 
+                        value={formData.security_deposit_amount} 
+                        onChange={e => setFormData({...formData, security_deposit_amount: e.target.value})} 
+                        placeholder="e.g. Rs 1,00,000 or Blank Cheque" 
+                        required={formData.has_security_deposit}
+                        className="bg-white"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div>
-              <label className="text-sm font-medium">Placement Season *</label>
-              <select
-                required
-                className="w-full border rounded-md px-3 py-2 text-sm bg-white"
-                value={formData.placement_season}
-                onChange={e => setFormData({...formData, placement_season: e.target.value})}
-              >
-                <option value="">Select placement season</option>
-                {placementSeasonOptions.map((season) => (
-                  <option key={season} value={season}>
-                    {season}
-                  </option>
-                ))}
-              </select>
+              <label className="text-sm font-medium">Placement Season</label>
+              <div className="w-full border rounded-md px-3 py-2 text-sm bg-gray-50 text-gray-500 font-medium">
+                {activePlacementSeason || fetchedSeason || "Set automatically"}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Based on active department season.</p>
             </div>
             <div>
               <label className="text-sm font-medium">Deadline *</label>

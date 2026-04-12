@@ -34,6 +34,16 @@ const Offer = sequelize.define(
       }
     },
 
+    offer_letter_url: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+
+    offer_letter_timestamp: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

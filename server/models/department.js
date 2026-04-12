@@ -22,6 +22,11 @@ const Department = sequelize.define(
       unique: true
     },
 
+    current_placement_season: {
+      type: DataTypes.STRING(9),
+      allowNull: true
+    },
+
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

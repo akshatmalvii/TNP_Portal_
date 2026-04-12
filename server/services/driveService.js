@@ -304,6 +304,11 @@ const createDriveTransaction = async (driveData, staffId, options = {}) => {
     package_lpa,
     deadline,
     placement_season,
+    stipend_pm,
+    has_bond,
+    bond_months,
+    has_security_deposit,
+    security_deposit_amount,
     allowed_departments, 
     allowed_courses, 
     eligibility, 
@@ -349,6 +354,11 @@ const createDriveTransaction = async (driveData, staffId, options = {}) => {
       created_by_staff: staffId,
       offer_type,
       package_lpa,
+      stipend_pm,
+      has_bond: has_bond || false,
+      bond_months: bond_months || null,
+      has_security_deposit: has_security_deposit || false,
+      security_deposit_amount: security_deposit_amount || null,
       deadline,
       placement_season: normalizedPlacementSeason,
       drive_status: driveStatus,
@@ -407,10 +417,16 @@ const updateDriveTransaction = async (drive_id, driveData, staffId) => {
     const {
       company_id, role_title, role_description, offer_type,
       package_lpa, deadline, placement_season, drive_status, approval_status,
+      stipend_pm, has_bond, bond_months, has_security_deposit, security_deposit_amount,
       allowed_departments, allowed_courses, eligibility, dynamic_form_fields
     } = driveData;
 
-    const normalizedPlacementSeason = normalizePlacementSeason(placement_season);
+    let normalizedPlacementSeason;
+    if (placement_season !== undefined && placement_season !== "") {
+      normalizedPlacementSeason = normalizePlacementSeason(placement_season);
+    } else {
+      normalizedPlacementSeason = drive.placement_season;  // Keep existing if not provided or empty
+    }
 
     // 1. Update root Drive record
     await drive.update({
@@ -419,6 +435,11 @@ const updateDriveTransaction = async (drive_id, driveData, staffId) => {
       role_description: role_description || null,
       offer_type,
       package_lpa: package_lpa || null,
+      stipend_pm: stipend_pm || null,
+      has_bond: has_bond || false,
+      bond_months: bond_months || null,
+      has_security_deposit: has_security_deposit || false,
+      security_deposit_amount: security_deposit_amount || null,
       deadline,
       placement_season: normalizedPlacementSeason,
       drive_status: drive_status || drive.drive_status,

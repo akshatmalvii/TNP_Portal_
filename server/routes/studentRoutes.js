@@ -1,5 +1,5 @@
 import express from "express";
-import { getMe, getVerificationStatus } from "../contollers/studentController.js";
+import { getMe, getVerificationStatus, getAcceptedOffers, uploadOfferLetter } from "../contollers/studentController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/roleMiddleware.js";
 
@@ -10,5 +10,7 @@ router.use(authorizeRoles("Student"));
 
 router.get("/me", getMe);
 router.get("/verification-status", getVerificationStatus);
+router.get("/offers/accepted", getAcceptedOffers);
+router.post("/offers/upload-letter", uploadOfferLetter);
 
 export default router;

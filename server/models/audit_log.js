@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
+import StaffAdmin from "./staff_admin.js";
 
 const AuditLog = sequelize.define(
   "AuditLog",
@@ -12,6 +13,14 @@ const AuditLog = sequelize.define(
 
     staff_id: {
       type: DataTypes.INTEGER
+    },
+
+    dept_id: {
+      type: DataTypes.INTEGER
+    },
+
+    placement_season: {
+      type: DataTypes.STRING
     },
 
     action_type: {
@@ -32,5 +41,8 @@ const AuditLog = sequelize.define(
     timestamps: false
   }
 );
+
+AuditLog.belongsTo(StaffAdmin, { foreignKey: "staff_id", as: "StaffAdmin" });
+StaffAdmin.hasMany(AuditLog, { foreignKey: "staff_id" });
 
 export default AuditLog;

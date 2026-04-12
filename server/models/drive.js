@@ -55,6 +55,31 @@ const Drive = sequelize.define(
       type: DataTypes.DECIMAL(6, 2)
     },
 
+    stipend_pm: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+
+    has_bond: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+
+    bond_months: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+
+    has_security_deposit: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    },
+
+    security_deposit_amount: {
+      type: DataTypes.STRING(255),
+      allowNull: true
+    },
+
     deadline: {
       type: DataTypes.DATE
     },

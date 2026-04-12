@@ -2,6 +2,7 @@ import coordinatorDriveService from "../services/coordinatorDriveService.js";
 import driveService from "../services/driveService.js";
 import StaffAdmin from "../models/staff_admin.js";
 import Department from "../models/department.js";
+import Course from "../models/course.js";
 import Company from "../models/company.js";
 import CompanyContact from "../models/company_contact.js";
 import sequelize from "../config/db.js";
@@ -10,7 +11,7 @@ const getCoordinatorContext = async (req, res) => {
   try {
     const staffUser = await StaffAdmin.findOne({
       where: { user_id: req.user.user_id },
-      include: [{ model: Department, attributes: ["dept_id", "dept_code", "dept_name"] }],
+      include: [{ model: Department, attributes: ["dept_id", "dept_code", "dept_name", "current_placement_season"] }],
     });
 
     if (!staffUser) {
@@ -21,6 +22,7 @@ const getCoordinatorContext = async (req, res) => {
       staff_id: staffUser.staff_id,
       dept_id: staffUser.dept_id,
       Department: staffUser.Department,
+      current_placement_season: staffUser.Department?.current_placement_season || null,
     });
   } catch (err) {
     console.error("Error fetching coordinator context:", err);
@@ -38,9 +40,53 @@ const listCompanies = async (req, res) => {
   }
 };
 
+const getCourses = async (req, res) => {
+  try {
+    const staffUser = await StaffAdmin.findOne({
+      where: { user_id: req.user.user_id },
+    });
+
+    if (!staffUser?.dept_id) {
+      return res.status(400).json({ error: "Department not found" });
+    }
+
+    const courses = await Course.findAll({
+      where: { dept_id: staffUser.dept_id },
+    });
+
+    return res.json(courses);
+  } catch (err) {
+    console.error("Error fetching courses for coordinator:", err);
+    return res.status(500).json({ error: err.message || "Failed to fetch courses" });
+  }
+};
+
 const createCompany = async (req, res) => {
   const t = await sequelize.transaction();
   try {
+    const staffUser = await StaffAdmin.findOne({
+      where: { user_id: req.user.user_id },
+      transaction: t,
+    });
+
+    if (!staffUser?.dept_id) {
+      await t.rollback();
+      return res.status(400).json({ error: "Coordinator department not found" });
+    }
+
+    const department = await Department.findByPk(staffUser.dept_id, {
+      attributes: ["dept_id", "current_placement_season"],
+      transaction: t,
+    });
+
+    if (!department?.current_placement_season) {
+      await t.rollback();
+      return res.status(400).json({
+        error:
+          "The current placement season must be set by TPO before creating companies.",
+      });
+    }
+
     const { company_name, company_website, contacts } = req.body;
 
     if (!company_name) {
@@ -57,6 +103,7 @@ const createCompany = async (req, res) => {
     const newCompany = await Company.create({
       company_name,
       company_website: company_website || null,
+      placement_season: department.current_placement_season,
     }, { transaction: t });
 
     if (Array.isArray(contacts) && contacts.length > 0) {
@@ -158,8 +205,24 @@ const createDrive = async (req, res) => {
       return res.status(400).json({ error: "Coordinator department not found" });
     }
 
+    const department = await Department.findByPk(staffUser.dept_id, {
+      attributes: ["dept_id", "current_placement_season"],
+    });
+
+    if (!department?.current_placement_season) {
+      return res.status(400).json({
+        error:
+          "The current placement season must be set by TPO before creating drives.",
+      });
+    }
+
+    const driveData = {
+      ...req.body,
+      placement_season: department.current_placement_season,
+    };
+
     const drive = await driveService.createDriveTransaction(
-      req.body,
+      driveData,
       staffUser.staff_id,
       {
         driveStatus: "Draft",
@@ -205,6 +268,7 @@ const uploadDriveDocuments = async (req, res) => {
 export default {
   getCoordinatorContext,
   listCompanies,
+  getCourses,
   listDrives,
   getDriveProcess,
   createRound,

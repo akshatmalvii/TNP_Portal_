@@ -327,6 +327,7 @@ const createDriveRound = async (userId, driveId, data) => {
     }));
 
     await createNotifications(notifications, transaction);
+
     await transaction.commit();
 
     return {

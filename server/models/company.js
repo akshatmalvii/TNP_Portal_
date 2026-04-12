@@ -20,6 +20,11 @@ const Company = sequelize.define(
       type: DataTypes.TEXT
     },
 
+    placement_season: {
+      type: DataTypes.STRING(9),
+      allowNull: true
+    },
+
     created_at: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW

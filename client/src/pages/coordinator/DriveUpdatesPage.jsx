@@ -38,6 +38,7 @@ export default function DriveUpdatesPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [coordinatorContext, setCoordinatorContext] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
@@ -217,6 +218,10 @@ export default function DriveUpdatesPage() {
     }
   };
 
+  const filteredDrives = drives.filter((drive) =>
+    (drive.company_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (drive.role_title || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
   const minRoundDateTime = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
     .toISOString()
     .slice(0, 16);
@@ -229,7 +234,7 @@ export default function DriveUpdatesPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Drive Updates</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Upload Drive Results</h1>
           <p className="text-gray-500 mt-1">
             Manage approved drives and rounds for your department.
           </p>
@@ -256,15 +261,26 @@ export default function DriveUpdatesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <Input
+              placeholder="Search drives by company or role..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           {loading ? (
             <p className="text-sm text-gray-500">Loading drives...</p>
           ) : drives.length === 0 ? (
             <p className="text-sm text-gray-500">
               No drives are available for your department yet.
             </p>
+          ) : filteredDrives.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              No drives match your search.
+            </p>
           ) : (
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {drives.map((drive) => (
+              {filteredDrives.map((drive) => (
                 <button
                   key={drive.drive_id}
                   type="button"

@@ -18,6 +18,7 @@ const DEFAULT_FORM = {
   allow_apply_after_placement: false,
   min_package_difference: 0,
   ignore_package_condition: false,
+  current_placement_season: "",
   change_note: "",
 };
 
@@ -73,7 +74,7 @@ export default function PlacementPolicyPage() {
     "Content-Type": "application/json",
   };
 
-  const syncFormFromPolicy = (currentPolicy) => {
+  const syncFormFromPolicy = (currentPolicy, department) => {
     setForm({
       allow_apply_after_internship:
         currentPolicy?.allow_apply_after_internship ?? DEFAULT_FORM.allow_apply_after_internship,
@@ -83,6 +84,8 @@ export default function PlacementPolicyPage() {
         currentPolicy?.min_package_difference ?? DEFAULT_FORM.min_package_difference,
       ignore_package_condition:
         currentPolicy?.ignore_package_condition ?? DEFAULT_FORM.ignore_package_condition,
+      current_placement_season:
+        department?.current_placement_season ?? DEFAULT_FORM.current_placement_season,
       change_note: "",
     });
   };
@@ -108,7 +111,7 @@ export default function PlacementPolicyPage() {
 
       setPolicyData(policyJson);
       setHistory(Array.isArray(historyJson.history) ? historyJson.history : []);
-      syncFormFromPolicy(policyJson.current_policy);
+      syncFormFromPolicy(policyJson.current_policy, policyJson.department);
       setError("");
     } catch (err) {
       setError(err.message);
@@ -200,6 +203,11 @@ export default function PlacementPolicyPage() {
                 </Badge>
                 <Badge className="bg-gray-100 text-gray-700 border border-gray-200">
                   {currentPolicy ? "Policy Active" : "No Policy Set Yet"}
+                </Badge>
+                <Badge className="bg-green-100 text-green-700 border border-green-200">
+                  {department?.current_placement_season
+                    ? `Placement Season: ${department.current_placement_season}`
+                    : "Placement season not set"}
                 </Badge>
               </div>
 
@@ -298,6 +306,25 @@ export default function PlacementPolicyPage() {
               setForm({ ...form, ignore_package_condition: value })
             }
           />
+
+          <div>
+            <label className="text-sm font-medium text-gray-900">
+              Current Placement Season
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              Set the active placement season for your department. Coordinators
+              cannot create companies or drives until this is configured.
+            </p>
+            <Input
+              type="text"
+              placeholder="2025-2026"
+              value={form.current_placement_season}
+              onChange={(e) =>
+                setForm({ ...form, current_placement_season: e.target.value })
+              }
+              className="mt-2"
+            />
+          </div>
 
           <div>
             <label className="text-sm font-medium text-gray-900">

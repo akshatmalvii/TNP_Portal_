@@ -90,6 +90,7 @@ export const authenticateStudent = async (req, res, next) => {
 // Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/students', studentRoutes);
+app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/verification', verificationRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/roles', rolesRoutes);

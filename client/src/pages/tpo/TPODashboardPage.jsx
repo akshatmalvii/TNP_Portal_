@@ -8,22 +8,58 @@ import {
 } from "../../components/Card";
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
+import { Input } from "../../components/Input";
 import {
   Briefcase,
   TrendingUp,
   Building2,
   CheckCircle2,
   UserPlus,
+  CalendarClock,
+  AlertTriangle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useConfirmDialog } from "../../components/ConfirmDialog";
 
 export default function TPODashboard() {
+  const { confirm, confirmDialog } = useConfirmDialog();
   const [drives, setDrives] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Placement season state
+  const [currentSeason, setCurrentSeason] = useState(null);
+  const [seasonLoading, setSeasonLoading] = useState(true);
+  const [isEditingSeason, setIsEditingSeason] = useState(false);
+  const [seasonStartYear, setSeasonStartYear] = useState("");
+  const [seasonSaving, setSeasonSaving] = useState(false);
+  const [seasonError, setSeasonError] = useState("");
+  const [seasonSuccess, setSeasonSuccess] = useState("");
+
   useEffect(() => {
     fetchDrives();
+    fetchPlacementSeason();
   }, []);
+
+  const fetchPlacementSeason = async () => {
+    try {
+      setSeasonLoading(true);
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/v1/tpo/placement-season", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentSeason(data.current_placement_season);
+        if (data.current_placement_season) {
+          setSeasonStartYear(data.current_placement_season.split("-")[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch placement season", err);
+    } finally {
+      setSeasonLoading(false);
+    }
+  };
 
   const fetchDrives = async () => {
     try {
@@ -37,6 +73,60 @@ export default function TPODashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveSeason = async () => {
+    const startYear = parseInt(seasonStartYear);
+    if (!startYear || startYear < 2020 || startYear > 2099) {
+      setSeasonError("Enter a valid year (2020–2099)");
+      return;
+    }
+
+    const newSeason = `${startYear}-${startYear + 1}`;
+
+    const shouldProceed = await confirm({
+      title: `Set placement season to ${newSeason}?`,
+      description: currentSeason
+        ? `This will change the active placement season from ${currentSeason} to ${newSeason}. All new companies and drives created after this will be tagged with ${newSeason}. Existing drives will keep their original season.`
+        : `This will set the active placement season to ${newSeason}. Coordinators will be able to create companies and drives after this.`,
+      confirmText: "Yes, set season",
+    });
+
+    if (!shouldProceed) return;
+
+    setSeasonSaving(true);
+    setSeasonError("");
+    setSeasonSuccess("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/v1/tpo/placement-season", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ placement_season: newSeason }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to set placement season");
+
+      setCurrentSeason(data.current_placement_season);
+      setIsEditingSeason(false);
+      setSeasonSuccess(`Placement season set to ${data.current_placement_season}`);
+      setTimeout(() => setSeasonSuccess(""), 4000);
+    } catch (err) {
+      setSeasonError(err.message);
+    } finally {
+      setSeasonSaving(false);
+    }
+  };
+
+  const getDefaultStartYear = () => {
+    const now = new Date();
+    const month = now.getMonth();
+    return month >= 6 ? now.getFullYear() : now.getFullYear() - 1;
   };
 
   const stats = [
@@ -66,7 +156,7 @@ export default function TPODashboard() {
     },
   ];
 
-  const pendingApprovals = []; // TBD based on new company creation workflows
+  const pendingApprovals = [];
 
   return (
     <div className="p-6 space-y-6">
@@ -79,6 +169,85 @@ export default function TPODashboard() {
           Manage placements, drives, and company relationships.
         </p>
       </div>
+
+      {/* Placement Season Card */}
+      <Card className={`border-2 ${currentSeason ? 'border-indigo-200 bg-gradient-to-r from-indigo-50/60 to-blue-50/60' : 'border-amber-300 bg-gradient-to-r from-amber-50/80 to-yellow-50/80'}`}>
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-xl ${currentSeason ? 'bg-indigo-100' : 'bg-amber-100'}`}>
+                <CalendarClock className={`w-7 h-7 ${currentSeason ? 'text-indigo-600' : 'text-amber-600'}`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Active Placement Season</p>
+                {seasonLoading ? (
+                  <p className="text-lg text-gray-400 mt-0.5">Loading…</p>
+                ) : currentSeason ? (
+                  <p className="text-2xl font-bold text-indigo-700 mt-0.5">{currentSeason}</p>
+                ) : (
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <AlertTriangle className="w-5 h-5 text-amber-600" />
+                    <p className="text-lg font-semibold text-amber-700">Not set yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {!isEditingSeason ? (
+              <Button
+                onClick={() => {
+                  setIsEditingSeason(true);
+                  setSeasonError("");
+                  setSeasonSuccess("");
+                  if (!seasonStartYear) setSeasonStartYear(String(getDefaultStartYear()));
+                }}
+                className={currentSeason ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-amber-600 hover:bg-amber-700'}
+              >
+                {currentSeason ? "Change Season" : "Set Placement Season"}
+              </Button>
+            ) : (
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    min="2020"
+                    max="2099"
+                    className="w-24 text-center font-semibold"
+                    value={seasonStartYear}
+                    onChange={(e) => setSeasonStartYear(e.target.value)}
+                    placeholder="2025"
+                  />
+                  <span className="text-gray-500 font-medium">–</span>
+                  <span className="text-gray-700 font-semibold w-12">
+                    {parseInt(seasonStartYear) ? parseInt(seasonStartYear) + 1 : "----"}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button onClick={handleSaveSeason} disabled={seasonSaving} size="sm">
+                    {seasonSaving ? "Saving…" : "Save"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => { setIsEditingSeason(false); setSeasonError(""); }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {seasonError && (
+            <p className="text-sm text-red-600 mt-3 bg-red-50 border border-red-200 rounded-md px-3 py-2">{seasonError}</p>
+          )}
+          {seasonSuccess && (
+            <p className="text-sm text-green-700 mt-3 bg-green-50 border border-green-200 rounded-md px-3 py-2">{seasonSuccess}</p>
+          )}
+
+          {!currentSeason && !isEditingSeason && (
+            <p className="text-sm text-amber-700/80 mt-3">
+              ⚠️ Coordinators cannot add companies or create drives until the placement season is set.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -195,9 +364,9 @@ export default function TPODashboard() {
               </p>
             </div>
 
-            <Link to="/dashboard/tpo/analytics">
+            <Link to="/dashboard/tpo/reports">
               <Button variant="outline" className="w-full">
-                View Analytics
+                View Reports
               </Button>
             </Link>
 
@@ -263,6 +432,8 @@ export default function TPODashboard() {
           </Link>
         </CardContent>
       </Card>
+
+      {confirmDialog}
     </div>
   );
 }

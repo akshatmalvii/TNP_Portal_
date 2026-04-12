@@ -16,6 +16,7 @@ import {
   LayoutDashboard,
   Landmark,
   Plus,
+  CalendarClock,
 } from "lucide-react";
 import { confirmDialogIcons, useConfirmDialog } from "./ConfirmDialog";
 
@@ -46,26 +47,27 @@ export default function Sidebar({ userRole, isVerified = true }) {
     { href: "/dashboard/student/drives", label: "Job Drives", icon: Briefcase },
     { href: "/dashboard/student/applications", label: "My Applications", icon: FileText },
     { href: "/dashboard/student/notifications", label: "Notifications", icon: Bell },
+    { href: "/dashboard/student/offer-letter", label: "Offer Letter", icon: ShieldCheck },
     { href: "/dashboard/student/profile", label: "My Profile", icon: Users },
   ];
 
   const coordinatorMenuItems = [
-    { href: "/dashboard/coordinator", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/coordinator/students", label: "Students", icon: Users },
     { href: "/dashboard/coordinator/verifications", label: "Verifications", icon: CheckCircle2 },
     { href: "/dashboard/coordinator/create-drive", label: "Create Drive", icon: Plus },
-    { href: "/dashboard/coordinator/drive-updates", label: "Drive Updates", icon: Briefcase },
+    { href: "/dashboard/coordinator/drive-updates", label: "Upload Drive Results", icon: Briefcase },
     { href: "/dashboard/coordinator/companies", label: "Companies", icon: Building2 },
   ];
 
   const tpoMenuItems = [
-    { href: "/dashboard/tpo", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/tpo/coordinators", label: "Manage Coordinators", icon: UserPlus },
+    { href: "/dashboard/tpo/placement-season", label: "Placement Season", icon: CalendarClock },
     { href: "/dashboard/tpo/policy", label: "Placement Policy", icon: Landmark },
     { href: "/dashboard/tpo/drives", label: "Job Drives", icon: Briefcase },
     { href: "/dashboard/tpo/companies", label: "Companies", icon: Building2 },
     { href: "/dashboard/tpo/approvals", label: "Approvals", icon: CheckCircle2 },
-    { href: "/dashboard/tpo/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/dashboard/tpo/offer-letters", label: "Offer Letters", icon: ShieldCheck },
+    { href: "/dashboard/tpo/reports", label: "Reports", icon: FileText },
   ];
 
   const tpoHeadMenuItems = [

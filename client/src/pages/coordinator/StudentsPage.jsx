@@ -8,13 +8,12 @@ import {
 import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
-import { Search } from "lucide-react";
+import { Search, Users as UsersIcon, Mail, BookOpen, GraduationCap } from "lucide-react";
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -36,145 +35,113 @@ export default function StudentsPage() {
     fetchStudents();
   }, []);
 
-  const getStatusText = (student) => {
-    const vr = student.StudentVerificationRequest;
-    if (!vr) return "Not Verified";
-    if (vr.coordinator_status === "Pending") return "Pending Review";
-    if (vr.coordinator_status === "Approved") return "Verified";
-    if (vr.coordinator_status === "Rejected") return "Rejected";
-    return "Unknown";
-  };
-
   const filteredStudents = students.filter((student) => {
-    const matchesSearch =
+    return (
       (student.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (student.email || "").toLowerCase().includes(searchTerm.toLowerCase());
-
-    const statusObj = getStatusText(student);
-    const matchesStatus =
-      statusFilter === "all" || statusObj === statusFilter;
-
-    return matchesSearch && matchesStatus;
+      (student.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.tnp_id || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.prn || "").toLowerCase().includes(searchTerm.toLowerCase())
+    );
   });
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "Verified":
-        return "bg-green-500/10 text-green-700 border-green-200";
-      case "Pending Review":
-        return "bg-yellow-500/10 text-yellow-700 border-yellow-200";
-      case "Rejected":
-        return "bg-red-500/10 text-red-700 border-red-200";
-      default:
-        return "bg-gray-500/10 text-gray-700 border-gray-200";
-    }
-  };
-
   if (loading) {
-    return <div className="p-6 text-gray-500">Loading students...</div>;
+    return <div className="p-6 text-gray-500 flex items-center gap-2">
+      <div className="animate-spin h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full font-bold"></div>
+      Loading verified roster...
+    </div>;
   }
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Students</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage and track student records and placements.
-        </p>
+      <div className="flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Verified Students</h1>
+          <p className="text-muted-foreground mt-1">
+            Directory of all students in your department who have completed verification.
+          </p>
+        </div>
+        <div className="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
+           <UsersIcon className="w-4 h-4" />
+           {students.length} Total Verified
+        </div>
       </div>
 
-      {/* Search + Filter */}
-      <Card className="border-0 bg-card">
+      {/* Search */}
+      <Card className="border-0 bg-card shadow-sm">
         <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or email..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {["all", "Verified", "Pending Review", "Not Verified", "Rejected"].map(
-                (filter) => (
-                  <Button
-                    key={filter}
-                    variant={statusFilter === filter ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatusFilter(filter)}
-                  >
-                    {filter === "all" ? "All Students" : filter}
-                  </Button>
-                )
-              )}
-            </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, email, TNP ID or PRN..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </CardContent>
       </Card>
 
       {/* Table */}
-      <Card className="border-0 bg-card">
-        <CardContent className="pt-6">
+      <Card className="border-0 bg-card shadow-sm overflow-hidden">
+        <CardContent className="p-0">
           {filteredStudents.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              No students found
-            </p>
+            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-gray-50/50">
+               <UsersIcon className="w-12 h-12 mb-4 opacity-20" />
+               <p className="text-lg font-medium text-gray-400">No students found matching your search</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border">
-                    <th className="py-3 px-4 text-left">Name</th>
-                    <th className="py-3 px-4 text-left">Email</th>
-                    <th className="py-3 px-4 text-left">Department</th>
-                    <th className="py-3 px-4 text-left">CGPA</th>
-                    <th className="py-3 px-4 text-left">Status</th>
-                    <th className="py-3 px-4 text-left">Company</th>
-                    <th className="py-3 px-4 text-left">Action</th>
+                  <tr className="bg-gray-50/80 border-b border-border text-gray-600 uppercase text-[11px] font-bold tracking-wider">
+                    <th className="py-4 px-6 text-left">Student Info</th>
+                    <th className="py-4 px-6 text-left">Identifiers</th>
+                    <th className="py-4 px-6 text-left">Academic Profile</th>
+                    <th className="py-4 px-6 text-left">Verification Status</th>
                   </tr>
                 </thead>
 
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {filteredStudents.map((student) => {
-                    const statusText = getStatusText(student);
                     return (
                       <tr
                         key={student.student_id}
-                        className="border-b border-border hover:bg-secondary/50"
+                        className="hover:bg-indigo-50/30 transition-colors"
                       >
-                        <td className="py-3 px-4 font-medium">
-                          {student.full_name || "N/A"}
+                        <td className="py-4 px-6">
+                          <div className="flex flex-col">
+                            <span className="font-bold text-gray-900">{student.full_name || "N/A"}</span>
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+                              <Mail className="w-3 h-3 text-indigo-400" />
+                              {student.email}
+                            </div>
+                          </div>
                         </td>
-                        <td className="py-3 px-4 text-muted-foreground text-xs">
-                          {student.email}
+                        <td className="py-4 px-6">
+                           <div className="flex flex-col gap-1">
+                              <span className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded w-fit text-gray-700">TNP: {student.tnp_id || "PENDING"}</span>
+                              <span className="text-xs font-mono bg-indigo-50 px-1.5 py-0.5 rounded w-fit text-indigo-700">PRN: {student.prn || "N/A"}</span>
+                           </div>
                         </td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          {student.Department?.dept_name || "N/A"}
+                        <td className="py-4 px-6 text-muted-foreground">
+                           <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5 text-xs">
+                                 <BookOpen className="w-3 h-3" />
+                                 {student.Course?.course_name || "N/A"}
+                              </div>
+                              <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-600">
+                                 <GraduationCap className="w-3 h-3" />
+                                 CGPA: {student.cgpa || "-"}
+                              </div>
+                           </div>
                         </td>
-                        <td className="py-3 px-4 font-medium">
-                          {student.cgpa || "-"}
-                        </td>
-                        <td className="py-3 px-4">
+                        <td className="py-4 px-6">
                           <Badge
-                            className={
-                              getStatusColor(statusText) + " border"
-                            }
+                            className="bg-green-100 text-green-700 border-green-200 px-2.5 py-1"
                           >
-                            {statusText}
+                            Verified
                           </Badge>
-                        </td>
-                        <td className="py-3 px-4 text-muted-foreground">
-                          {/* Placed Company pending Offer module */}
-                          -
-                        </td>
-                        <td className="py-3 px-4">
-                          <Button size="sm" variant="outline">
-                            View
-                          </Button>
                         </td>
                       </tr>
                     );

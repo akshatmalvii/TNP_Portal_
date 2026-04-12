@@ -14,10 +14,29 @@ export default function TPODrivesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [editingDrive, setEditingDrive] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activePlacementSeason, setActivePlacementSeason] = useState("");
+  const [department, setDepartment] = useState(null);
 
   useEffect(() => {
     fetchDrives();
+    fetchPolicy();
   }, []);
+
+  const fetchPolicy = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:5000/api/v1/tpo/policy", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setActivePlacementSeason(data.department?.current_placement_season || "");
+        setDepartment(data.department);
+      }
+    } catch (err) {
+      console.error("Failed to fetch policy", err);
+    }
+  };
 
   const fetchDrives = async () => {
     try {
@@ -85,6 +104,9 @@ export default function TPODrivesPage() {
       <div className="p-6 max-w-5xl mx-auto">
         <CreateDriveForm 
           initialData={editingDrive}
+          activePlacementSeason={activePlacementSeason}
+          fixedDepartmentId={department?.dept_id}
+          fixedDepartmentLabel={department?.dept_name}
           onCancel={() => {
             setIsCreating(false);
             setEditingDrive(null);
