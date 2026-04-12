@@ -1,0 +1,195 @@
+﻿Table,Column,Type,Key,Description
+roles,role_id,INTEGER,PK,Unique role identifier
+roles,role_name,STRING(50),,Role name
+users,user_id,INTEGER,PK,Unique user ID
+users,email,STRING(255),UNIQUE,Login email
+users,password_hash,TEXT,,Encrypted password
+users,role_id,INTEGER,FK roles.role_id,Role mapping
+users,account_status,STRING(20),,Active/Inactive
+users,created_at,DATE,,Created timestamp
+users,updated_at,DATE,,Updated timestamp
+staff_admins,staff_id,INTEGER,PK,Unique staff ID
+staff_admins,user_id,INTEGER,FK users.user_id (UNIQUE),Linked user
+staff_admins,dept_id,INTEGER,FK departments.dept_id,Assigned department
+staff_admins,created_at,DATE,,Created timestamp
+departments,dept_id,INTEGER,PK,Department ID
+departments,dept_code,STRING(20),UNIQUE,Department short code
+departments,dept_name,STRING(100),UNIQUE,Department name
+departments,current_placement_season,STRING(9),,Current year season
+departments,created_at,DATE,,Created timestamp
+courses,course_id,INTEGER,PK,Course ID
+courses,course_name,STRING(100),,Course name
+courses,dept_id,INTEGER,FK departments.dept_id,Owning department
+courses,created_at,DATE,,Created timestamp
+department_tpo_assignment,id,INTEGER,PK,Assignment ID
+department_tpo_assignment,dept_id,INTEGER,FK departments.dept_id (UNIQUE),Department
+department_tpo_assignment,tpo_staff_id,INTEGER,FK staff_admins.staff_id,TPO
+department_tpo_assignment,assigned_at,DATE,,Assignment date
+students,student_id,INTEGER,PK,Student ID
+students,user_id,INTEGER,FK users.user_id (UNIQUE),Linked user
+students,full_name,STRING(255),,Student name
+students,gender,STRING(20),,Gender
+students,marital_status,STRING(20),,Marital status
+students,date_of_birth,DATEONLY,,DOB
+students,mobile_number,STRING(20),,Contact
+students,parent_mobile_number,STRING(20),,Parent contact
+students,email,STRING(255),,Email
+students,blood_group,STRING(10),,Blood group
+students,category,STRING(50),,Category
+students,nationality,STRING(50),,Nationality
+students,height_cm,INTEGER,,Height
+students,weight_kg,INTEGER,,Weight
+students,present_address,TEXT,,Address
+students,permanent_address,TEXT,,Address
+students,dept_id,INTEGER,FK departments.dept_id,Department
+students,course_id,INTEGER,FK courses.course_id,Course
+students,running_backlogs,INTEGER,,Backlogs
+students,total_kt,INTEGER,,Total KTs
+students,prn,STRING(50),,PRN
+students,cgpa,DECIMAL(4,2),,CGPA
+students,tnp_id,STRING(20),UNIQUE,TNP ID
+students,created_at,DATE,,Created
+students,updated_at,DATE,,Updated
+student_education,education_id,INTEGER,PK,Education record
+student_education,student_id,INTEGER,FK students.student_id,Student
+student_education,education_type,STRING(20),,SSC/HSC/Diploma
+student_education,institution_name,STRING(255),,Institute
+student_education,board_or_university,STRING(255),,Board
+student_education,course_name,STRING(255),,Course
+student_education,program,STRING(100),,Program
+student_education,stream,STRING(100),,Stream
+student_education,passing_year,INTEGER,,Year
+student_education,percentage,DECIMAL(5,2),,%
+student_education,cgpa,DECIMAL(4,2),,CGPA
+student_documents,document_id,INTEGER,PK,Document ID
+student_documents,student_id,INTEGER,FK students.student_id,Student
+student_documents,document_type,STRING(50),,Document type
+student_documents,file_url,TEXT,,File URL
+student_documents,uploaded_at,DATE,,Uploaded
+student_verification_requests,verification_id,INTEGER,PK,Verification ID
+student_verification_requests,student_id,INTEGER,FK students.student_id (UNIQUE),Student
+student_verification_requests,coordinator_status,STRING(20),,Pending/Approved/Rejected
+student_verification_requests,tpo_status,STRING(20),,Pending/Approved/Rejected
+student_verification_requests,verified_by_coordinator,INTEGER,FK staff_admins.staff_id,Coordinator
+student_verification_requests,approved_by_tpo,INTEGER,FK staff_admins.staff_id,TPO
+student_verification_requests,created_at,DATE,,Created
+student_verification_requests,updated_at,DATE,,Updated
+companies,company_id,INTEGER,PK,Company ID
+companies,company_name,STRING(255),UNIQUE,Company name
+companies,company_website,TEXT,,Website
+companies,placement_season,STRING(9),,Season
+companies,created_at,DATE,,Created
+company_contacts,contact_id,INTEGER,PK,Contact ID
+company_contacts,company_id,INTEGER,FK companies.company_id,Company
+company_contacts,contact_name,STRING(255),,Name
+company_contacts,contact_email,STRING(255),,Email
+company_contacts,contact_phone,STRING(20),,Phone
+company_contacts,designation,STRING(100),,Role
+company_contacts,created_at,DATE,,Created
+drives,drive_id,INTEGER,PK,Drive ID
+drives,company_id,INTEGER,FK companies.company_id,Company
+drives,role_title,STRING(255),,Role title
+drives,role_description,TEXT,,Description
+drives,created_by_staff,INTEGER,FK staff_admins.staff_id,Created by
+drives,approved_by_staff,INTEGER,FK staff_admins.staff_id,Approved by
+drives,offer_type,STRING(20),,Placement/Internship
+drives,package_lpa,DECIMAL(6,2),,CTC
+drives,stipend_pm,DECIMAL(10,2),,Stipend
+drives,has_bond,BOOLEAN,,Bond?
+drives,bond_months,INTEGER,,Bond months
+drives,has_security_deposit,BOOLEAN,,Deposit?
+drives,security_deposit_amount,DECIMAL(10,2),,Amount
+drives,deadline,DATE,,Deadline
+drives,placement_season,STRING(9),,Season
+drives,drive_status,STRING(20),,Draft/Active
+drives,approval_status,STRING(20),,Pending/Approved
+drives,created_at,DATE,,Created
+drives,updated_at,DATE,,Updated
+drive_documents,document_id,INTEGER,PK,Doc ID
+drive_documents,drive_id,INTEGER,FK drives.drive_id,Drive
+drive_documents,file_name,STRING(255),,File name
+drive_documents,file_url,TEXT,,File URL
+drive_documents,uploaded_at,DATE,,Uploaded
+drive_allowed_departments,id,INTEGER,PK,Row ID
+drive_allowed_departments,drive_id,INTEGER,FK drives.drive_id,Drive
+drive_allowed_departments,dept_id,INTEGER,FK departments.dept_id,Department
+drive_allowed_courses,id,INTEGER,PK,Row ID
+drive_allowed_courses,drive_id,INTEGER,FK drives.drive_id,Drive
+drive_allowed_courses,course_id,INTEGER,FK courses.course_id,Course
+drive_eligibility,eligibility_id,INTEGER,PK,Eligibility ID
+drive_eligibility,drive_id,INTEGER,FK drives.drive_id (UNIQUE),Drive
+drive_eligibility,min_cgpa,DECIMAL(4,2),,Min CGPA
+drive_eligibility,max_backlogs,INTEGER,,Max backlogs
+drive_eligibility,min_10th_percent,DECIMAL(5,2),,10th %
+drive_eligibility,min_12th_percent,DECIMAL(5,2),,12th %
+drive_eligibility,gender,STRING(10),,Gender
+drive_eligibility,passing_year,INTEGER,,Passing year
+student_applications,application_id,INTEGER,PK,Application ID
+student_applications,student_id,INTEGER,FK students.student_id,Student
+student_applications,drive_id,INTEGER,FK drives.drive_id,Drive
+student_applications,application_status,STRING(20),,APPLIED/SELECTED
+student_applications,applied_at,DATE,,Applied on
+student_applications,updated_at,DATE,,Updated
+dynamic_form_fields,field_id,INTEGER,PK,Field ID
+dynamic_form_fields,drive_id,INTEGER,FK drives.drive_id,Drive
+dynamic_form_fields,field_label,STRING(255),,Label
+dynamic_form_fields,field_type,STRING(20),,TEXT/NUMBER/FILE
+dynamic_form_fields,is_required,BOOLEAN,,Required?
+dynamic_form_fields,field_order,INTEGER,,Order
+dynamic_form_fields,created_at,DATE,,Created
+dynamic_form_responses,response_id,INTEGER,PK,Response ID
+dynamic_form_responses,application_id,INTEGER,FK student_applications.application_id,Application
+dynamic_form_responses,field_id,INTEGER,FK dynamic_form_fields.field_id,Field
+dynamic_form_responses,text_value,TEXT,,Text response
+dynamic_form_responses,number_value,DECIMAL,,Number response
+dynamic_form_responses,file_url,TEXT,,File response
+offers,offer_id,INTEGER,PK,Offer ID
+offers,application_id,INTEGER,FK student_applications.application_id,Application
+offers,offer_category,STRING(30),,Placement/Internship
+offers,offered_package,DECIMAL(6,2),,Package
+offers,acceptance_status,STRING(20),,Accepted/Rejected
+offers,offer_letter_url,TEXT,,Offer letter
+offers,offer_letter_timestamp,DATE,,Uploaded time
+offers,created_at,DATE,,Created
+offers,updated_at,DATE,,Updated
+drive_rounds,round_id,INTEGER,PK,Round ID
+drive_rounds,drive_id,INTEGER,FK drives.drive_id,Drive
+drive_rounds,round_number,INTEGER,,Round number
+drive_rounds,round_name,STRING(120),,Name
+drive_rounds,round_type,STRING(60),,Aptitude/PI/etc
+drive_rounds,scheduled_at,DATE,,Schedule
+drive_rounds,venue,STRING(255),,Venue
+drive_rounds,instructions,TEXT,,Instructions
+drive_rounds,is_final_round,BOOLEAN,,Final?
+drive_rounds,broadcasted_at,DATE,,Broadcast time
+drive_rounds,created_by_staff,INTEGER,FK staff_admins.staff_id,Creator
+drive_rounds,created_at,DATE,,Created
+drive_rounds,updated_at,DATE,,Updated
+drive_round_results,result_id,INTEGER,PK,Result ID
+drive_round_results,round_id,INTEGER,FK drive_rounds.round_id,Round
+drive_round_results,application_id,INTEGER,FK student_applications.application_id,Application
+drive_round_results,result_status,STRING(20),,Qualified/Rejected
+drive_round_results,remarks,TEXT,,Remarks
+drive_round_results,updated_by_staff,INTEGER,FK staff_admins.staff_id,Updated by
+drive_round_results,created_at,DATE,,Created
+drive_round_results,updated_at,DATE,,Updated
+student_notifications,notification_id,INTEGER,PK,Notification ID
+student_notifications,student_id,INTEGER,FK students.student_id,Student
+student_notifications,drive_id,INTEGER,FK drives.drive_id,Drive
+student_notifications,application_id,INTEGER,FK student_applications.application_id,Application
+student_notifications,round_id,INTEGER,FK drive_rounds.round_id,Round
+student_notifications,title,STRING(255),,Title
+student_notifications,message,TEXT,,Message
+student_notifications,notification_type,STRING(30),,ROUND_RESULT/GENERAL
+student_notifications,is_read,BOOLEAN,,Read?
+student_notifications,created_by_staff,INTEGER,FK staff_admins.staff_id,Creator
+student_notifications,created_at,DATE,,Created
+audit_logs,log_id,INTEGER,PK,Log ID
+audit_logs,staff_id,INTEGER,FK staff_admins.staff_id,Actor
+audit_logs,action_type,STRING,,Action type
+audit_logs,entity_name,STRING,,Entity
+audit_logs,entity_id,INTEGER,,Entity ID
+audit_logs,old_values,TEXT,,Old JSON
+audit_logs,new_values,TEXT,,New JSON
+audit_logs,ip_address,STRING,,IP
+audit_logs,created_at,DATE,,Logged time

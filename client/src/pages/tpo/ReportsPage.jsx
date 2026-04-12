@@ -341,6 +341,7 @@ export default function ReportsPage() {
                     <th className="px-4 py-3">Student Name</th>
                     <th className="px-4 py-3">Identifier (TNP/PRN)</th>
                     <th className="px-4 py-3">Company</th>
+                    <th className="px-4 py-3">Placement Status</th>
                     <th className="px-4 py-3">Offer Category</th>
                     <th className="px-4 py-3">Monetary Package</th>
                     <th className="px-4 py-3">Contract Restrictions</th>
@@ -349,7 +350,7 @@ export default function ReportsPage() {
                 <tbody className="divide-y divide-gray-100">
                   {reportData.placedStudents.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-4 py-8 text-center text-gray-500">No placements recorded for this season.</td>
+                      <td colSpan="7" className="px-4 py-8 text-center text-gray-500">No placements recorded for this season.</td>
                     </tr>
                   ) : (
                     reportData.placedStudents.map((ps, idx) => (
@@ -365,6 +366,22 @@ export default function ReportsPage() {
                         <td className="px-4 py-4">
                           <p className="font-medium text-indigo-700">{ps.company_name}</p>
                           <p className="text-xs text-gray-500">{ps.role_title}</p>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              ps.is_final_placement
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            {ps.placement_status}
+                          </span>
+                          {ps.is_final_placement && ps.previous_companies?.length > 0 ? (
+                            <p className="text-xs text-gray-500 mt-2">
+                              Earlier: {ps.previous_companies.join(", ")}
+                            </p>
+                          ) : null}
                         </td>
                         <td className="px-4 py-4">
                           <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium 

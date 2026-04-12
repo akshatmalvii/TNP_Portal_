@@ -11,6 +11,8 @@ import Offer from "../models/offer.js";
 import Course from "../models/course.js";
 import Department from "../models/department.js";
 
+const FINAL_PLACEMENT_CATEGORIES = new Set(["Placement", "Internship+PPO", "PPO_Conversion"]);
+
 const formatContractRestrictions = (student) => {
   const restrictions = [];
 
@@ -31,6 +33,80 @@ const formatContractRestrictions = (student) => {
 
 const setSheetColumns = (worksheet, columns) => {
   worksheet["!cols"] = columns.map((width) => ({ wch: width }));
+};
+
+const getOfferRecordedAt = (record) => {
+  return (
+    record.offer_letter_timestamp ||
+    record.offer_updated_at ||
+    record.offer_created_at ||
+    record.application_updated_at ||
+    record.application_applied_at ||
+    null
+  );
+};
+
+const compareOfferRecency = (left, right) => {
+  const leftTime = getOfferRecordedAt(left) ? new Date(getOfferRecordedAt(left)).getTime() : 0;
+  const rightTime = getOfferRecordedAt(right) ? new Date(getOfferRecordedAt(right)).getTime() : 0;
+
+  if (leftTime !== rightTime) {
+    return rightTime - leftTime;
+  }
+
+  const leftUpdated = left.offer_updated_at ? new Date(left.offer_updated_at).getTime() : 0;
+  const rightUpdated = right.offer_updated_at ? new Date(right.offer_updated_at).getTime() : 0;
+  if (leftUpdated !== rightUpdated) {
+    return rightUpdated - leftUpdated;
+  }
+
+  const leftCreated = left.offer_created_at ? new Date(left.offer_created_at).getTime() : 0;
+  const rightCreated = right.offer_created_at ? new Date(right.offer_created_at).getTime() : 0;
+  if (leftCreated !== rightCreated) {
+    return rightCreated - leftCreated;
+  }
+
+  if ((left.offer_id || 0) !== (right.offer_id || 0)) {
+    return (right.offer_id || 0) - (left.offer_id || 0);
+  }
+
+  return (right.application_id || 0) - (left.application_id || 0);
+};
+
+const annotateFinalPlacements = (placedStudentsList) => {
+  const recordsByStudent = new Map();
+
+  for (const record of placedStudentsList) {
+    const existing = recordsByStudent.get(record.student_id) || [];
+    existing.push(record);
+    recordsByStudent.set(record.student_id, existing);
+  }
+
+  for (const records of recordsByStudent.values()) {
+    const placementCandidates = records.filter((record) =>
+      FINAL_PLACEMENT_CATEGORIES.has(record.offer_category)
+    );
+    const rankingPool = placementCandidates.length > 0 ? placementCandidates : records;
+    const [finalRecord] = [...rankingPool].sort(compareOfferRecency);
+
+    const chronologicalRecords = [...records].sort((left, right) => compareOfferRecency(right, left));
+    const previousCompanyNames = chronologicalRecords
+      .filter((record) => record !== finalRecord)
+      .map((record) => record.company_name)
+      .filter(Boolean);
+
+    const previousCompanies = [...new Set(previousCompanyNames)];
+
+    for (const record of records) {
+      const isFinalPlacement = record === finalRecord;
+      record.is_final_placement = isFinalPlacement;
+      record.placement_status = isFinalPlacement ? "Final Placement" : "Previous Offer";
+      record.previous_companies = isFinalPlacement ? previousCompanies : [];
+      record.offer_recorded_at = getOfferRecordedAt(record);
+    }
+  }
+
+  return placedStudentsList;
 };
 
 const getAvailableSeasons = async (dept_id = null) => {
@@ -163,6 +239,15 @@ const getPlacementReport = async (dept_id, season, filters = {}) => {
       {
         model: Offer,
         where: { acceptance_status: "Accepted" },
+        attributes: [
+          "offer_id",
+          "offer_category",
+          "offered_package",
+          "acceptance_status",
+          "offer_letter_timestamp",
+          "created_at",
+          "updated_at",
+        ],
         required: true // only accepted offers
       }
     ]
@@ -209,6 +294,9 @@ const getPlacementReport = async (dept_id, season, filters = {}) => {
       tnp_id: student.tnp_id,
       prn: student.prn,
       full_name: student.full_name,
+      student_id: student.student_id,
+      application_id: app.application_id,
+      offer_id: actualOffer.offer_id,
       gender: student.gender,
       dept_name: selectedDepartment.dept_name,
       dept_code: selectedDepartment.dept_code,
@@ -221,9 +309,16 @@ const getPlacementReport = async (dept_id, season, filters = {}) => {
       has_bond: drive.has_bond,
       bond_months: drive.bond_months,
       has_security_deposit: drive.has_security_deposit,
-      security_deposit_amount: drive.security_deposit_amount
+      security_deposit_amount: drive.security_deposit_amount,
+      application_applied_at: app.applied_at || null,
+      application_updated_at: app.updated_at || null,
+      offer_created_at: actualOffer.created_at || null,
+      offer_updated_at: actualOffer.updated_at || null,
+      offer_letter_timestamp: actualOffer.offer_letter_timestamp || null,
     });
   }
+
+  annotateFinalPlacements(placedStudentsList);
 
   const highest = validPackages.length > 0 ? Math.max(...validPackages) : 0;
   const lowest = validPackages.length > 0 ? Math.min(...validPackages) : 0;
@@ -354,6 +449,9 @@ const buildPlacementReportWorkbook = (report) => {
     PRN: student.prn || "",
     Company: student.company_name || "",
     "Role Title": student.role_title || "",
+    "Placement Status": student.placement_status || "",
+    "Offer Recorded At": student.offer_recorded_at || "",
+    "Previous Companies": (student.previous_companies || []).join(", "),
     "Offer Category": student.offer_category || "",
     "Package (LPA)": student.package_lpa ?? "",
     "Stipend Per Month": student.stipend_pm ?? "",
@@ -378,6 +476,9 @@ const buildPlacementReportWorkbook = (report) => {
           PRN: "",
           Company: "",
           "Role Title": "",
+          "Placement Status": "",
+          "Offer Recorded At": "",
+          "Previous Companies": "",
           "Offer Category": "",
           "Package (LPA)": "",
           "Stipend Per Month": "",
@@ -388,7 +489,7 @@ const buildPlacementReportWorkbook = (report) => {
           "Security Deposit Amount": "",
         }]
   );
-  setSheetColumns(placedStudentsSheet, [10, 28, 24, 16, 20, 12, 18, 18, 24, 24, 18, 16, 18, 30, 12, 14, 20, 24]);
+  setSheetColumns(placedStudentsSheet, [10, 28, 24, 16, 20, 12, 18, 18, 22, 22, 28, 18, 16, 18, 30, 12, 14, 20, 24]);
   XLSX.utils.book_append_sheet(workbook, placedStudentsSheet, "Placed Students");
 
   return XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
