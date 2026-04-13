@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"build successful\" && exit 0",
     "dev": "nodemon server.js",
     "seed:demo-2024-2025": "node scripts/seedDemoPlacement2024_2025.js"
   },
