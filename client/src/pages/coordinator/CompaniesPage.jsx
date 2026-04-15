@@ -23,7 +23,7 @@ export default function CompaniesPage() {
   const fetchCompanies = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token`);
+      const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE}/companies`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -310,6 +310,7 @@ export default function CompaniesPage() {
     </div>
   );
 }
+
 
 
 

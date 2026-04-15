@@ -43,7 +43,7 @@ export default function DepartmentsPage() {
   const [courseSaving, setCourseSaving] = useState(false);
   const [deletingCourseId, setDeletingCourseId] = useState(null);
 
-  const token = localStorage.getItem("token`);
+  const token = localStorage.getItem("token");
   const headers = {
     Authorization: `Bearer ${token}`,
     "Content-Type": "application/json",
@@ -242,7 +242,7 @@ export default function DepartmentsPage() {
   const handleDeleteCourse = async (course) => {
     const shouldDelete = await confirm({
       title: "Delete course?",
-      description: `Remove "${course.course_name}" from ${selectedDept?.dept_code}? Students and drives linked to it may no longer match as expected.`,
+      description: `Remove "${course.course_name}" from ${selectedDept?.dept_code}? Students and drives linked to it may no longer match as expected.",
       confirmText: "Delete Course",
     });
 
@@ -555,6 +555,7 @@ export default function DepartmentsPage() {
     </div>
   );
 }
+
 
 
 

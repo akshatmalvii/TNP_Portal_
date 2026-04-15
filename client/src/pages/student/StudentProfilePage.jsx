@@ -67,7 +67,7 @@ export default function StudentProfilePage() {
       const response = await fetch(`${API_BASE_URL}/api/v1/students`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json`,
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
@@ -126,7 +126,7 @@ export default function StudentProfilePage() {
               isEditing
                 ? "bg-indigo-600 text-white"
                 : "hover:bg-gray-100"
-            }`}
+            }"}
           >
             {isEditing ? "Save Changes" : "Edit Profile"}
           </button>
@@ -281,6 +281,7 @@ export default function StudentProfilePage() {
     </div>
   );
 }
+
 
 
 

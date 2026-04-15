@@ -104,7 +104,7 @@ export default function TPODashboard() {
       const res = await fetch(`${API_BASE_URL}/api/v1/tpo/placement-season`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json`,
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ placement_season: newSeason }),
@@ -438,6 +438,7 @@ export default function TPODashboard() {
     </div>
   );
 }
+
 
 
 

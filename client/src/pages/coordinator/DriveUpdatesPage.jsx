@@ -41,7 +41,7 @@ export default function DriveUpdatesPage() {
   const [coordinatorContext, setCoordinatorContext] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const token = localStorage.getItem("token`);
+  const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
   const fetchDrives = async () => {
@@ -290,7 +290,7 @@ export default function DriveUpdatesPage() {
                     selectedDriveId === drive.drive_id
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-blue-200 hover:bg-gray-50"
-                  }`}
+                  }"}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -666,6 +666,7 @@ export default function DriveUpdatesPage() {
     </div>
   );
 }
+
 
 
 

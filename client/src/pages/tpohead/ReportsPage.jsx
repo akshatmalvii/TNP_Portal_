@@ -69,7 +69,7 @@ export default function ReportsPage() {
   }, [selectedSeason, selectedDepartment, selectedCourse]);
 
   const getHeaders = () => {
-    const token = localStorage.getItem("token`);
+    const token = localStorage.getItem("token");
     return {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -472,7 +472,7 @@ export default function ReportsPage() {
                               ps.is_final_placement
                                 ? "bg-emerald-100 text-emerald-700"
                                 : "bg-slate-100 text-slate-700"
-                            }`}
+                            }"}
                           >
                             {ps.placement_status}
                           </span>
@@ -490,7 +490,7 @@ export default function ReportsPage() {
                                 : ps.offer_category === "Internship"
                                   ? "bg-amber-100 text-amber-700"
                                   : "bg-blue-100 text-blue-700"
-                            }`}
+                            }"}
                           >
                             {ps.offer_category}
                           </span>
@@ -530,6 +530,7 @@ export default function ReportsPage() {
     </div>
   );
 }
+
 
 
 

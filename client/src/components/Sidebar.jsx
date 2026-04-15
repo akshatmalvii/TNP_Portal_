@@ -159,7 +159,7 @@ export default function Sidebar({ userRole, isVerified = true }) {
                   active
                     ? "bg-indigo-600"
                     : "hover:bg-gray-700"
-                }`}
+                }"}
               >
                 <Icon className="w-5 h-5" />
                 <span className="text-sm font-medium">{item.label}</span>
@@ -193,6 +193,7 @@ export default function Sidebar({ userRole, isVerified = true }) {
     </div>
   );
 }
+
 
 
 

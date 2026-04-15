@@ -55,7 +55,7 @@ export default function StudentProfileFormPage() {
   const [documents, setDocuments] = useState([]);
   const [uploadingType, setUploadingType] = useState("");
 
-  const token = localStorage.getItem("token`);
+  const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
   const jsonHeaders = { ...headers, "Content-Type": "application/json" };
 
@@ -258,10 +258,10 @@ export default function StudentProfileFormPage() {
               i < step ? "bg-green-500 text-white" :
               i === step ? "bg-blue-600 text-white" :
               "bg-gray-200 text-gray-500"
-            }`}>
+            }"}>
               {i < step ? <CheckCircle2 className="w-5 h-5" /> : i + 1}
             </div>
-            <span className={`text-sm hidden sm:inline ${i === step ? "font-semibold" : "text-gray-400"}`}>{s}</span>
+            <span className={`text-sm hidden sm:inline ${i === step ? "font-semibold" : "text-gray-400"}"}>{s}</span>
             {i < STEPS.length - 1 && <div className="w-8 h-px bg-gray-300" />}
           </div>
         ))}
@@ -823,6 +823,7 @@ function EducationSection({ type, existing, onSave }) {
 
   return null;
 }
+
 
 
 

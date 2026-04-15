@@ -60,7 +60,7 @@ export default function CreateDriveForm({
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const token = localStorage.getItem("token`);
+        const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
         
         const [depRes, crsRes, compRes] = await Promise.all([
@@ -753,6 +753,7 @@ export default function CreateDriveForm({
     </div>
   );
 }
+
 
 
 

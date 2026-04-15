@@ -17,7 +17,7 @@ export default function VerificationsPage() {
   const [approvedCount, setApprovedCount] = useState(0);
   const [rejectedCount, setRejectedCount] = useState(0);
 
-  const token = localStorage.getItem("token`);
+  const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
@@ -334,6 +334,7 @@ export default function VerificationsPage() {
     </div>
   );
 }
+
 
 
 

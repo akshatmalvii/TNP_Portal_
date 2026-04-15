@@ -11,7 +11,7 @@ export default function StudentDashboardPage() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token`);
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     checkVerificationAndLoad();
@@ -209,6 +209,7 @@ export default function StudentDashboardPage() {
     </div>
   );
 }
+
 
 
 

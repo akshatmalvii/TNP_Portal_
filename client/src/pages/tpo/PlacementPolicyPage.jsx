@@ -24,7 +24,7 @@ const DEFAULT_FORM = {
 };
 
 const formatDateTime = (value) => {
-  if (!value) return "-`;
+  if (!value) return "-";
   return new Date(value).toLocaleString();
 };
 
@@ -462,6 +462,7 @@ export default function PlacementPolicyPage() {
     </div>
   );
 }
+
 
 
 

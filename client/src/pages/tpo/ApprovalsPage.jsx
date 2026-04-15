@@ -16,7 +16,7 @@ export default function ApprovalsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const token = localStorage.getItem("token`);
+  const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
   const fetchRequests = async () => {
@@ -45,7 +45,7 @@ export default function ApprovalsPage() {
 
   const handleDecision = async (request, action) => {
     const shouldContinue = await confirm({
-      title: `${action === "approve" ? "Approve" : "Reject"} drive request?`,
+      title: `${action === "approve" ? "Approve" : "Reject"} drive request?",
       description:
         action === "approve"
           ? "Approving will publish this drive to eligible students immediately."
@@ -187,6 +187,7 @@ export default function ApprovalsPage() {
     </div>
   );
 }
+
 
 
 

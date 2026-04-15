@@ -19,7 +19,7 @@ export default function TPOHeadDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token`);
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchStats();
@@ -142,6 +142,7 @@ export default function TPOHeadDashboardPage() {
     </div>
   );
 }
+
 
 
 

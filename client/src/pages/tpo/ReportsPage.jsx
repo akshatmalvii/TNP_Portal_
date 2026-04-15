@@ -48,7 +48,7 @@ export default function ReportsPage() {
 
   const fetchSeasons = async () => {
     try {
-      const token = localStorage.getItem("token`);
+      const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE}/reports/seasons`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -374,7 +374,7 @@ export default function ReportsPage() {
                               ps.is_final_placement
                                 ? "bg-emerald-100 text-emerald-700"
                                 : "bg-slate-100 text-slate-700"
-                            }`}
+                            }"}
                           >
                             {ps.placement_status}
                           </span>
@@ -423,6 +423,7 @@ export default function ReportsPage() {
     </div>
   );
 }
+
 
 
 

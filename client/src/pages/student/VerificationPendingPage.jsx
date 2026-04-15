@@ -12,7 +12,7 @@ export default function VerificationPendingPage() {
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token`);
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchStatus();
@@ -106,6 +106,7 @@ export default function VerificationPendingPage() {
     </div>
   );
 }
+
 
 
 

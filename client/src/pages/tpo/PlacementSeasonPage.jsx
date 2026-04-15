@@ -26,7 +26,7 @@ export default function PlacementSeasonPage() {
   const fetchPlacementSeason = async () => {
     try {
       setSeasonLoading(true);
-      const token = localStorage.getItem("token`);
+      const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE}/placement-season`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -111,12 +111,12 @@ export default function PlacementSeasonPage() {
         </p>
       </div>
 
-      <Card className={`border-2 ${currentSeason ? "border-indigo-200 bg-gradient-to-r from-indigo-50/60 to-blue-50/60" : "border-amber-300 bg-gradient-to-r from-amber-50/80 to-yellow-50/80"}`}>
+      <Card className={`border-2 ${currentSeason ? "border-indigo-200 bg-gradient-to-r from-indigo-50/60 to-blue-50/60" : "border-amber-300 bg-gradient-to-r from-amber-50/80 to-yellow-50/80"}"}>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${currentSeason ? "bg-indigo-100" : "bg-amber-100"}`}>
-                <CalendarClock className={`w-7 h-7 ${currentSeason ? "text-indigo-600" : "text-amber-600"}`} />
+              <div className={`p-3 rounded-xl ${currentSeason ? "bg-indigo-100" : "bg-amber-100"}"}>
+                <CalendarClock className={`w-7 h-7 ${currentSeason ? "text-indigo-600" : "text-amber-600"}"} />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Active Placement Season</p>
@@ -219,6 +219,7 @@ export default function PlacementSeasonPage() {
     </div>
   );
 }
+
 
 
 

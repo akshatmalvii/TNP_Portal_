@@ -102,7 +102,7 @@ export default function StudentNotificationsPage() {
     setMarkingRead(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/notifications/me/read-all`, {
-        method: "POST`,
+        method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -270,6 +270,7 @@ export default function StudentNotificationsPage() {
     </div>
   );
 }
+
 
 
 

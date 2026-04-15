@@ -134,7 +134,7 @@ export default function LoginPage() {
                 isLogin
                   ? "bg-white text-blue-600 shadow"
                   : "text-gray-600 hover:text-gray-800"
-              }`}
+              }"}
             >
               Login
             </button>
@@ -144,7 +144,7 @@ export default function LoginPage() {
                 !isLogin
                   ? "bg-white text-blue-600 shadow"
                   : "text-gray-600 hover:text-gray-800"
-              }`}
+              }"}
             >
               Sign Up
             </button>
@@ -241,6 +241,7 @@ export default function LoginPage() {
     </div>
   );
 }
+
 
 
 
