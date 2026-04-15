@@ -70,7 +70,7 @@ export default function VerificationPendingPage() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900">Verification Rejected</h2>
               <p className="text-gray-500 max-w-sm mx-auto">
-                Your verification request was rejected by the coordinator.
+                Your verification application has been rejected by the coordinator.
                 Please update your profile/documents and contact your department coordinator.
               </p>
               <Button onClick={() => navigate("/dashboard/student/profile-form")}>

@@ -23,6 +23,7 @@ export default function LoginPage() {
   const getRoleDashboardPath = (role) => {
     switch (role) {
       case "TPO_Head":
+        return "/dashboard/tpohead";
       case "TPO":
         return "/dashboard/tpo";
       case "Placement_Coordinator":

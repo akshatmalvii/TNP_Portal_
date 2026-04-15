@@ -5,6 +5,7 @@ import StudentEducation from "../models/student_education.js";
 import Department from "../models/department.js";
 import Course from "../models/course.js";
 import User from "../models/users.js";
+import StudentNotification from "../models/student_notification.js";
 import sequelize from "../config/db.js";
 import { getSignedCloudinaryDownloadUrl } from "../utils/cloudinaryFileUrl.js";
 import { Op } from "sequelize";
@@ -126,6 +127,26 @@ const rejectByCoordinator = async (student_id, staff_id, coordinator_dept_id, re
     req.verified_by_coordinator = staff_id;
     req.updated_at = new Date();
     await req.save({ transaction: t });
+
+    const trimmedReason = String(reason || "").trim();
+    const messageParts = [
+      "Your verification request has been rejected by the coordinator.",
+      "Please update your profile/documents and submit again.",
+    ];
+    if (trimmedReason) {
+      messageParts.push(`Reason: ${trimmedReason}`);
+    }
+
+    await StudentNotification.create(
+      {
+        student_id,
+        title: "Verification Rejected",
+        message: messageParts.join(" "),
+        notification_type: "GENERAL",
+        created_by_staff: staff_id,
+      },
+      { transaction: t }
+    );
 
     return { message: "Student verification rejected" };
   });
