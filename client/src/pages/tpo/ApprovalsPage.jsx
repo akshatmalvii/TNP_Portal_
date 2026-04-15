@@ -6,7 +6,7 @@ import { CheckCircle2, Clock, IndianRupee, XCircle } from "lucide-react";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1/tpo";
+const API_BASE = `${API_BASE_URL}/api/v1/tpo`;
 
 export default function ApprovalsPage() {
   const { confirm, confirmDialog } = useConfirmDialog();
@@ -16,7 +16,7 @@ export default function ApprovalsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token`);
   const headers = { Authorization: `Bearer ${token}` };
 
   const fetchRequests = async () => {
@@ -187,5 +187,8 @@ export default function ApprovalsPage() {
     </div>
   );
 }
+
+
+
 
 

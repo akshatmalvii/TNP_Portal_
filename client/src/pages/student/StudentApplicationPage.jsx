@@ -29,7 +29,7 @@ export default function StudentApplicationPage() {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const res = await fetch("`${API_BASE_URL}`/api/v1/drives/applications", {
+        const res = await fetch(`${API_BASE_URL}/api/v1/drives/applications`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -252,5 +252,8 @@ export default function StudentApplicationPage() {
     </div>
   );
 }
+
+
+
 
 

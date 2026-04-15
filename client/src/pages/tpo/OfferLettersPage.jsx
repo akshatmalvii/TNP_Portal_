@@ -24,8 +24,8 @@ export default function OfferLettersPage() {
       };
 
       const [coursesRes, seasonsRes] = await Promise.all([
-        fetch("`${API_BASE_URL}`/api/v1/tpo/courses", { headers }),
-        fetch("`${API_BASE_URL}`/api/v1/tpo/reports/seasons", { headers }),
+        fetch(`${API_BASE_URL}/api/v1/tpo/courses`, { headers }),
+        fetch(`${API_BASE_URL}/api/v1/tpo/reports/seasons`, { headers }),
       ]);
 
       if (coursesRes.ok) {
@@ -51,9 +51,9 @@ export default function OfferLettersPage() {
 
       const query = new URLSearchParams();
       if (selectedSeason) query.set("season", selectedSeason);
-      if (selectedCourse) query.set("course_id", selectedCourse);
+      if (selectedCourse) query.set("course_id`, selectedCourse);
 
-      const res = await fetch(``${API_BASE_URL}`/api/v1/tpo/offer-letters?${query.toString()}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/tpo/offer-letters?${query.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -237,5 +237,8 @@ export default function OfferLettersPage() {
     </div>
   );
 }
+
+
+
 
 

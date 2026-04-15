@@ -14,7 +14,7 @@ export default function CreateDriveForm({
   onCancel,
   onSuccess,
   initialData,
-  apiBase = "`${API_BASE_URL}`/api/v1/tpo",
+  apiBase = `${API_BASE_URL}/api/v1/tpo`,
   fixedDepartmentId = null,
   fixedDepartmentLabel = "",
   submitLabel = "",
@@ -60,12 +60,12 @@ export default function CreateDriveForm({
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token`);
         const headers = { Authorization: `Bearer ${token}` };
         
         const [depRes, crsRes, compRes] = await Promise.all([
-          fetch("`${API_BASE_URL}`/api/v1/departments", { headers }),
-          fetch("`${API_BASE_URL}`/api/v1/courses", { headers }),
+          fetch(`${API_BASE_URL}/api/v1/departments`, { headers }),
+          fetch(`${API_BASE_URL}/api/v1/courses`, { headers }),
           fetch(`${apiBase}/companies`, { headers })
         ]);
 
@@ -753,5 +753,8 @@ export default function CreateDriveForm({
     </div>
   );
 }
+
+
+
 
 

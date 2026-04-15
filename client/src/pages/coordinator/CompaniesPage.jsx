@@ -5,7 +5,7 @@ import { Input } from "../../components/Input";
 import { Building2, Plus, Trash2, Globe, X } from "lucide-react";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1/coordinator";
+const API_BASE = `${API_BASE_URL}/api/v1/coordinator`;
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState([]);
@@ -23,7 +23,7 @@ export default function CompaniesPage() {
   const fetchCompanies = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token`);
       const res = await fetch(`${API_BASE}/companies`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -310,5 +310,8 @@ export default function CompaniesPage() {
     </div>
   );
 }
+
+
+
 
 

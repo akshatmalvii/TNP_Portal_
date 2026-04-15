@@ -72,7 +72,7 @@ export default function StudentNotificationsPage() {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await fetch("`${API_BASE_URL}`/api/v1/notifications/me?limit=200", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/notifications/me?limit=200`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -101,8 +101,8 @@ export default function StudentNotificationsPage() {
 
     setMarkingRead(true);
     try {
-      const res = await fetch("`${API_BASE_URL}`/api/v1/notifications/me/read-all", {
-        method: "POST",
+      const res = await fetch(`${API_BASE_URL}/api/v1/notifications/me/read-all`, {
+        method: "POST`,
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -270,5 +270,8 @@ export default function StudentNotificationsPage() {
     </div>
   );
 }
+
+
+
 
 

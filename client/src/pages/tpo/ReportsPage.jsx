@@ -3,7 +3,7 @@ import { BarChart, Users, Building, TrendingDown, TrendingUp, Download, IndianRu
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1/tpo";
+const API_BASE = `${API_BASE_URL}/api/v1/tpo`;
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center py-20">
@@ -48,7 +48,7 @@ export default function ReportsPage() {
 
   const fetchSeasons = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token`);
       const res = await fetch(`${API_BASE}/reports/seasons`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -423,5 +423,8 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+
+
 
 

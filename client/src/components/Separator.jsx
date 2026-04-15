@@ -10,3 +10,6 @@ export function Separator({ orientation = "horizontal", className = "" }) {
 
   return <div className={`${baseStyle} ${styles} ${className}`} />;
 }
+
+
+

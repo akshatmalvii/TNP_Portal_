@@ -6,7 +6,7 @@ import { CheckCircle2, XCircle, Clock, FileText, User, ExternalLink } from "luci
 import { useConfirmDialog } from "../../components/ConfirmDialog";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1/verification";
+const API_BASE = `${API_BASE_URL}/api/v1/verification`;
 
 export default function VerificationsPage() {
   const { confirm, confirmDialog } = useConfirmDialog();
@@ -17,7 +17,7 @@ export default function VerificationsPage() {
   const [approvedCount, setApprovedCount] = useState(0);
   const [rejectedCount, setRejectedCount] = useState(0);
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token`);
   const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
@@ -334,5 +334,8 @@ export default function VerificationsPage() {
     </div>
   );
 }
+
+
+
 
 

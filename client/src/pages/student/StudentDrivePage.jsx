@@ -30,10 +30,10 @@ export default function StudentDrivePage() {
     const fetchData = async () => {
       try {
         const [drivesRes, appsRes] = await Promise.all([
-          fetch("`${API_BASE_URL}`/api/v1/drives", {
+          fetch(`${API_BASE_URL}/api/v1/drives`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          fetch("`${API_BASE_URL}`/api/v1/drives/applications", {
+          fetch(`${API_BASE_URL}/api/v1/drives/applications`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -88,7 +88,7 @@ export default function StudentDrivePage() {
   const handleApplyClick = async (drive) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(``${API_BASE_URL}`/api/v1/drives/${drive.drive_id || drive.id}/form`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/drives/${drive.drive_id || drive.id}/form`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -146,7 +146,7 @@ export default function StudentDrivePage() {
         return { fieldId: field.field_id, value: value || "" };
       });
 
-      const res = await fetch(``${API_BASE_URL}`/api/v1/drives/${selectedDrive.drive_id || selectedDrive.id}/apply`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/drives/${selectedDrive.drive_id || selectedDrive.id}/apply`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,7 +159,7 @@ export default function StudentDrivePage() {
       if (!res.ok) throw new Error(data.error || "Failed to apply");
 
       // Refresh applied drives list
-      const appsRes = await fetch("`${API_BASE_URL}`/api/v1/drives/applications", {
+      const appsRes = await fetch(`${API_BASE_URL}/api/v1/drives/applications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (appsRes.ok) {
@@ -514,5 +514,8 @@ export default function StudentDrivePage() {
     </div>
   );
 }
+
+
+
 
 

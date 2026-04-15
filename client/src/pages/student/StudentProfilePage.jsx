@@ -23,7 +23,7 @@ export default function StudentProfilePage() {
     const loadProfile = async () => {
       setLoading(true);
       try {
-        const response = await fetch("`${API_BASE_URL}`/api/v1/students/me", {
+        const response = await fetch(`${API_BASE_URL}/api/v1/students/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -64,10 +64,10 @@ export default function StudentProfilePage() {
     }
 
     try {
-      const response = await fetch("`${API_BASE_URL}`/api/v1/students", {
+      const response = await fetch(`${API_BASE_URL}/api/v1/students`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json`,
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
@@ -281,4 +281,7 @@ export default function StudentProfilePage() {
     </div>
   );
 }
+
+
+
 

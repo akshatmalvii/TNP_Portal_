@@ -26,7 +26,7 @@ export default function TPODrivesPage() {
   const fetchPolicy = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("`${API_BASE_URL}`/api/v1/tpo/policy", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/tpo/policy`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -43,7 +43,7 @@ export default function TPODrivesPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await fetch("`${API_BASE_URL}`/api/v1/tpo/drives", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/tpo/drives`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -73,7 +73,7 @@ export default function TPODrivesPage() {
     
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(``${API_BASE_URL}`/api/v1/tpo/drive/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/tpo/drive/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -235,5 +235,8 @@ export default function TPODrivesPage() {
     </div>
   );
 }
+
+
+
 
 

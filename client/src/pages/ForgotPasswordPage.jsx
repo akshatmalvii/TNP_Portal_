@@ -5,7 +5,7 @@ import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1";
+const API_BASE = `${API_BASE_URL}/api/v1`;
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
     setMessage("");
 
     if (!email) {
-      setError("Please enter your email");
+      setError("Please enter your email`);
       return;
     }
 
@@ -99,5 +99,8 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+
+
+
 
 

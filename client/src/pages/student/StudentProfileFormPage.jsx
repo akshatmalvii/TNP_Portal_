@@ -6,7 +6,7 @@ import { Input } from "../../components/Input";
 import { CheckCircle2, Upload, User, GraduationCap, FileText, Send } from "lucide-react";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1/student-profile";
+const API_BASE = `${API_BASE_URL}/api/v1/student-profile`;
 
 const STEPS = ["Personal Info", "Academic Info", "Documents", "Review & Submit"];
 
@@ -55,7 +55,7 @@ export default function StudentProfileFormPage() {
   const [documents, setDocuments] = useState([]);
   const [uploadingType, setUploadingType] = useState("");
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token`);
   const headers = { Authorization: `Bearer ${token}` };
   const jsonHeaders = { ...headers, "Content-Type": "application/json" };
 
@@ -63,7 +63,7 @@ export default function StudentProfileFormPage() {
 
   useEffect(() => {
     if (academic.dept_id) {
-      fetch(``${API_BASE_URL}`/api/v1/courses?dept_id=${academic.dept_id}`, { headers })
+      fetch(`${API_BASE_URL}/api/v1/courses?dept_id=${academic.dept_id}`, { headers })
         .then(res => res.ok ? res.json() : [])
         .then(data => setDepartmentCourses(data))
         .catch(err => console.error(err));
@@ -76,7 +76,7 @@ export default function StudentProfileFormPage() {
     try {
       const [profileRes, deptRes] = await Promise.all([
         fetch(`${API_BASE}/profile`, { headers }),
-        fetch("`${API_BASE_URL}`/api/v1/departments", { headers }),
+        fetch(`${API_BASE_URL}/api/v1/departments`, { headers }),
       ]);
 
       if (deptRes.ok) setDepartments(await deptRes.json());
@@ -823,5 +823,8 @@ function EducationSection({ type, existing, onSave }) {
 
   return null;
 }
+
+
+
 
 

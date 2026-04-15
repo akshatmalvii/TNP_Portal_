@@ -6,7 +6,7 @@ import { Input } from "../../components/Input";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1/tpo";
+const API_BASE = `${API_BASE_URL}/api/v1/tpo`;
 
 export default function PlacementSeasonPage() {
   const { confirm, confirmDialog } = useConfirmDialog();
@@ -26,7 +26,7 @@ export default function PlacementSeasonPage() {
   const fetchPlacementSeason = async () => {
     try {
       setSeasonLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token`);
       const res = await fetch(`${API_BASE}/placement-season`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -219,5 +219,8 @@ export default function PlacementSeasonPage() {
     </div>
   );
 }
+
+
+
 
 

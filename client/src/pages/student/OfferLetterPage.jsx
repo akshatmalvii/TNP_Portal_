@@ -18,7 +18,7 @@ export default function OfferLetterPage() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(``${API_BASE_URL}`/api/v1/students/offers/accepted`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/students/offers/accepted`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -56,7 +56,7 @@ export default function OfferLetterPage() {
       reader.onload = async () => {
         const base64Content = reader.result;
 
-        const res = await fetch(``${API_BASE_URL}`/api/v1/students/offers/upload-letter`, {
+        const res = await fetch(`${API_BASE_URL}/api/v1/students/offers/upload-letter`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -230,4 +230,7 @@ export default function OfferLetterPage() {
     </div>
   );
 }
+
+
+
 

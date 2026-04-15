@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1";
+const API_BASE = `${API_BASE_URL}/api/v1`;
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center py-20">
@@ -69,7 +69,7 @@ export default function ReportsPage() {
   }, [selectedSeason, selectedDepartment, selectedCourse]);
 
   const getHeaders = () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token`);
     return {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -530,5 +530,8 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+
+
 
 

@@ -5,7 +5,7 @@ import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1";
+const API_BASE = `${API_BASE_URL}/api/v1`;
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -22,7 +22,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        setError("This reset link is invalid or missing.");
+        setError("This reset link is invalid or missing.`);
         setCheckingToken(false);
         return;
       }
@@ -155,5 +155,8 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+
+
+
 
 

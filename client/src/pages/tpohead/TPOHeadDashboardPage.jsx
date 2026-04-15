@@ -8,7 +8,7 @@ import {
 import { Building2, ShieldCheck, UserPlus, Users } from "lucide-react";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1";
+const API_BASE = `${API_BASE_URL}/api/v1`;
 
 export default function TPOHeadDashboardPage() {
   const [stats, setStats] = useState({
@@ -19,7 +19,7 @@ export default function TPOHeadDashboardPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token`);
 
   useEffect(() => {
     fetchStats();
@@ -142,5 +142,8 @@ export default function TPOHeadDashboardPage() {
     </div>
   );
 }
+
+
+
 
 

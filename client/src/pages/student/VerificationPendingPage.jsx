@@ -5,14 +5,14 @@ import { Clock, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "../../components/Button";
 import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "`${API_BASE_URL}`/api/v1/student-profile";
+const API_BASE = `${API_BASE_URL}/api/v1/student-profile`;
 
 export default function VerificationPendingPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token`);
 
   useEffect(() => {
     fetchStatus();
@@ -106,5 +106,8 @@ export default function VerificationPendingPage() {
     </div>
   );
 }
+
+
+
 
 

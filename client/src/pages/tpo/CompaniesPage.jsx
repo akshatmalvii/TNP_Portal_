@@ -11,7 +11,7 @@ export default function CompaniesPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await fetch("`${API_BASE_URL}`/api/v1/tpo/companies", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/tpo/companies`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -81,4 +81,7 @@ export default function CompaniesPage() {
     </div>
   );
 }
+
+
+
 

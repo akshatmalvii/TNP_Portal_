@@ -5,3 +5,6 @@ export default function StudentSettingPage() {
   return <PasswordSettingsPlaceholder roleLabel="student account" />;
 }
 
+
+
+

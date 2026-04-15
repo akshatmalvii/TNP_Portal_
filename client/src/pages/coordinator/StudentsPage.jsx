@@ -20,7 +20,7 @@ export default function StudentsPage() {
     const fetchStudents = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("`${API_BASE_URL}`/api/v1/verification/coordinator/all", {
+        const res = await fetch(`${API_BASE_URL}/api/v1/verification/coordinator/all`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -156,4 +156,7 @@ export default function StudentsPage() {
     </div>
   );
 }
+
+
+
 

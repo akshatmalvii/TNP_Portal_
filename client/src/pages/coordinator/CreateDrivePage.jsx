@@ -14,7 +14,7 @@ export default function CreateDrivePage() {
     const fetchContext = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("`${API_BASE_URL}`/api/v1/coordinator/context", {
+        const res = await fetch(`${API_BASE_URL}/api/v1/coordinator/context`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -61,11 +61,11 @@ export default function CreateDrivePage() {
       ) : (
         <div className="space-y-6">
           <CreateDriveForm
-            apiBase="`${API_BASE_URL}`/api/v1/coordinator"
+            apiBase=`${API_BASE_URL}/api/v1/coordinator`
             fixedDepartmentId={coordinatorContext?.dept_id}
             fixedDepartmentLabel={coordinatorContext?.Department?.dept_name || coordinatorContext?.Department?.dept_code}
             onSuccess={handleSuccess}
-            submitLabel="Send For Approval"
+            submitLabel="Send For Approval`
             activePlacementSeason={coordinatorContext?.current_placement_season}
           />
         </div>
@@ -73,5 +73,8 @@ export default function CreateDrivePage() {
     </div>
   );
 }
+
+
+
 
 
