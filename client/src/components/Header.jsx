@@ -89,9 +89,11 @@ export default function DashboardHeader({ userName, userRole, onMenuClick }) {
       case "student":
         return "Student";
       case "coordinator":
-        return "Placement Coordinator";
+        return "Student Coordinator";
       case "tpo":
-        return "TPO Administrator";
+        return "TPO";
+      case "tpohead":
+        return "TPO Head";
       default:
         return "User";
     }

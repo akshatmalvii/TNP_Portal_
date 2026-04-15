@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { FileText, CheckCircle, Clock, Upload, Loader2, Download, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/Dialog';
 
 export default function OfferLetterPage() {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const token = localStorage.getItem('token');
 
@@ -71,7 +73,7 @@ export default function OfferLetterPage() {
           throw new Error(data.error || 'Upload failed');
         }
         
-        alert('Offer letter uploaded successfully!');
+        setShowSuccessDialog(true);
         fetchOffers();
       };
     } catch (err) {
@@ -209,6 +211,21 @@ export default function OfferLetterPage() {
           </Card>
         ))}
       </div>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle className="h-5 w-5" />
+              Success
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-700">Offer letter has been uploaded successfully!</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
