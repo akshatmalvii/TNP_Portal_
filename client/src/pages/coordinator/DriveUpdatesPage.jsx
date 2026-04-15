@@ -11,7 +11,7 @@ import {
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1/coordinator`;
 
@@ -290,7 +290,7 @@ export default function DriveUpdatesPage() {
                     selectedDriveId === drive.drive_id
                       ? "border-blue-500 bg-blue-50"
                       : "border-gray-200 hover:border-blue-200 hover:bg-gray-50"
-                  }"}
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>

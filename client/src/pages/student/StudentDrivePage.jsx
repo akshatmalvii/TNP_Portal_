@@ -3,7 +3,7 @@ import { Calendar, ExternalLink, FileText, IndianRupee, Search, X, Briefcase } f
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function StudentDrivePage() {
   const [drives, setDrives] = useState([]);
@@ -414,7 +414,7 @@ export default function StudentDrivePage() {
                   statusFilter === filter
                     ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
                     : "hover:bg-gray-50 bg-white"
-                }"}
+                }`}
               >
                 {filter === "all" ? "All Drives" : filter}
               </button>

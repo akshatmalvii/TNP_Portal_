@@ -9,7 +9,7 @@ import {
   IndianRupee,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1`;
 
@@ -472,7 +472,7 @@ export default function ReportsPage() {
                               ps.is_final_placement
                                 ? "bg-emerald-100 text-emerald-700"
                                 : "bg-slate-100 text-slate-700"
-                            }"}
+                            }`}
                           >
                             {ps.placement_status}
                           </span>
@@ -490,7 +490,7 @@ export default function ReportsPage() {
                                 : ps.offer_category === "Internship"
                                   ? "bg-amber-100 text-amber-700"
                                   : "bg-blue-100 text-blue-700"
-                            }"}
+                            }`}
                           >
                             {ps.offer_category}
                           </span>

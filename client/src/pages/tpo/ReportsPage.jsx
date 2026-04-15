@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { BarChart, Users, Building, TrendingDown, TrendingUp, Download, IndianRupee } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1/tpo`;
 
@@ -374,7 +374,7 @@ export default function ReportsPage() {
                               ps.is_final_placement
                                 ? "bg-emerald-100 text-emerald-700"
                                 : "bg-slate-100 text-slate-700"
-                            }"}
+                            }`}
                           >
                             {ps.placement_status}
                           </span>

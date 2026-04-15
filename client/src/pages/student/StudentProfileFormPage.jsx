@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../..
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { CheckCircle2, Upload, User, GraduationCap, FileText, Send } from "lucide-react";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1/student-profile`;
 
@@ -258,10 +258,10 @@ export default function StudentProfileFormPage() {
               i < step ? "bg-green-500 text-white" :
               i === step ? "bg-blue-600 text-white" :
               "bg-gray-200 text-gray-500"
-            }"}>
+            }`}>
               {i < step ? <CheckCircle2 className="w-5 h-5" /> : i + 1}
             </div>
-            <span className={`text-sm hidden sm:inline ${i === step ? "font-semibold" : "text-gray-400"}"}>{s}</span>
+            <span className={`text-sm hidden sm:inline ${i === step ? "font-semibold" : "text-gray-400"}`}>{s}</span>
             {i < STEPS.length - 1 && <div className="w-8 h-px bg-gray-300" />}
           </div>
         ))}

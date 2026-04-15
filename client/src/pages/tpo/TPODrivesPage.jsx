@@ -6,7 +6,7 @@ import { Input } from "../../components/Input";
 import { Search, Edit2, Trash2 } from "lucide-react";
 import CreateDriveForm from "../../components/tpo/CreateDriveForm";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function TPODrivesPage() {
   const { confirm, confirmDialog } = useConfirmDialog();

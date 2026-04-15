@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Mail, Phone, Briefcase, BookOpen } from "lucide-react";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function StudentProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -126,7 +126,7 @@ export default function StudentProfilePage() {
               isEditing
                 ? "bg-indigo-600 text-white"
                 : "hover:bg-gray-100"
-            }"}
+            }`}
           >
             {isEditing ? "Save Changes" : "Edit Profile"}
           </button>

@@ -178,7 +178,7 @@ export default function OfferLetterPage() {
                       className="gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
                       onClick={() => {
                         const win = window.open();
-                        win.document.write(`<iframe src="${offer.offer_letter_url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>");
+                        win.document.write(`<iframe src="${offer.offer_letter_url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
                       }}
                     >
                       <ExternalLink className="h-4 w-4" /> View Submitted

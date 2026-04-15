@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "../../components/Card";
 import { Building2, ShieldCheck, UserPlus, Users } from "lucide-react";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1`;
 

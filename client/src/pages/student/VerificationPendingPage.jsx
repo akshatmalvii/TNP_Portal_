@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../../components/Card";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "../../components/Button";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1/student-profile`;
 

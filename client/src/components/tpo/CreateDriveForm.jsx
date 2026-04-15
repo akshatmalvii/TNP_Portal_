@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../Card";
 import { Button } from "../Button";
 import { Input } from "../Input";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const createDocumentInput = () => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "../../components/Card";
 import { Building2, Globe } from "lucide-react";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState([]);

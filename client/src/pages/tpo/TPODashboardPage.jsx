@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function TPODashboard() {
   const { confirm, confirmDialog } = useConfirmDialog();

@@ -19,7 +19,7 @@ import {
 } from "../../components/Dialog";
 import { Plus, Pencil, Trash2, BookOpen } from "lucide-react";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1`;
 
@@ -242,7 +242,7 @@ export default function DepartmentsPage() {
   const handleDeleteCourse = async (course) => {
     const shouldDelete = await confirm({
       title: "Delete course?",
-      description: `Remove "${course.course_name}" from ${selectedDept?.dept_code}? Students and drives linked to it may no longer match as expected.",
+      description: `Remove "${course.course_name}" from ${selectedDept?.dept_code}? Students and drives linked to it may no longer match as expected.`,
       confirmText: "Delete Course",
     });
 

@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "../Card";
 import { Button } from "../Button";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1`;
 
@@ -45,7 +45,7 @@ export default function PasswordSettingsPlaceholder({ roleLabel = "account" }) {
 
     const fetchCurrentUser = async () => {
       setProfileLoading(true);
-      setProfileError("`);
+      setProfileError("");
       try {
         const response = await fetch(`${API_BASE}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },

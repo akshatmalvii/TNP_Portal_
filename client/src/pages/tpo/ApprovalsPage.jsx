@@ -4,7 +4,7 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { CheckCircle2, Clock, IndianRupee, XCircle } from "lucide-react";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1/tpo`;
 
@@ -45,7 +45,7 @@ export default function ApprovalsPage() {
 
   const handleDecision = async (request, action) => {
     const shouldContinue = await confirm({
-      title: `${action === "approve" ? "Approve" : "Reject"} drive request?",
+      title: `${action === "approve" ? "Approve" : "Reject"} drive request?`,
       description:
         action === "approve"
           ? "Approving will publish this drive to eligible students immediately."

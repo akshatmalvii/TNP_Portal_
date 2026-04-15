@@ -3,7 +3,7 @@ import { Download, ExternalLink, Search, FileText, User, Building, Calendar, Loa
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function OfferLettersPage() {
   const [letters, setLetters] = useState([]);
@@ -220,7 +220,7 @@ export default function OfferLettersPage() {
                           className="gap-2 text-indigo-700 border-indigo-200 hover:bg-indigo-50"
                           onClick={() => {
                             const win = window.open();
-                            win.document.write(`<iframe src="${letter.offer_letter_url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>");
+                            win.document.write(`<iframe src="${letter.offer_letter_url}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
                           }}
                         >
                           <ExternalLink className="w-3.5 h-3.5" /> View Letter

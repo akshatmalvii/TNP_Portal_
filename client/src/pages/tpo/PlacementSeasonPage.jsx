@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../..
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 const API_BASE = `${API_BASE_URL}/api/v1/tpo`;
 
@@ -111,12 +111,12 @@ export default function PlacementSeasonPage() {
         </p>
       </div>
 
-      <Card className={`border-2 ${currentSeason ? "border-indigo-200 bg-gradient-to-r from-indigo-50/60 to-blue-50/60" : "border-amber-300 bg-gradient-to-r from-amber-50/80 to-yellow-50/80"}"}>
+      <Card className={`border-2 ${currentSeason ? "border-indigo-200 bg-gradient-to-r from-indigo-50/60 to-blue-50/60" : "border-amber-300 bg-gradient-to-r from-amber-50/80 to-yellow-50/80"}`}>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl ${currentSeason ? "bg-indigo-100" : "bg-amber-100"}"}>
-                <CalendarClock className={`w-7 h-7 ${currentSeason ? "text-indigo-600" : "text-amber-600"}"} />
+              <div className={`p-3 rounded-xl ${currentSeason ? "bg-indigo-100" : "bg-amber-100"}`}>
+                <CalendarClock className={`w-7 h-7 ${currentSeason ? "text-indigo-600" : "text-amber-600"}`} />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Active Placement Season</p>

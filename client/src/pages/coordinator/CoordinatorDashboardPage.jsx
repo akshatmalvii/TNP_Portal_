@@ -4,7 +4,7 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { Users, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function CoordinatorDashboard() {
   const [students, setStudents] = useState([]);

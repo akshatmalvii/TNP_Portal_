@@ -9,7 +9,7 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Search, Users as UsersIcon, Mail, BookOpen, GraduationCap } from "lucide-react";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);

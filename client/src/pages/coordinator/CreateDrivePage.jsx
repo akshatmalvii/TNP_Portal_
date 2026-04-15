@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CreateDriveForm from "../../components/tpo/CreateDriveForm";
 import { Button } from "../../components/Button";
-import { API_BASE_URL } from '../constants/api';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function CreateDrivePage() {
   const navigate = useNavigate();
@@ -61,11 +61,11 @@ export default function CreateDrivePage() {
       ) : (
         <div className="space-y-6">
           <CreateDriveForm
-            apiBase=`${API_BASE_URL}/api/v1/coordinator`
+            apiBase={`${API_BASE_URL}/api/v1/coordinator`}
             fixedDepartmentId={coordinatorContext?.dept_id}
             fixedDepartmentLabel={coordinatorContext?.Department?.dept_name || coordinatorContext?.Department?.dept_code}
             onSuccess={handleSuccess}
-            submitLabel="Send For Approval`
+            submitLabel="Send For Approval"
             activePlacementSeason={coordinatorContext?.current_placement_season}
           />
         </div>
