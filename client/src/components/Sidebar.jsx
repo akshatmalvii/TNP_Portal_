@@ -193,3 +193,4 @@ export default function Sidebar({ userRole, isVerified = true }) {
     </div>
   );
 }
+

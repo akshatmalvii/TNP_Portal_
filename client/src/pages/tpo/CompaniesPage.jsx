@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "../../components/Card";
 import { Building2, Globe } from "lucide-react";
+import { API_BASE_URL } from '../constants/api';
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState([]);
@@ -10,7 +11,7 @@ export default function CompaniesPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/v1/tpo/companies", {
+      const res = await fetch("`${API_BASE_URL}`/api/v1/tpo/companies", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -80,3 +81,4 @@ export default function CompaniesPage() {
     </div>
   );
 }
+

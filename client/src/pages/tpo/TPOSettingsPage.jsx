@@ -4,3 +4,4 @@ import PasswordSettingsPlaceholder from "../../components/settings/PasswordSetti
 export default function TPOSettingsPage() {
   return <PasswordSettingsPlaceholder roleLabel="TPO account" />;
 }
+

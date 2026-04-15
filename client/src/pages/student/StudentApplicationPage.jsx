@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { CheckCircle2, Clock, FileText, XCircle } from "lucide-react";
+import { API_BASE_URL } from '../constants/api';
 
 const getCompanyName = (application) =>
   application.Drive?.company_name ||
@@ -28,7 +29,7 @@ export default function StudentApplicationPage() {
   useEffect(() => {
     const fetchApplications = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/v1/drives/applications", {
+        const res = await fetch("`${API_BASE_URL}`/api/v1/drives/applications", {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -251,3 +252,5 @@ export default function StudentApplicationPage() {
     </div>
   );
 }
+
+

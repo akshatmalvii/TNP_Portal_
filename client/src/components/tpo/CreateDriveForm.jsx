@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../Card";
 import { Button } from "../Button";
 import { Input } from "../Input";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
+import { API_BASE_URL } from '../constants/api';
 
 const createDocumentInput = () => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -13,7 +14,7 @@ export default function CreateDriveForm({
   onCancel,
   onSuccess,
   initialData,
-  apiBase = "http://localhost:5000/api/v1/tpo",
+  apiBase = "`${API_BASE_URL}`/api/v1/tpo",
   fixedDepartmentId = null,
   fixedDepartmentLabel = "",
   submitLabel = "",
@@ -63,8 +64,8 @@ export default function CreateDriveForm({
         const headers = { Authorization: `Bearer ${token}` };
         
         const [depRes, crsRes, compRes] = await Promise.all([
-          fetch("http://localhost:5000/api/v1/departments", { headers }),
-          fetch("http://localhost:5000/api/v1/courses", { headers }),
+          fetch("`${API_BASE_URL}`/api/v1/departments", { headers }),
+          fetch("`${API_BASE_URL}`/api/v1/courses", { headers }),
           fetch(`${apiBase}/companies`, { headers })
         ]);
 
@@ -752,3 +753,5 @@ export default function CreateDriveForm({
     </div>
   );
 }
+
+

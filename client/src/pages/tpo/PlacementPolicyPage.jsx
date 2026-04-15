@@ -10,8 +10,9 @@ import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Badge } from "../../components/Badge";
 import { ShieldCheck, History, Landmark } from "lucide-react";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1";
+const API_BASE = "`${API_BASE_URL}`/api/v1";
 
 const DEFAULT_FORM = {
   allow_apply_after_internship: true,
@@ -461,3 +462,5 @@ export default function PlacementPolicyPage() {
     </div>
   );
 }
+
+

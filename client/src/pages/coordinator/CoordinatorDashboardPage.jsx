@@ -4,6 +4,7 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { Users, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
+import { API_BASE_URL } from '../constants/api';
 
 export default function CoordinatorDashboard() {
   const [students, setStudents] = useState([]);
@@ -13,7 +14,7 @@ export default function CoordinatorDashboard() {
     const fetchStudents = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/v1/verification/coordinator/all", {
+        const res = await fetch("`${API_BASE_URL}`/api/v1/verification/coordinator/all", {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -290,3 +291,4 @@ export default function CoordinatorDashboard() {
     </div>
   );
 }
+

@@ -4,8 +4,9 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { CheckCircle2, XCircle, Clock, FileText, User, ExternalLink } from "lucide-react";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1/verification";
+const API_BASE = "`${API_BASE_URL}`/api/v1/verification";
 
 export default function VerificationsPage() {
   const { confirm, confirmDialog } = useConfirmDialog();
@@ -333,3 +334,5 @@ export default function VerificationsPage() {
     </div>
   );
 }
+
+

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { BarChart, Users, Building, TrendingDown, TrendingUp, Download, IndianRupee } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1/tpo";
+const API_BASE = "`${API_BASE_URL}`/api/v1/tpo";
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center py-20">
@@ -422,3 +423,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+

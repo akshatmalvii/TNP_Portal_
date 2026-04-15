@@ -99,3 +99,4 @@ export const confirmDialogIcons = {
   alert: AlertTriangle,
   logout: LogOut,
 };
+

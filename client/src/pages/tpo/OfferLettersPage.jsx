@@ -3,6 +3,7 @@ import { Download, ExternalLink, Search, FileText, User, Building, Calendar, Loa
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
+import { API_BASE_URL } from '../constants/api';
 
 export default function OfferLettersPage() {
   const [letters, setLetters] = useState([]);
@@ -23,8 +24,8 @@ export default function OfferLettersPage() {
       };
 
       const [coursesRes, seasonsRes] = await Promise.all([
-        fetch("http://localhost:5000/api/v1/tpo/courses", { headers }),
-        fetch("http://localhost:5000/api/v1/tpo/reports/seasons", { headers }),
+        fetch("`${API_BASE_URL}`/api/v1/tpo/courses", { headers }),
+        fetch("`${API_BASE_URL}`/api/v1/tpo/reports/seasons", { headers }),
       ]);
 
       if (coursesRes.ok) {
@@ -52,7 +53,7 @@ export default function OfferLettersPage() {
       if (selectedSeason) query.set("season", selectedSeason);
       if (selectedCourse) query.set("course_id", selectedCourse);
 
-      const res = await fetch(`http://localhost:5000/api/v1/tpo/offer-letters?${query.toString()}`, {
+      const res = await fetch(``${API_BASE_URL}`/api/v1/tpo/offer-letters?${query.toString()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -236,3 +237,5 @@ export default function OfferLettersPage() {
     </div>
   );
 }
+
+

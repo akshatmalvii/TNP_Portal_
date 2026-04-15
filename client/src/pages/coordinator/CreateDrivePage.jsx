@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CreateDriveForm from "../../components/tpo/CreateDriveForm";
 import { Button } from "../../components/Button";
+import { API_BASE_URL } from '../constants/api';
 
 export default function CreateDrivePage() {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ export default function CreateDrivePage() {
     const fetchContext = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/v1/coordinator/context", {
+        const res = await fetch("`${API_BASE_URL}`/api/v1/coordinator/context", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -60,7 +61,7 @@ export default function CreateDrivePage() {
       ) : (
         <div className="space-y-6">
           <CreateDriveForm
-            apiBase="http://localhost:5000/api/v1/coordinator"
+            apiBase="`${API_BASE_URL}`/api/v1/coordinator"
             fixedDepartmentId={coordinatorContext?.dept_id}
             fixedDepartmentLabel={coordinatorContext?.Department?.dept_name || coordinatorContext?.Department?.dept_code}
             onSuccess={handleSuccess}
@@ -72,3 +73,5 @@ export default function CreateDrivePage() {
     </div>
   );
 }
+
+

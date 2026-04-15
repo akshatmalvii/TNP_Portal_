@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1/student-profile";
-const AUTH_API_BASE = "http://localhost:5000/api/v1/auth";
+const API_BASE = ``${API_BASE_URL}`/api/v1/student-profile`;
+const AUTH_API_BASE = ``${API_BASE_URL}`/api/v1/auth`;
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -165,3 +166,4 @@ export default function DashboardLayout() {
     </div>
   );
 }
+

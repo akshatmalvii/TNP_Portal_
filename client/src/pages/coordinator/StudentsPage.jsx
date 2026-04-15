@@ -9,6 +9,7 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Search, Users as UsersIcon, Mail, BookOpen, GraduationCap } from "lucide-react";
+import { API_BASE_URL } from '../constants/api';
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([]);
@@ -19,7 +20,7 @@ export default function StudentsPage() {
     const fetchStudents = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/v1/verification/coordinator/all", {
+        const res = await fetch("`${API_BASE_URL}`/api/v1/verification/coordinator/all", {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -155,3 +156,4 @@ export default function StudentsPage() {
     </div>
   );
 }
+

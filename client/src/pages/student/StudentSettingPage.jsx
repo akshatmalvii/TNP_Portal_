@@ -4,3 +4,4 @@ import PasswordSettingsPlaceholder from "../../components/settings/PasswordSetti
 export default function StudentSettingPage() {
   return <PasswordSettingsPlaceholder roleLabel="student account" />;
 }
+

@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../..
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1/tpo";
+const API_BASE = "`${API_BASE_URL}`/api/v1/tpo";
 
 export default function PlacementSeasonPage() {
   const { confirm, confirmDialog } = useConfirmDialog();
@@ -218,3 +219,5 @@ export default function PlacementSeasonPage() {
     </div>
   );
 }
+
+

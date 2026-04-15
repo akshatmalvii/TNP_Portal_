@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, Menu } from "lucide-react";
 import { Button } from "./Button";
+import { API_BASE_URL } from "../constants/api";
 
 export default function DashboardHeader({ userName, userRole, onMenuClick }) {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export default function DashboardHeader({ userName, userRole, onMenuClick }) {
 
     setLoadingNotifications(true);
     try {
-      const res = await fetch("http://localhost:5000/api/v1/notifications/me?limit=4", {
+      const res = await fetch(``${API_BASE_URL}`/api/v1/notifications/me?limit=4`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -51,7 +52,7 @@ export default function DashboardHeader({ userName, userRole, onMenuClick }) {
     if (!isStudent || !token || unreadCount === 0) return;
 
     try {
-      const res = await fetch("http://localhost:5000/api/v1/notifications/me/read-all", {
+      const res = await fetch(``${API_BASE_URL}`/api/v1/notifications/me/read-all`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -249,3 +250,4 @@ export default function DashboardHeader({ userName, userRole, onMenuClick }) {
     </header>
   );
 }
+

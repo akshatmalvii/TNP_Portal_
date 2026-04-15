@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/Card"
 import { Button } from "../../components/Button";
 import { Input } from "../../components/Input";
 import { Building2, Plus, Trash2, Globe, X } from "lucide-react";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1/coordinator";
+const API_BASE = "`${API_BASE_URL}`/api/v1/coordinator";
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState([]);
@@ -309,3 +310,5 @@ export default function CompaniesPage() {
     </div>
   );
 }
+
+

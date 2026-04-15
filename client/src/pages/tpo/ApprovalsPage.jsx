@@ -4,8 +4,9 @@ import { Badge } from "../../components/Badge";
 import { Button } from "../../components/Button";
 import { CheckCircle2, Clock, IndianRupee, XCircle } from "lucide-react";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1/tpo";
+const API_BASE = "`${API_BASE_URL}`/api/v1/tpo";
 
 export default function ApprovalsPage() {
   const { confirm, confirmDialog } = useConfirmDialog();
@@ -186,3 +187,5 @@ export default function ApprovalsPage() {
     </div>
   );
 }
+
+

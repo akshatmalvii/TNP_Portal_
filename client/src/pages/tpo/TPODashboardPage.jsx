@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
+import { API_BASE_URL } from '../constants/api';
 
 export default function TPODashboard() {
   const { confirm, confirmDialog } = useConfirmDialog();
@@ -44,7 +45,7 @@ export default function TPODashboard() {
     try {
       setSeasonLoading(true);
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/v1/tpo/placement-season", {
+      const res = await fetch("`${API_BASE_URL}`/api/v1/tpo/placement-season", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -64,7 +65,7 @@ export default function TPODashboard() {
   const fetchDrives = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/v1/tpo/drives", {
+      const res = await fetch("`${API_BASE_URL}`/api/v1/tpo/drives", {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) setDrives(await res.json());
@@ -100,7 +101,7 @@ export default function TPODashboard() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/v1/tpo/placement-season", {
+      const res = await fetch("`${API_BASE_URL}`/api/v1/tpo/placement-season", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -437,3 +438,5 @@ export default function TPODashboard() {
     </div>
   );
 }
+
+

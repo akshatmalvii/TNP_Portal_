@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Briefcase, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1";
+const API_BASE = "`${API_BASE_URL}`/api/v1";
 
 export default function StudentDashboardPage() {
   const navigate = useNavigate();
@@ -208,3 +209,5 @@ export default function StudentDashboardPage() {
     </div>
   );
 }
+
+

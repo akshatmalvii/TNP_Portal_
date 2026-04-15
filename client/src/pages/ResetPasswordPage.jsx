@@ -3,8 +3,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/Card";
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1";
+const API_BASE = "`${API_BASE_URL}`/api/v1";
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -154,3 +155,5 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+
+

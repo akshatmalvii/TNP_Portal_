@@ -3,6 +3,7 @@ import { FileText, CheckCircle, Clock, Upload, Loader2, Download, ExternalLink }
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/Dialog';
+import { API_BASE_URL } from '../../constants/api';
 
 export default function OfferLetterPage() {
   const [offers, setOffers] = useState([]);
@@ -17,7 +18,7 @@ export default function OfferLetterPage() {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:5000/api/v1/students/offers/accepted', {
+      const res = await fetch(``${API_BASE_URL}`/api/v1/students/offers/accepted`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -55,7 +56,7 @@ export default function OfferLetterPage() {
       reader.onload = async () => {
         const base64Content = reader.result;
 
-        const res = await fetch('http://localhost:5000/api/v1/students/offers/upload-letter', {
+        const res = await fetch(``${API_BASE_URL}`/api/v1/students/offers/upload-letter`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -229,3 +230,4 @@ export default function OfferLetterPage() {
     </div>
   );
 }
+

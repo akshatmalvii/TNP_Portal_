@@ -19,8 +19,9 @@ import {
 } from "../../components/Dialog";
 import { Plus, Pencil, Trash2, BookOpen } from "lucide-react";
 import { useConfirmDialog } from "../../components/ConfirmDialog";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1";
+const API_BASE = "`${API_BASE_URL}`/api/v1";
 
 export default function DepartmentsPage() {
   const { confirm, confirmDialog } = useConfirmDialog();
@@ -554,3 +555,5 @@ export default function DepartmentsPage() {
     </div>
   );
 }
+
+

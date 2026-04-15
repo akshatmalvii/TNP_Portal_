@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "../../components/Card";
 import { Button } from "../../components/Button";
+import { API_BASE_URL } from '../constants/api';
 
 const FILTERS = [
   { id: "all", label: "All" },
@@ -71,7 +72,7 @@ export default function StudentNotificationsPage() {
   const fetchNotifications = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/v1/notifications/me?limit=200", {
+      const res = await fetch("`${API_BASE_URL}`/api/v1/notifications/me?limit=200", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -100,7 +101,7 @@ export default function StudentNotificationsPage() {
 
     setMarkingRead(true);
     try {
-      const res = await fetch("http://localhost:5000/api/v1/notifications/me/read-all", {
+      const res = await fetch("`${API_BASE_URL}`/api/v1/notifications/me/read-all", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -269,3 +270,5 @@ export default function StudentNotificationsPage() {
     </div>
   );
 }
+
+

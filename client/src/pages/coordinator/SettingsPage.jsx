@@ -4,3 +4,4 @@ import PasswordSettingsPlaceholder from "../../components/settings/PasswordSetti
 export default function SettingsPage() {
   return <PasswordSettingsPlaceholder roleLabel="coordinator account" />;
 }
+

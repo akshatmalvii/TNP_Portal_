@@ -9,6 +9,7 @@ import {
   CardTitle,
   CardDescription
 } from "../components/Card";
+import { API_BASE_URL } from "../constants/api";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/v1/auth/login", {
+      const response = await fetch(``${API_BASE_URL}`/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
@@ -87,7 +88,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/v1/auth/register", {
+      const response = await fetch(``${API_BASE_URL}`/api/v1/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password, confirmPassword })
@@ -240,3 +241,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

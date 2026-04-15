@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Mail, Phone, Briefcase, BookOpen } from "lucide-react";
+import { API_BASE_URL } from '../constants/api';
 
 export default function StudentProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -22,7 +23,7 @@ export default function StudentProfilePage() {
     const loadProfile = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/v1/students/me", {
+        const response = await fetch("`${API_BASE_URL}`/api/v1/students/me", {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -63,7 +64,7 @@ export default function StudentProfilePage() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/v1/students", {
+      const response = await fetch("`${API_BASE_URL}`/api/v1/students", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -280,3 +281,4 @@ export default function StudentProfilePage() {
     </div>
   );
 }
+

@@ -8,8 +8,9 @@ import {
   CardTitle,
 } from "../Card";
 import { Button } from "../Button";
+import { API_BASE_URL } from '../constants/api';
 
-const API_BASE = "http://localhost:5000/api/v1";
+const API_BASE = "`${API_BASE_URL}`/api/v1";
 
 export default function PasswordSettingsPlaceholder({ roleLabel = "account" }) {
   const [profileLoading, setProfileLoading] = useState(true);
@@ -261,3 +262,5 @@ export default function PasswordSettingsPlaceholder({ roleLabel = "account" }) {
     </div>
   );
 }
+
+
