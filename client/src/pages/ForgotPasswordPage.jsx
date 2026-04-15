@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
     setMessage("");
 
     if (!email) {
-      setError("Please enter your email`);
+      setError("Please enter your email");
       return;
     }
 

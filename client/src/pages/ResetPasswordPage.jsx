@@ -22,7 +22,7 @@ export default function ResetPasswordPage() {
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        setError("This reset link is invalid or missing.`);
+        setError("This reset link is invalid or missing.");
         setCheckingToken(false);
         return;
       }
