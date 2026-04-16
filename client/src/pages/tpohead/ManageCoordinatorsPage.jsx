@@ -22,7 +22,7 @@ import {Plus, Trash2} from 'lucide-react';
 import {useConfirmDialog} from '../../components/ConfirmDialog';
 import { API_BASE_URL } from '../../constants/api';
 
-const API_BASE = '`${API_BASE_URL}`/api/v1';
+const API_BASE = `${API_BASE_URL}/api/v1`;
 
 export default function ManageCoordinatorsPage() {
     const {confirm, confirmDialog} = useConfirmDialog();
