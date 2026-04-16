@@ -38,6 +38,7 @@ export default function Sidebar({ userRole, isVerified = true }) {
 
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("role");
     navigate("/");
   };

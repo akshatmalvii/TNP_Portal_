@@ -20,6 +20,16 @@ export const login = async (req, res) => {
   }
 };
 
+export const refreshToken = async (req, res) => {
+  try {
+    const result = await authService.refreshToken(req.body);
+    return res.json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(err.status || 500).json({ error: err.message || "Failed to refresh token" });
+  }
+};
+
 export const forgotPassword = async (req, res) => {
   try {
     const result = await authService.forgotPassword(req.body);

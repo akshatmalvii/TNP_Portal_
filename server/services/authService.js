@@ -11,6 +11,48 @@ import { sendPasswordResetEmail, isMailerConfigured } from "../utils/mailer.js";
 const JWT_SECRET = process.env.JWT_SECRET;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const PASSWORD_RESET_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TTL_MINUTES || 30);
+const ACCESS_TOKEN_TTL = process.env.JWT_ACCESS_TTL || "20m";
+const REFRESH_TOKEN_TTL_DAYS = Number(process.env.JWT_REFRESH_TTL_DAYS || 7);
+
+const createAccessToken = ({ user_id, email, role }) =>
+  jwt.sign(
+    {
+      user_id,
+      email,
+      role,
+    },
+    JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_TTL }
+  );
+
+const createRefreshToken = () => crypto.randomBytes(32).toString("hex");
+
+const saveRefreshToken = async (user, rawRefreshToken) => {
+  const refreshTokenHash = crypto.createHash("sha256").update(rawRefreshToken).digest("hex");
+  const refreshTokenExpiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
+
+  user.refresh_token_hash = refreshTokenHash;
+  user.refresh_token_expires_at = refreshTokenExpiresAt;
+  user.updated_at = new Date();
+  await user.save();
+};
+
+const issueAuthTokensForUser = async (user) => {
+  const role = user.Role ? user.Role.role_name : "Student";
+  const refreshToken = createRefreshToken();
+
+  await saveRefreshToken(user, refreshToken);
+
+  return {
+    token: createAccessToken({
+      user_id: user.user_id,
+      email: user.email,
+      role,
+    }),
+    refreshToken,
+    role,
+  };
+};
 
 const buildCurrentUserPayload = async (userId) => {
   const user = await User.findByPk(userId, {
@@ -101,19 +143,38 @@ const login = async ({ email, password }) => {
     throw { status: 401, message: "Invalid email or password" };
   }
 
-  // Role comes from users.role_id → roles.role_name (via include)
-  const role = user.Role ? user.Role.role_name : "Student";
-
-  const token = jwt.sign({
-    user_id: user.user_id,
-    email: user.email,
-    role: role
-  }, JWT_SECRET, { expiresIn: "7d" });
+  const authTokens = await issueAuthTokensForUser(user);
 
   return {
-    token,
-    role,
+    token: authTokens.token,
+    refreshToken: authTokens.refreshToken,
+    role: authTokens.role,
     user: await buildCurrentUserPayload(user.user_id),
+  };
+};
+
+const refreshToken = async ({ refreshToken }) => {
+  if (!refreshToken) {
+    throw { status: 400, message: "Refresh token is required" };
+  }
+
+  const tokenHash = crypto.createHash("sha256").update(refreshToken).digest("hex");
+  const user = await userRepository.findByRefreshTokenHash(tokenHash);
+
+  if (!user) {
+    throw { status: 401, message: "Refresh token is invalid or expired" };
+  }
+
+  if (user.account_status === "Inactive") {
+    throw { status: 403, message: "Your account has been deactivated. Contact admin." };
+  }
+
+  const authTokens = await issueAuthTokensForUser(user);
+
+  return {
+    token: authTokens.token,
+    refreshToken: authTokens.refreshToken,
+    role: authTokens.role,
   };
 };
 
@@ -230,6 +291,7 @@ const updateCurrentUser = async (userId, { full_name }) => {
 export default {
   register,
   login,
+  refreshToken,
   forgotPassword,
   validateResetToken,
   resetPassword,

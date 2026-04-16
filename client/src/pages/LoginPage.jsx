@@ -59,6 +59,7 @@ export default function LoginPage() {
       }
 
       localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("role", data.role);
       localStorage.setItem("user", JSON.stringify(data.user));
       window.dispatchEvent(new Event("tnp-user-updated"));

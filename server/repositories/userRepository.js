@@ -31,9 +31,22 @@ const findByResetTokenHash = async (tokenHash) => {
   });
 };
 
+const findByRefreshTokenHash = async (tokenHash) => {
+  return User.findOne({
+    where: {
+      refresh_token_hash: tokenHash,
+      refresh_token_expires_at: {
+        [Op.gt]: new Date(),
+      },
+    },
+    include: [{ model: Role, attributes: ["role_id", "role_name"] }],
+  });
+};
+
 export default {
   findByEmail,
   findById,
   create,
   findByResetTokenHash,
+  findByRefreshTokenHash,
 };
