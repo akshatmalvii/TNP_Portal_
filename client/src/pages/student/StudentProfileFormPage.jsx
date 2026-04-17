@@ -227,6 +227,10 @@ export default function StudentProfileFormPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
+      sessionStorage.setItem(
+        "studentVerificationSubmitted",
+        "Your verification request has been sent to the coordinator successfully."
+      );
       navigate("/dashboard/student/verification-pending");
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }

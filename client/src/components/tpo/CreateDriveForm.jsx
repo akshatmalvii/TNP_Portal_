@@ -29,7 +29,6 @@ export default function CreateDriveForm({
     stipend_pm: "",
     has_bond: false,
     bond_months: "",
-    has_security_deposit: false,
     security_deposit_amount: "",
     deadline: "",
     allowed_departments: [],
@@ -93,7 +92,6 @@ export default function CreateDriveForm({
               stipend_pm: driveData.stipend_pm || "",
               has_bond: driveData.has_bond || false,
               bond_months: driveData.bond_months || "",
-              has_security_deposit: driveData.has_security_deposit || false,
               security_deposit_amount: driveData.security_deposit_amount || "",
               deadline: driveData.deadline ? driveData.deadline.split("T")[0] : "",
               allowed_departments: driveData.DriveAllowedDepartments?.map(d => d.dept_id) || [],
@@ -188,6 +186,15 @@ export default function CreateDriveForm({
     });
   };
 
+  const handleBondToggle = (checked) => {
+    setFormData((prev) => ({
+      ...prev,
+      has_bond: checked,
+      bond_months: checked ? prev.bond_months : "",
+      security_deposit_amount: checked ? prev.security_deposit_amount : "",
+    }));
+  };
+
   const getDepartmentCode = (deptId) =>
     departments.find((department) => department.dept_id === deptId)?.dept_code || "Unknown";
 
@@ -274,8 +281,8 @@ export default function CreateDriveForm({
         stipend_pm: formData.offer_type !== "Placement" ? formData.stipend_pm : null,
         has_bond: formData.has_bond,
         bond_months: formData.has_bond ? (parseInt(formData.bond_months) || null) : null,
-        has_security_deposit: formData.has_security_deposit,
-        security_deposit_amount: formData.has_security_deposit ? formData.security_deposit_amount : null,
+        has_security_deposit: formData.has_bond,
+        security_deposit_amount: formData.has_bond ? formData.security_deposit_amount : null,
         allowed_departments: fixedDepartmentId
           ? [fixedDepartmentId]
           : formData.allowed_departments,
@@ -425,47 +432,34 @@ export default function CreateDriveForm({
                       type="checkbox" 
                       className="rounded text-indigo-600 focus:ring-indigo-500"
                       checked={formData.has_bond}
-                      onChange={e => setFormData({...formData, has_bond: e.target.checked})}
+                      onChange={e => handleBondToggle(e.target.checked)}
                     />
                     Requires Service Bond / Agreement
                   </label>
                   {formData.has_bond && (
-                    <div className="pl-6 transition-all duration-200">
-                      <label className="text-xs font-medium text-gray-500 block mb-1">Duration (Months) *</label>
-                      <Input 
-                        type="number" 
-                        min="1"
-                        value={formData.bond_months} 
-                        onChange={e => setFormData({...formData, bond_months: e.target.value})} 
-                        placeholder="e.g. 24" 
-                        required={formData.has_bond}
-                        className="bg-white"
-                      />
-                    </div>
-                  )}
-                </div>
-                
-                {/* Security Deposit */}
-                <div className="space-y-3 p-3 border rounded-lg bg-gray-50/50">
-                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <input 
-                      type="checkbox" 
-                      className="rounded text-indigo-600 focus:ring-indigo-500"
-                      checked={formData.has_security_deposit}
-                      onChange={e => setFormData({...formData, has_security_deposit: e.target.checked})}
-                    />
-                    Requires Security Cheque / Deposit
-                  </label>
-                  {formData.has_security_deposit && (
-                    <div className="pl-6 transition-all duration-200">
-                      <label className="text-xs font-medium text-gray-500 block mb-1">Amount / Details *</label>
-                      <Input 
-                        value={formData.security_deposit_amount} 
-                        onChange={e => setFormData({...formData, security_deposit_amount: e.target.value})} 
-                        placeholder="e.g. Rs 1,00,000 or Blank Cheque" 
-                        required={formData.has_security_deposit}
-                        className="bg-white"
-                      />
+                    <div className="pl-6 transition-all duration-200 space-y-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 block mb-1">Duration (Months) *</label>
+                        <Input 
+                          type="number" 
+                          min="1"
+                          value={formData.bond_months} 
+                          onChange={e => setFormData({...formData, bond_months: e.target.value})} 
+                          placeholder="e.g. 24" 
+                          required={formData.has_bond}
+                          className="bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 block mb-1">Security Cheque Amount / Details *</label>
+                        <Input 
+                          value={formData.security_deposit_amount} 
+                          onChange={e => setFormData({...formData, security_deposit_amount: e.target.value})} 
+                          placeholder="e.g. Rs 1,00,000 or Blank Cheque" 
+                          required={formData.has_bond}
+                          className="bg-white"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

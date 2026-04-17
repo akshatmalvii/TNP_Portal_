@@ -28,6 +28,40 @@ const attachSignedDriveDocuments = (drive) => {
   return plainDrive;
 };
 
+const normalizeContractTerms = ({
+  has_bond,
+  bond_months,
+  security_deposit_amount,
+}) => {
+  const normalizedHasBond = Boolean(has_bond);
+  const normalizedBondMonths = normalizedHasBond
+    ? Number.parseInt(bond_months, 10) || null
+    : null;
+  const normalizedSecurityDepositAmount = normalizedHasBond
+    ? String(security_deposit_amount || "").trim() || null
+    : null;
+
+  if (normalizedHasBond) {
+    if (!normalizedBondMonths) {
+      throw { status: 400, message: "Bond duration is required when bond is enabled." };
+    }
+
+    if (!normalizedSecurityDepositAmount) {
+      throw {
+        status: 400,
+        message: "Security cheque amount/details are required when bond is enabled.",
+      };
+    }
+  }
+
+  return {
+    has_bond: normalizedHasBond,
+    bond_months: normalizedBondMonths,
+    has_security_deposit: normalizedHasBond,
+    security_deposit_amount: normalizedSecurityDepositAmount,
+  };
+};
+
 const PLACEMENT_OFFER_CATEGORIES = new Set(["Placement", "Internship+PPO", "PPO_Conversion"]);
 
 const getAcceptedOffersForStudent = async (studentId) => {
@@ -333,6 +367,11 @@ const createDriveTransaction = async (driveData, staffId, options = {}) => {
   }
 
   const normalizedPlacementSeason = normalizePlacementSeason(placement_season);
+  const contractTerms = normalizeContractTerms({
+    has_bond,
+    bond_months,
+    security_deposit_amount,
+  });
 
   // Deep Validation: Check if selected courses actually belong to the selected departments
   const validCourses = await Course.findAll({
@@ -355,10 +394,7 @@ const createDriveTransaction = async (driveData, staffId, options = {}) => {
       offer_type,
       package_lpa,
       stipend_pm,
-      has_bond: has_bond || false,
-      bond_months: bond_months || null,
-      has_security_deposit: has_security_deposit || false,
-      security_deposit_amount: security_deposit_amount || null,
+      ...contractTerms,
       deadline,
       placement_season: normalizedPlacementSeason,
       drive_status: driveStatus,
@@ -428,6 +464,12 @@ const updateDriveTransaction = async (drive_id, driveData, staffId) => {
       normalizedPlacementSeason = drive.placement_season;  // Keep existing if not provided or empty
     }
 
+    const contractTerms = normalizeContractTerms({
+      has_bond,
+      bond_months,
+      security_deposit_amount,
+    });
+
     // 1. Update root Drive record
     await drive.update({
       company_id,
@@ -436,10 +478,7 @@ const updateDriveTransaction = async (drive_id, driveData, staffId) => {
       offer_type,
       package_lpa: package_lpa || null,
       stipend_pm: stipend_pm || null,
-      has_bond: has_bond || false,
-      bond_months: bond_months || null,
-      has_security_deposit: has_security_deposit || false,
-      security_deposit_amount: security_deposit_amount || null,
+      ...contractTerms,
       deadline,
       placement_season: normalizedPlacementSeason,
       drive_status: drive_status || drive.drive_status,

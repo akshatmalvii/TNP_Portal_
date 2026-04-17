@@ -38,6 +38,7 @@ export default function DriveUpdatesPage() {
   const [uploadFiles, setUploadFiles] = useState({});
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [flashMessage, setFlashMessage] = useState("");
   const [coordinatorContext, setCoordinatorContext] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -115,6 +116,12 @@ export default function DriveUpdatesPage() {
   useEffect(() => {
     fetchCoordinatorContext();
     fetchDrives();
+
+    const submittedMessage = sessionStorage.getItem("coordinatorDriveSubmitted");
+    if (submittedMessage) {
+      setFlashMessage(submittedMessage);
+      sessionStorage.removeItem("coordinatorDriveSubmitted");
+    }
   }, []);
 
   useEffect(() => {
@@ -251,6 +258,18 @@ export default function DriveUpdatesPage() {
       {success && (
         <div className="p-3 rounded-md text-sm bg-green-100 text-green-700">
           {success}
+        </div>
+      )}
+
+      {flashMessage && (
+        <div className="p-4 rounded-lg border border-green-200 bg-green-50 text-green-800 shadow-sm">
+          <div className="flex items-start gap-3">
+            <BellRing className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
+            <div>
+              <p className="font-semibold">Drive submitted for approval</p>
+              <p className="mt-1 text-sm text-green-700">{flashMessage}</p>
+            </div>
+          </div>
         </div>
       )}
 

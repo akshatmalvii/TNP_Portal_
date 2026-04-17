@@ -31,6 +31,10 @@ export default function CreateDrivePage() {
   }, []);
 
   const handleSuccess = () => {
+    sessionStorage.setItem(
+      "coordinatorDriveSubmitted",
+      "Drive sent to the TPO for approval successfully."
+    );
     navigate("/dashboard/coordinator/drive-updates");
   };
 

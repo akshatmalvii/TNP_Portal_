@@ -11,11 +11,18 @@ export default function VerificationPendingPage() {
   const navigate = useNavigate();
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [flashMessage, setFlashMessage] = useState("");
 
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchStatus();
+
+    const submittedMessage = sessionStorage.getItem("studentVerificationSubmitted");
+    if (submittedMessage) {
+      setFlashMessage(submittedMessage);
+      sessionStorage.removeItem("studentVerificationSubmitted");
+    }
   }, []);
 
   const fetchStatus = async () => {
@@ -60,7 +67,20 @@ export default function VerificationPendingPage() {
 
   return (
     <div className="flex items-center justify-center min-h-[80vh] p-6">
-      <Card className="border-0 max-w-lg w-full text-center">
+      <div className="w-full max-w-lg space-y-4">
+        {flashMessage && (
+          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-left text-sm text-green-800 shadow-sm">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
+              <div>
+                <p className="font-semibold">Verification request submitted</p>
+                <p className="mt-1 text-green-700">{flashMessage}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <Card className="border-0 text-center">
         <CardContent className="py-12 space-y-6">
           {isRejected ? (
             <>
@@ -102,7 +122,8 @@ export default function VerificationPendingPage() {
             </>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
