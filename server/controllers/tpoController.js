@@ -50,7 +50,19 @@ const parseRequiredDepartmentId = (deptId) => {
 
 const getCompanies = async (req, res) => {
   try {
-    const companies = await Company.findAll();
+    const staffUser = await getStaffContext(req.user.user_id);
+    const department = await Department.findByPk(staffUser.dept_id, {
+      attributes: ["current_placement_season"],
+    });
+
+    if (!department?.current_placement_season) {
+      return res.json([]);
+    }
+
+    const companies = await Company.findAll({
+      where: { placement_season: department.current_placement_season },
+      order: [["created_at", "DESC"]],
+    });
     res.json(companies);
   } catch (err) {
     console.error("Error fetching companies:", err);

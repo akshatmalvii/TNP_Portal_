@@ -35,7 +35,7 @@ export default function CompaniesPage() {
         <div>
           <h1 className="text-3xl font-bold">Companies</h1>
           <p className="text-muted-foreground mt-1">
-            View all recruiting companies created by your coordinators.
+            View recruiting companies from the current placement season.
           </p>
         </div>
       </div>
