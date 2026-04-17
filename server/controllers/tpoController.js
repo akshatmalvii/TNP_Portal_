@@ -85,8 +85,29 @@ const getCourses = async (req, res) => {
 
 const getDrives = async (req, res) => {
   try {
+    // Get TPO's staff context to access their department
+    const staffUser = await getStaffContext(req.user.user_id);
+    
+    // Get department and current placement season
+    const department = await Department.findByPk(staffUser.dept_id, {
+      attributes: ["dept_id", "current_placement_season"],
+    });
+
+    if (!department) {
+      return res.status(404).json({ error: "Department not found" });
+    }
+
+    const currentPlacementSeason = department.current_placement_season;
+
+    // Build where clause to filter by current placement season
+    const whereClause = {
+      placement_season: currentPlacementSeason,
+    };
+
+    // Fetch only drives from the current placement season
     const drives = await Drive.findAll({
       attributes: ['drive_id', 'company_id', 'role_title', 'role_description', 'offer_type', 'package_lpa', 'deadline', 'placement_season', 'drive_status', 'approval_status', 'created_at'],
+      where: whereClause,
       include: [{ model: Company, attributes: ["company_name"] }],
       order: [["created_at", "DESC"]]
     });
@@ -101,7 +122,7 @@ const getDrives = async (req, res) => {
     res.json(mappedDrives);
   } catch (err) {
     console.error("Error fetching TPO drives:", err);
-    res.status(500).json({ error: "Failed to fetch drives" });
+    res.status(err.status || 500).json({ error: err.message || "Failed to fetch drives" });
   }
 };
 
