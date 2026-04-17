@@ -7,6 +7,7 @@ import Role from "../models/role.js";
 import User from "../models/users.js";
 import Student from "../models/student.js";
 import { sendPasswordResetEmail, isMailerConfigured } from "../utils/mailer.js";
+import { validatePasswordStrength } from "../utils/passwordPolicy.js";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -94,6 +95,8 @@ const register = async ({ email, password, confirmPassword }) => {
   if (password !== confirmPassword) {
     throw { status: 400, message: "Password and confirm password do not match" };
   }
+
+  await validatePasswordStrength({ password, email });
 
   const existingUser = await userRepository.findByEmail(email);
   if (existingUser) {
@@ -238,16 +241,18 @@ const resetPassword = async ({ token, password, confirmPassword }) => {
     throw { status: 400, message: "Password and confirm password do not match" };
   }
 
-  if (password.length < 6) {
-    throw { status: 400, message: "Password must be at least 6 characters" };
-  }
-
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const user = await userRepository.findByResetTokenHash(tokenHash);
 
   if (!user) {
     throw { status: 400, message: "This reset link is invalid or has expired" };
   }
+
+  await validatePasswordStrength({
+    password,
+    email: user.email,
+    currentPasswordHash: user.password_hash,
+  });
 
   user.password_hash = await bcrypt.hash(password, 10);
   user.password_reset_token_hash = null;

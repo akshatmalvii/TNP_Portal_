@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Input } from "../components/Input";
 import { Button } from "../components/Button";
 import { API_BASE_URL } from '../constants/api';
+import { PASSWORD_POLICY_RULES, validatePasswordStrength } from "../lib/passwordPolicy";
 
 const API_BASE = `${API_BASE_URL}/api/v1`;
 
@@ -61,6 +62,12 @@ export default function ResetPasswordPage() {
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
+      return;
+    }
+
+    const passwordValidationError = validatePasswordStrength({ password });
+    if (passwordValidationError) {
+      setError(passwordValidationError);
       return;
     }
 
@@ -136,6 +143,14 @@ export default function ResetPasswordPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
+                </div>
+                <div className="rounded-md bg-blue-50 border border-blue-100 p-3 text-xs text-blue-900">
+                  <p className="font-medium mb-2">Password rules</p>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {PASSWORD_POLICY_RULES.map((rule) => (
+                      <li key={rule}>{rule}</li>
+                    ))}
+                  </ul>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>

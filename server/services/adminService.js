@@ -5,11 +5,14 @@ import Department from "../models/department.js";
 import DepartmentTpoAssignment from "../models/department_tpo_assignment.js";
 import sequelize from "../config/db.js";
 import bcrypt from "bcrypt";
+import { validatePasswordStrength } from "../utils/passwordPolicy.js";
 
 const createStaffAccount = async ({ email, password, role_name, dept_id }) => {
   if (!email || !password || !role_name) {
     throw { status: 400, message: "email, password, and role_name are required" };
   }
+
+  await validatePasswordStrength({ password, email });
 
   return await sequelize.transaction(async (t) => {
     // Check if user exists

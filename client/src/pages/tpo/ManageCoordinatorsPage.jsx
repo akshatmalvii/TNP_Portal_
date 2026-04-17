@@ -21,6 +21,7 @@ import {Badge} from '../../components/Badge';
 import {Plus, Trash2} from 'lucide-react';
 import {useConfirmDialog} from '../../components/ConfirmDialog';
 import { API_BASE_URL } from '../../constants/api';
+import { PASSWORD_POLICY_RULES, validatePasswordStrength } from '../../lib/passwordPolicy';
 
 const API_BASE = `${API_BASE_URL}/api/v1`;
 
@@ -67,6 +68,15 @@ export default function ManageCoordinatorsPage() {
     const handleAdd = async () => {
         if (!form.email || !form.password) {
             setError('Email and password are required');
+            return;
+        }
+
+        const passwordValidationError = validatePasswordStrength({
+            password: form.password,
+            email: form.email,
+        });
+        if (passwordValidationError) {
+            setError(passwordValidationError);
             return;
         }
 
@@ -313,6 +323,14 @@ export default function ManageCoordinatorsPage() {
                                     setForm({...form, password: e.target.value})
                                 }
                             />
+                        </div>
+                        <div className='rounded-md border border-blue-100 bg-blue-50 p-3 text-xs text-blue-900'>
+                            <p className='mb-2 font-medium'>Password rules</p>
+                            <ul className='list-disc space-y-1 pl-4'>
+                                {PASSWORD_POLICY_RULES.map((rule) => (
+                                    <li key={rule}>{rule}</li>
+                                ))}
+                            </ul>
                         </div>
                     </div>
 
