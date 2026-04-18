@@ -46,14 +46,14 @@ export default function DashboardLayout() {
   const isStaffNameIncomplete =
     userRole !== "student" && currentUser.name_completed === false;
 
+  // Sync current user on mount if we have a user object in localStorage
   useEffect(() => {
-    if (!token) return;
+    if (!currentUser.user_id) return;
 
     const syncCurrentUser = async () => {
       try {
-        const res = await fetch(`${AUTH_API_BASE}/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Interceptor will handle token refresh and injection
+        const res = await fetch(`${AUTH_API_BASE}/me`);
 
         if (!res.ok) return;
 
@@ -78,18 +78,17 @@ export default function DashboardLayout() {
 
     window.addEventListener("tnp-user-updated", handleUserUpdated);
     return () => window.removeEventListener("tnp-user-updated", handleUserUpdated);
-  }, [token]);
+  }, [currentUser.user_id]);
 
   // Check verification status for students
   useEffect(() => {
-    if (userRole !== "student") return;
+    if (userRole !== "student" || !currentUser.user_id) return;
     setCheckingVerification(true);
 
     const checkVerification = async () => {
       try {
-        const res = await fetch(`${API_BASE}/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        // Interceptor will handle token refresh and injection
+        const res = await fetch(`${API_BASE}/profile`);
         if (res.ok) {
           const data = await res.json();
           const vr = data.StudentVerificationRequest;
@@ -120,7 +119,7 @@ export default function DashboardLayout() {
     };
 
     checkVerification();
-  }, [userRole, location.pathname]);
+  }, [userRole, location.pathname, currentUser.user_id]);
 
   return (
     <div className="flex h-screen bg-gray-100">

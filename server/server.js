@@ -66,9 +66,23 @@ const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'topn-secret-key';
 
 // Middleware
-const allowedOrigin = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : "http://localhost:5173";
+const rawAllowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+const allowedOrigins = [
+    rawAllowedOrigin.replace(/\/$/, ''), // Strip trailing slash
+    rawAllowedOrigin.replace(/\/$/, '') + '/', // Add trailing slash just in case
+    "http://localhost:5173"
+];
+
 app.use(cors({
-    origin: [allowedOrigin, "http://localhost:5173"],
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.indexOf(origin + '/') !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
 }));
 app.use(express.json());

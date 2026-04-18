@@ -136,4 +136,15 @@ export const setupAuthFetch = () => {
   };
 
   window.__tnpAuthFetchInstalled = true;
+
+  // Compatibility Patch: Many components check localStorage.getItem("token")
+  // to decide if they should render or redirect. We intercept this and return
+  // the in-memory token to prevent fake "logged out" states on refresh.
+  const originalGetItem = window.localStorage.getItem.bind(window.localStorage);
+  window.localStorage.getItem = (key) => {
+    if (key === "token") {
+      return inMemoryAccessToken;
+    }
+    return originalGetItem(key);
+  };
 };
