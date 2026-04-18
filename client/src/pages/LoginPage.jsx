@@ -11,6 +11,7 @@ import {
 } from "../components/Card";
 import { API_BASE_URL } from "../constants/api";
 import { PASSWORD_POLICY_RULES, validatePasswordStrength } from "../lib/passwordPolicy";
+import { setAccessToken } from "../lib/setupAuthFetch";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -59,8 +60,7 @@ export default function LoginPage() {
         throw new Error(data.error || data.message || "Login failed");
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      setAccessToken(data.token);
       localStorage.setItem("role", data.role);
       localStorage.setItem("user", JSON.stringify(data.user));
       window.dispatchEvent(new Event("tnp-user-updated"));

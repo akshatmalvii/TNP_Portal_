@@ -36,11 +36,18 @@ export default function Sidebar({ userRole, isVerified = true }) {
 
     if (!shouldLogout) return;
 
+    try {
+      await fetch("http://localhost:5000/api/v1/auth/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+    } catch (error) {
+      console.error("Logout API request failed:", error);
+    }
+
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
     localStorage.removeItem("role");
-    navigate("/");
+    window.location.href = "/";
   };
 
   const studentMenuItems = [

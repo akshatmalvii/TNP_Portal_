@@ -3,6 +3,7 @@ import cors from 'cors';
 import sequelize from './config/db.js';
 import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -65,8 +66,12 @@ const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'topn-secret-key';
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true,
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // JWT Middleware (if needed later)
 export const authenticateStudent = async (req, res, next) => {

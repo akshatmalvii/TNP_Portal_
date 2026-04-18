@@ -13,6 +13,18 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const result = await authService.login(req.body);
+    
+    // Set refreshToken as an HttpOnly cookie
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+    
+    // Remove it from JSON response
+    delete result.refreshToken;
+    
     return res.json(result);
   } catch (err) {
     console.error(err);
@@ -22,12 +34,37 @@ export const login = async (req, res) => {
 
 export const refreshToken = async (req, res) => {
   try {
-    const result = await authService.refreshToken(req.body);
+    // Read the token from cookies instead of body
+    const tokenStr = req.cookies?.refreshToken;
+    if (!tokenStr) {
+      return res.status(401).json({ error: "No refresh token provided in cookies" });
+    }
+
+    const result = await authService.refreshToken({ refreshToken: tokenStr });
+    
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+    
+    delete result.refreshToken;
+    
     return res.json(result);
   } catch (err) {
     console.error(err);
     return res.status(err.status || 500).json({ error: err.message || "Failed to refresh token" });
   }
+};
+
+export const logout = async (req, res) => {
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  });
+  return res.json({ message: "Logged out successfully" });
 };
 
 export const forgotPassword = async (req, res) => {
